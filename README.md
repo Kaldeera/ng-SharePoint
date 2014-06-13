@@ -1,4 +1,4 @@
 ng-SharePoint
 =============
 
-  AngularJS-SharePoint wraps SharePoint JSOM into Angular world
+AngularJS-SharePoint wraps SharePoint JSOM into Angular world
