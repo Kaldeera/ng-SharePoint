@@ -27,9 +27,15 @@ module.exports = function(grunt) {
         separator: '\n'
       },
       dist: {
-        src: ['src/*.js'],
-        dest: 'build/<%= pkg.name %>-<%= pkg.version %>.js',
+        src: ['src/**/*.js'],
+        dest: 'build/<%= pkg.name %>-<%= pkg.version %>.debug.js'
       }
+    },
+
+    jshint: {
+      all: ['Gruntfile.js', 'src/**/*.js'],
+      beforeconcat: ['src/**/*.js'],
+      afterconcat: ['build/*.js']
     }
     
   });
@@ -37,9 +43,10 @@ module.exports = function(grunt) {
   // Load plugins
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
 
   // Default task(s).
-  grunt.registerTask('default', ['uglify']);
-  grunt.registerTask('concat', ['concat']);
+  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat']);
+  grunt.registerTask('debug', ['concat']);
 
 };
