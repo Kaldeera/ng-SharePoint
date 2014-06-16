@@ -168,7 +168,7 @@ angular.module('kld.CamlHelper', [])
 					
 					return "<Query>" + Where + GroupBy + OrderBy + "</Query>";
 				}
-			}
+			};
 		};
 	};
 
@@ -260,7 +260,7 @@ angular.module('kld.CamlHelper', [])
 						return true;
 					}
 				}
-			}
+			};
 		};
 	};
 
@@ -272,9 +272,8 @@ angular.module('kld.CamlHelper', [])
 .provider('ODataParserProvider', function () {
 	var ODataParserProvider = function (CamlQueryHelperProvider, ODataSentencePartProvider, CamlOperatorEnumerator) {
 		this.ODataParser = function (fieldsSchema) {
-			if (fieldsSchema == undefined) {
+			if (fieldsSchema === undefined) {
 				throw 'fieldsSchema not specified';
-				return;
 			}
 
 			return {
@@ -299,7 +298,7 @@ angular.module('kld.CamlHelper', [])
 					if (queryInfo.filter !== undefined) { this.Filter = queryInfo.filter; }
 					if (queryInfo.orderBy !== undefined) { this.Sort = queryInfo.orderBy; }
 					if (queryInfo.select !== undefined) { this.Select = queryInfo.select; }
-					if (queryInfo.groupBy != undefined) { this.GroupBy = queryInfo.groupBy; }
+					if (queryInfo.groupBy !== undefined) { this.GroupBy = queryInfo.groupBy; }
 					if (queryInfo.top !== undefined) { this.Top = queryInfo.top; }
 					if (queryInfo.paging !== undefined) { this.Paging = queryInfo.paging; }
 					if (queryInfo.skip !== undefined) { this.Skip = queryInfo.skip; }
@@ -320,9 +319,9 @@ angular.module('kld.CamlHelper', [])
 					var camlHelper = CamlQueryHelperProvider.CamlQueryHelper();
 					this.Sentences.reverse();
 
-					for (var iterator = 0; iterator < this.Sentences.length; iterator++) {
+					for (var i = 0; i < this.Sentences.length; i++) {
 						var lookupId = false;
-						var sentence = this.Sentences[iterator];
+						var sentence = this.Sentences[i];
 
 						if (sentence.Field.get_typeAsString() == "Lookup" || sentence.Field.get_typeAsString() == "User" || sentence.Field.get_typeAsString() == "LookupMulti" || sentence.Field.get_typeAsString() == "UserMulti") {
 							// Se quitan las llaves, si las hay
@@ -353,9 +352,9 @@ angular.module('kld.CamlHelper', [])
 
 					if (this.Sort.length > 0) {
 						var sortSentences = this.Sort.split(",");
-						for (var iterator = 0; iterator < sortSentences.length; iterator++) {
-							if (sortSentences[iterator] != "") {
-								var sortSentence = sortSentences[iterator];
+						for (var r = 0; r < sortSentences.length; r++) {
+							if (sortSentences[r] !== "") {
+								var sortSentence = sortSentences[r];
 								var parts = sortSentence.trim().split(" ");
 
 								try {
@@ -377,8 +376,8 @@ angular.module('kld.CamlHelper', [])
 					if (this.GroupBy !== undefined && this.GroupBy !== "") {
 						var groupFieldsList = this.GroupBy.split(',');
 
-						for (var iterator = 0; iterator < groupFieldsList.length; iterator++) {
-							var eachField = groupFieldsList[iterator].trim();
+						for (var g = 0; g < groupFieldsList.length; g++) {
+							var eachField = groupFieldsList[g].trim();
 
 							if (eachField.length > 0) {
 								camlHelper.AddGroupByField(eachField);
@@ -405,10 +404,10 @@ angular.module('kld.CamlHelper', [])
 						var selectFieldsList = this.Select.split(',');
 
 						for (var iterator = 0; iterator < selectFieldsList.length; iterator++) {
-							var eachField = selectFieldsList[iterator].trim();
+							var selectedField = selectFieldsList[iterator].trim();
 
-							if (eachField.length > 0) {
-								viewFieldsQuery += "<FieldRef Name='" + eachField + "' />";
+							if (selectedField.length > 0) {
+								viewFieldsQuery += "<FieldRef Name='" + selectedField + "' />";
 							}
 						}
 
@@ -447,7 +446,7 @@ angular.module('kld.CamlHelper', [])
 
 					return resultObject;
 				}
-			}
+			};
 		};
 	};
 
@@ -505,7 +504,7 @@ angular.module('kld.ngSharePoint')
 								}
 							}
 						});
-					};
+					}
 
 					$scope.lastPage = false;
 					$scope.firstPage = true;
@@ -543,7 +542,7 @@ angular.module('kld.ngSharePoint')
 									$scope.results.push(res);
 								});
 
-								if ($scope.results.length == 0) {
+								if ($scope.results.length === 0) {
 									$scope.noResults = true;
 								} else {
 									$scope.noResults = false;
@@ -554,7 +553,7 @@ angular.module('kld.ngSharePoint')
 							}
 							$scope.currentPage++;
 							$scope.pageInfo = $scope.list.Items.get_listItemCollectionPosition();
-							if ($scope.pageInfo == null) $scope.lastPage = true;
+							if ($scope.pageInfo === null) $scope.lastPage = true;
 							$scope.firstPage = ($scope.currentPage == 1);
 							$scope.onLoading = false;
 						});
@@ -571,7 +570,7 @@ angular.module('kld.ngSharePoint')
 							$scope.firstPage = ($scope.currentPage == 1);
 							$scope.onLoading = false;
 						});
-					}
+					};
 				}
 			};
 		}
@@ -643,7 +642,7 @@ angular.module('kld.ngSharePoint')
 				transclude($scope, function (clone) {
 					angular.forEach(clone, function (e) {
 						$element.append(e);
-					})
+					});
 				});
 
 				$scope.ListItems = [];
@@ -672,7 +671,7 @@ angular.module('kld.ngSharePoint')
 				$scope.$watch('query', function(newValue) {
 					retrieveData();
 				}, true);
-			}
+			};
 		}
 	};
 }]);
@@ -733,7 +732,7 @@ angular.module('kld.ngSharePoint')
 
     return function(user) {
         
-        if (user == undefined) return "";
+        if (user === undefined) return "";
 
         var usuario;
         if (typeof user == 'string') {
@@ -741,7 +740,7 @@ angular.module('kld.ngSharePoint')
         	var userName = user.substring(user.indexOf(';#') + 2);
         	var profileUrl = kldConstants.userProfileUrl + userId + '&source=' + $location.absUrl();
 
-	        return '<a href="' + profileUrl + '">' + userName + '</a>'
+	        return '<a href="' + profileUrl + '">' + userName + '</a>';
         }
 
         return "";
@@ -802,9 +801,8 @@ angular.module('kld.ngSharePoint')
 		*/
 		this.SPList = function(listName, webId, webUrl) {
 
-			if (listName == undefined) {
+			if (listName === undefined) {
 				throw 'listName not specified';
-				return;
 			}
 
 			return {
@@ -832,7 +830,7 @@ angular.module('kld.ngSharePoint')
 
 					var web = "";
 
-					if (this.webId != undefined) {
+					if (this.webId !== undefined) {
 						web = this.Context.get_web(this.webId);
 					} else {
 						web = this.Context.get_web();
@@ -858,12 +856,12 @@ angular.module('kld.ngSharePoint')
 					}
 
 					var cache = $cacheFactory.get('SPListCache');
-					if (cache == undefined) {
+					if (cache === undefined) {
 						cache = $cacheFactory('SPListCache');
 					}
 
 					this.Schema = cache.get(web + '.' + listName);
-					if (this.Schema == undefined) {
+					if (this.Schema === undefined) {
 						this.ListFields = this.List.get_fields();
 						this.Context.load(this.ListFields);
 
@@ -906,7 +904,7 @@ angular.module('kld.ngSharePoint')
 						message: args.get_message(),
 						request: args.get_request(),
 						stackTrace: args.get_stackTrace()
-					}
+					};
 
 					console.error('SPList request failed: ' + err.message + '\n' + err.stackTrace);
 					self.deferred.reject(err);
@@ -924,14 +922,14 @@ angular.module('kld.ngSharePoint')
 							var camlQuery = SPUtils.generateCamlQuery(queryInformation, self.Schema);
 							self.Items = self.List.getItems(camlQuery);
 
-							var includeSentence = undefined;
+							var includeSentence;
 							if (queryInfo) {
 								if (queryInfo.select) {
 									includeSentence = 'Include(' + queryInfo.select + ')';
 								}
 							}
 
-							if (includeSentence) {
+							if (includeSentence !== undefined) {
 								self.Context.load(self.Items, includeSentence);
 							} else {
 								self.Context.load(self.Items);
@@ -1109,7 +1107,7 @@ angular.module('kld.ngSharePoint')
 							console.error('Error retrieving currentUser!!');
 							console.error(args.get_message());
 
-							if (self.currentUser.get_fieldValues().Id == undefined) {
+							if (self.currentUser.get_fieldValues().Id === undefined) {
 								self.def.reject({
 									Code: args.get_errorCode(),
 									Details: args.get_errorDetails(),
@@ -1188,13 +1186,13 @@ angular.module('kld.ngSharePoint')
 
 					return self.def.promise;
 				}
-			}
-		}
+			};
+		};
 	};
 	
 	this.$get = function($cacheFactory, SPUtils, $q) {
 		return new SharePoint($cacheFactory, SPUtils, $q);
-	}
+	};
 });
 
 /*

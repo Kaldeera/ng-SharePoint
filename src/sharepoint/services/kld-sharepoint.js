@@ -32,9 +32,8 @@ angular.module('kld.ngSharePoint')
 		*/
 		this.SPList = function(listName, webId, webUrl) {
 
-			if (listName == undefined) {
+			if (listName === undefined) {
 				throw 'listName not specified';
-				return;
 			}
 
 			return {
@@ -62,7 +61,7 @@ angular.module('kld.ngSharePoint')
 
 					var web = "";
 
-					if (this.webId != undefined) {
+					if (this.webId !== undefined) {
 						web = this.Context.get_web(this.webId);
 					} else {
 						web = this.Context.get_web();
@@ -88,12 +87,12 @@ angular.module('kld.ngSharePoint')
 					}
 
 					var cache = $cacheFactory.get('SPListCache');
-					if (cache == undefined) {
+					if (cache === undefined) {
 						cache = $cacheFactory('SPListCache');
 					}
 
 					this.Schema = cache.get(web + '.' + listName);
-					if (this.Schema == undefined) {
+					if (this.Schema === undefined) {
 						this.ListFields = this.List.get_fields();
 						this.Context.load(this.ListFields);
 
@@ -136,7 +135,7 @@ angular.module('kld.ngSharePoint')
 						message: args.get_message(),
 						request: args.get_request(),
 						stackTrace: args.get_stackTrace()
-					}
+					};
 
 					console.error('SPList request failed: ' + err.message + '\n' + err.stackTrace);
 					self.deferred.reject(err);
@@ -154,14 +153,14 @@ angular.module('kld.ngSharePoint')
 							var camlQuery = SPUtils.generateCamlQuery(queryInformation, self.Schema);
 							self.Items = self.List.getItems(camlQuery);
 
-							var includeSentence = undefined;
+							var includeSentence;
 							if (queryInfo) {
 								if (queryInfo.select) {
 									includeSentence = 'Include(' + queryInfo.select + ')';
 								}
 							}
 
-							if (includeSentence) {
+							if (includeSentence !== undefined) {
 								self.Context.load(self.Items, includeSentence);
 							} else {
 								self.Context.load(self.Items);
@@ -339,7 +338,7 @@ angular.module('kld.ngSharePoint')
 							console.error('Error retrieving currentUser!!');
 							console.error(args.get_message());
 
-							if (self.currentUser.get_fieldValues().Id == undefined) {
+							if (self.currentUser.get_fieldValues().Id === undefined) {
 								self.def.reject({
 									Code: args.get_errorCode(),
 									Details: args.get_errorDetails(),
@@ -418,11 +417,11 @@ angular.module('kld.ngSharePoint')
 
 					return self.def.promise;
 				}
-			}
-		}
+			};
+		};
 	};
 	
 	this.$get = function($cacheFactory, SPUtils, $q) {
 		return new SharePoint($cacheFactory, SPUtils, $q);
-	}
+	};
 });

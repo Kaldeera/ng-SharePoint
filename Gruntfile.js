@@ -36,14 +36,35 @@ module.exports = function(grunt) {
       all: ['Gruntfile.js', 'src/**/*.js'],
       beforeconcat: ['src/**/*.js'],
       afterconcat: ['build/*.js']
+    },
+
+    watch: {
+      scripts: {
+        files: ['**/*.js'],
+        tasks: ['default'],
+        options: {
+          spawn: false,
+        },
+      },
+      configFiles: {
+        files: [ 'Gruntfile.js'],
+        options: {
+          reload: true
+        }
+      }
     }
     
+  });
+
+  grunt.event.on('watch', function(action, filepath, target) {
+    grunt.log.writeln('yea!: ' + target + ': ' + filepath + ' has ' + action);
   });
 
   // Load plugins
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
   // Default task(s).
   grunt.registerTask('default', ['jshint:all', 'uglify', 'concat']);

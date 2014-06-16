@@ -168,7 +168,7 @@ angular.module('kld.CamlHelper', [])
 					
 					return "<Query>" + Where + GroupBy + OrderBy + "</Query>";
 				}
-			}
+			};
 		};
 	};
 
@@ -260,7 +260,7 @@ angular.module('kld.CamlHelper', [])
 						return true;
 					}
 				}
-			}
+			};
 		};
 	};
 
@@ -272,9 +272,8 @@ angular.module('kld.CamlHelper', [])
 .provider('ODataParserProvider', function () {
 	var ODataParserProvider = function (CamlQueryHelperProvider, ODataSentencePartProvider, CamlOperatorEnumerator) {
 		this.ODataParser = function (fieldsSchema) {
-			if (fieldsSchema == undefined) {
+			if (fieldsSchema === undefined) {
 				throw 'fieldsSchema not specified';
-				return;
 			}
 
 			return {
@@ -299,7 +298,7 @@ angular.module('kld.CamlHelper', [])
 					if (queryInfo.filter !== undefined) { this.Filter = queryInfo.filter; }
 					if (queryInfo.orderBy !== undefined) { this.Sort = queryInfo.orderBy; }
 					if (queryInfo.select !== undefined) { this.Select = queryInfo.select; }
-					if (queryInfo.groupBy != undefined) { this.GroupBy = queryInfo.groupBy; }
+					if (queryInfo.groupBy !== undefined) { this.GroupBy = queryInfo.groupBy; }
 					if (queryInfo.top !== undefined) { this.Top = queryInfo.top; }
 					if (queryInfo.paging !== undefined) { this.Paging = queryInfo.paging; }
 					if (queryInfo.skip !== undefined) { this.Skip = queryInfo.skip; }
@@ -320,9 +319,9 @@ angular.module('kld.CamlHelper', [])
 					var camlHelper = CamlQueryHelperProvider.CamlQueryHelper();
 					this.Sentences.reverse();
 
-					for (var iterator = 0; iterator < this.Sentences.length; iterator++) {
+					for (var i = 0; i < this.Sentences.length; i++) {
 						var lookupId = false;
-						var sentence = this.Sentences[iterator];
+						var sentence = this.Sentences[i];
 
 						if (sentence.Field.get_typeAsString() == "Lookup" || sentence.Field.get_typeAsString() == "User" || sentence.Field.get_typeAsString() == "LookupMulti" || sentence.Field.get_typeAsString() == "UserMulti") {
 							// Se quitan las llaves, si las hay
@@ -353,9 +352,9 @@ angular.module('kld.CamlHelper', [])
 
 					if (this.Sort.length > 0) {
 						var sortSentences = this.Sort.split(",");
-						for (var iterator = 0; iterator < sortSentences.length; iterator++) {
-							if (sortSentences[iterator] != "") {
-								var sortSentence = sortSentences[iterator];
+						for (var r = 0; r < sortSentences.length; r++) {
+							if (sortSentences[r] !== "") {
+								var sortSentence = sortSentences[r];
 								var parts = sortSentence.trim().split(" ");
 
 								try {
@@ -377,8 +376,8 @@ angular.module('kld.CamlHelper', [])
 					if (this.GroupBy !== undefined && this.GroupBy !== "") {
 						var groupFieldsList = this.GroupBy.split(',');
 
-						for (var iterator = 0; iterator < groupFieldsList.length; iterator++) {
-							var eachField = groupFieldsList[iterator].trim();
+						for (var g = 0; g < groupFieldsList.length; g++) {
+							var eachField = groupFieldsList[g].trim();
 
 							if (eachField.length > 0) {
 								camlHelper.AddGroupByField(eachField);
@@ -405,10 +404,10 @@ angular.module('kld.CamlHelper', [])
 						var selectFieldsList = this.Select.split(',');
 
 						for (var iterator = 0; iterator < selectFieldsList.length; iterator++) {
-							var eachField = selectFieldsList[iterator].trim();
+							var selectedField = selectFieldsList[iterator].trim();
 
-							if (eachField.length > 0) {
-								viewFieldsQuery += "<FieldRef Name='" + eachField + "' />";
+							if (selectedField.length > 0) {
+								viewFieldsQuery += "<FieldRef Name='" + selectedField + "' />";
 							}
 						}
 
@@ -447,7 +446,7 @@ angular.module('kld.CamlHelper', [])
 
 					return resultObject;
 				}
-			}
+			};
 		};
 	};
 

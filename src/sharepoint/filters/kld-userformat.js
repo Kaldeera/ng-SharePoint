@@ -16,7 +16,7 @@ angular.module('kld.ngSharePoint')
 
     return function(user) {
         
-        if (user == undefined) return "";
+        if (user === undefined) return "";
 
         var usuario;
         if (typeof user == 'string') {
@@ -24,7 +24,7 @@ angular.module('kld.ngSharePoint')
         	var userName = user.substring(user.indexOf(';#') + 2);
         	var profileUrl = kldConstants.userProfileUrl + userId + '&source=' + $location.absUrl();
 
-	        return '<a href="' + profileUrl + '">' + userName + '</a>'
+	        return '<a href="' + profileUrl + '">' + userName + '</a>';
         }
 
         return "";

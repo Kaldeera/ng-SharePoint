@@ -47,7 +47,7 @@ angular.module('kld.ngSharePoint')
 								}
 							}
 						});
-					};
+					}
 
 					$scope.lastPage = false;
 					$scope.firstPage = true;
@@ -85,7 +85,7 @@ angular.module('kld.ngSharePoint')
 									$scope.results.push(res);
 								});
 
-								if ($scope.results.length == 0) {
+								if ($scope.results.length === 0) {
 									$scope.noResults = true;
 								} else {
 									$scope.noResults = false;
@@ -96,7 +96,7 @@ angular.module('kld.ngSharePoint')
 							}
 							$scope.currentPage++;
 							$scope.pageInfo = $scope.list.Items.get_listItemCollectionPosition();
-							if ($scope.pageInfo == null) $scope.lastPage = true;
+							if ($scope.pageInfo === null) $scope.lastPage = true;
 							$scope.firstPage = ($scope.currentPage == 1);
 							$scope.onLoading = false;
 						});
@@ -113,7 +113,7 @@ angular.module('kld.ngSharePoint')
 							$scope.firstPage = ($scope.currentPage == 1);
 							$scope.onLoading = false;
 						});
-					}
+					};
 				}
 			};
 		}

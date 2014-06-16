@@ -63,7 +63,7 @@ angular.module('kld.ngSharePoint')
 				transclude($scope, function (clone) {
 					angular.forEach(clone, function (e) {
 						$element.append(e);
-					})
+					});
 				});
 
 				$scope.ListItems = [];
@@ -92,7 +92,7 @@ angular.module('kld.ngSharePoint')
 				$scope.$watch('query', function(newValue) {
 					retrieveData();
 				}, true);
-			}
+			};
 		}
 	};
 }]);
