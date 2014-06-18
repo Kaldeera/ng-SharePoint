@@ -3,9 +3,9 @@
     "name": "Pau Codina",
     "company": "Kaldeera"
   },
-  "name": "ng-SharePoint",
+  "name": "ng-sharepoint",
   "version": "0.0.1",
-  "homepage": "https://github.com/Kaldeera/ng-SharePoint/",
+  "homepage": "https://github.com/Kaldeera/ng-sharepoint/",
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-concat": "^0.4.0",
