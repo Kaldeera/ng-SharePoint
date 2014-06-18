@@ -37,16 +37,16 @@ angular.module('kld.ngSharePoint')
 			}
 
 			return {
-				// propiedades
+				// properties
 				webUrl: webUrl,
 				ListName: listName,
 				webId: webId,
 
-				// métodos internos
+				// inernal methods
 				initContext: function() {
 					var def = $q.defer();
 
-					// Si ya está inicializado ... no hacemos nada
+					// Si ya esta inicializado ... no hacemos nada
 					if (this.Context && this.List && this.Schema) {
 						def.resolve(this.Schema);
 						return def.promise;
@@ -141,7 +141,7 @@ angular.module('kld.ngSharePoint')
 					self.deferred.reject(err);
 				},
 
-				// métodos públicos
+				// public methods
 				getListItems: function(queryInfo) {
 					this.deferred = $q.defer();
 					var self = this;
@@ -317,7 +317,7 @@ angular.module('kld.ngSharePoint')
 					SPUtils.SharePointReady().then(function() {
 						self.context = new SP.ClientContext.get_current();
 
-						/* Esta opción retorna un objeto de tipo Usuario, pero no
+						/* Esta opcion retorna un objeto de tipo Usuario, pero no
 						   retorna ninguna de las propiedades del usuario.
 						   En lugar del web.getCurrentUser optamos por hacer una
 						   query sobre la lista de usuarios con el id del usuario

@@ -88,7 +88,7 @@ angular.module('kld.CamlHelper', [])
 								var eachValue = each.trim();
 								var eachValueTag = "";
 
-								// Si al transformar el valor a número no es NaN, es un número
+								// Si al transformar el valor a numero no es NaN, es un numero
 								if (!isNaN(parseInt(eachValue))) {
 									eachValueTag = "<Value Type='Integer'>" + eachValue + "</Value>";
 								} else {
@@ -329,7 +329,7 @@ angular.module('kld.CamlHelper', [])
 							sentenceValue = sentenceValue.replace("[", "");
 							sentenceValue = sentenceValue.replace("]", "");
 
-							// Se intenta hacer un split por ',' y se coge el primer elemento, que será el que nos guiará si es lookup o no
+							// Se intenta hacer un split por ',' y se coge el primer elemento, que sera el que nos guiara si es lookup o no
 							var tempArray = sentenceValue.split(",");
 
 							if (!isNaN(parseInt(tempArray[0]))) {
@@ -390,14 +390,14 @@ angular.module('kld.CamlHelper', [])
 
 					var rowLimitQuery = "";
 
-					// Generamos el string con el parámetro Top
+					// Generamos el string con el parametro Top
 					if (this.Top !== undefined && this.Top !== "") {
 						rowLimitQuery += "<RowLimit Paged='TRUE'>" + this.Top + "</RowLimit>";
 					}
 
 					var viewFieldsQuery = "";
 
-					// Generamos el string de los campos que se seleccionarán
+					// Generamos el string de los campos que se seleccionaran
 					if (this.Select.length > 0) {
 						viewFieldsQuery = "<ViewFields>";
 

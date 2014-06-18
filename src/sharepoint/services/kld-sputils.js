@@ -45,7 +45,7 @@ angular.module('kld.ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvide
 			if (queryInfo === undefined) {
 				camlQuery = SP.CamlQuery.createAllItemsQuery();
 			} else {
-				// El formato del parámetro puede ser un objeto, que hay que procesar, o un string directo de CamlQuery
+				// El formato del parametro puede ser un objeto, que hay que procesar, o un string directo de CamlQuery
 				if (typeof queryInfo === 'string') {
 					camlQueryXml = queryInfo;
 				} else if (typeof queryInfo === 'object') {
