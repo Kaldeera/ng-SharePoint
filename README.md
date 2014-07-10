@@ -1,7 +1,7 @@
 ng-SharePoint
 =============
 
-AngularJS ng-SharePoint wraps SharePoint JSOM into Angular world
+AngularJS ng-SharePoint wraps SharePoint REST API/JSOM into Angular world
 
 A set of services, directives and utilities that allows you to access and interact with SharePoint sites, lists and items.
 

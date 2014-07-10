@@ -1,23 +1,45 @@
 /*
-	kld-sharepoint
-	Pau Codina for Kaldeera
-	Copyright (c) 2014 Pau Codina (pau.codina@kaldeera.com)
-	Licensed under the MIT License
-
+	SharePoint - provider
 
 	Main SharePoint provider.
-		SPList
-		SPUser
-		SPGroup (comming soon)
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
 */
 
 
-angular.module('kld.ngSharePoint')
+
+///////////////////////////////////////
+//	SharePoint
+///////////////////////////////////////
+
+angular.module('ngSharePoint')
 .provider('SharePoint', function() {
 
 	'use strict';
 
-	var SharePoint = function($cacheFactory, SPUtils, $q) {
+	var SharePoint = function($cacheFactory, $q, SPUtils, SPWeb) {
+
+
+
+		this.getCurrentWeb = function() {
+			return this.getWeb();
+		};
+
+		this.getWeb = function(url) {
+			var def = $q.defer();
+
+			SPUtils.SharePointReady().then(function() {
+				def.resolve(new SPWeb(url));
+			});
+
+			return def.promise;
+		};
+
+
 
 		/*
 		---------------------------------------------------------------------------------------
@@ -30,6 +52,7 @@ angular.module('kld.ngSharePoint')
 				* deleteItem(itemId)
 		---------------------------------------------------------------------------------------
 		*/
+
 		this.SPList = function(listName, webId, webUrl) {
 
 			if (listName === undefined) {
@@ -43,7 +66,13 @@ angular.module('kld.ngSharePoint')
 				webId: webId,
 
 				// inernal methods
-				initContext: function() {
+				initContext: function(retrieveSchema) {
+
+					// by default list schema is retrieved
+					if (retrieveSchema === undefined) {
+						retrieveSchema = true;
+					}
+
 					var def = $q.defer();
 
 					// Si ya esta inicializado ... no hacemos nada
@@ -79,7 +108,7 @@ angular.module('kld.ngSharePoint')
 					if (guidRegExp.test(this.ListName)) {
 						this.List = web.get_lists().getById(this.ListName);
 					} else {
-						if (this.ListName == 'userinfolist') {
+						if (this.ListName.toLowerCase() == 'userinfolist') {
 							this.List = web.get_siteUserInfoList();
 						} else {
 							this.List = web.get_lists().getByTitle(this.ListName);
@@ -92,7 +121,7 @@ angular.module('kld.ngSharePoint')
 					}
 
 					this.Schema = cache.get(web + '.' + listName);
-					if (this.Schema === undefined) {
+					if (this.Schema === undefined && retrieveSchema) {
 						this.ListFields = this.List.get_fields();
 						this.Context.load(this.ListFields);
 
@@ -421,7 +450,7 @@ angular.module('kld.ngSharePoint')
 		};
 	};
 	
-	this.$get = function($cacheFactory, SPUtils, $q) {
-		return new SharePoint($cacheFactory, SPUtils, $q);
+	this.$get = function($cacheFactory, $q, SPUtils, SPWeb) {
+		return new SharePoint($cacheFactory, $q, SPUtils, SPWeb);
 	};
 });

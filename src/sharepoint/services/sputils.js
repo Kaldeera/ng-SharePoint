@@ -1,15 +1,27 @@
 /*
-	kld-sputils
-	Pau Codina for Kaldeera
-	Copyright (c) 2014 Pau Codina (pau.codina@kaldeera.com)
-	Licensed under the MIT License
+	SPUtils - factory
 
-	SharePoint utility functions
+	SharePoint utility functions.
+
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
 */
 
-angular.module('kld.ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', function ($q, ODataParserProvider) {
+
+
+///////////////////////////////////////
+//	SPUtils
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', function ($q, ODataParserProvider) {
 
 	'use strict';
+
+
+	var isSharePointReady = false;
 
 	return {
 		inDesignMode: function () {
@@ -22,9 +34,29 @@ angular.module('kld.ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvide
 
 		SharePointReady: function () {
 			var deferred = $q.defer();
-			SP.SOD.executeOrDelayUntilScriptLoaded(function () {
+
+			if (isSharePointReady) {
+
 				deferred.resolve();
-			}, "sp.js");
+
+			} else {
+
+				// Load sp.js
+				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
+
+					// Load SP.RequestExecutor.js
+					SP.SOD.registerSod('SP.RequestExecutor.js', SP.Utilities.Utility.getLayoutsPageUrl('SP.RequestExecutor.js'));
+
+					EnsureScriptFunc('SP.RequestExecutor.js', 'SP.RequestExecutor', function() {
+
+						isSharePointReady = true;
+						deferred.resolve();
+
+					});
+
+				}, "sp.js");
+			}
+
 			return deferred.promise;
 		},
 
@@ -66,6 +98,39 @@ angular.module('kld.ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvide
 				}
 			}
 			return camlQuery;
+		},
+
+		parseQuery: function(query) {
+
+			var strQuery = '';
+
+			angular.forEach(query, function(value, key) {
+				strQuery += (strQuery !== '' ? '&' : '?') + key + '=' + value;
+			});
+
+			return strQuery;
+		},
+
+		parseError: function(errorData) {
+
+			var errorObject = {
+				code: errorData.errorCode,
+				message: errorData.errorMessage
+			};
+
+			try {
+
+				var body = angular.fromJson(data.body);
+
+				errorObject.code = body.error.code;
+				errorObject.message = body.error.message.value;
+
+			} catch(ex) {}
+
+			console.error(errorObject.message);
+			return errorObject;
 		}
+
+
 	};
 }]);
