@@ -1,7 +1,7 @@
 /*
 	misc - js functions
 
-	Miscellaneous JavaScript utility functions.
+	Miscellaneous JavaScript utility functions..
 
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
