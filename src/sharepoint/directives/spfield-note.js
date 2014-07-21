@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldNote', 
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+	['$compile', '$templateCache', '$http',
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	function($compile, $templateCache, $http) {
 
 		return {
 
@@ -29,16 +29,17 @@ angular.module('ngSharePoint').directive('spfieldNote',
 				mode: '@',
 				value: '=ngModel'
 			},
-			//templateUrl: 'templates/form-templates/spfield-note.html',
 			template: '<div></div>',
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				//console.log('SPFieldNote.postLink (' + $attrs.name + ')');
-
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
-				// Watch for form mode changes
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
 				$scope.$watch(function() {
 
 					return $scope.mode || controllers[0].getFormMode();
@@ -52,6 +53,9 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
 
 
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
 				function renderField(mode) {
 
 					$http.get('templates/form-templates/spfield-note-' + mode + '.html', { cache: $templateCache }).success(function(html) {

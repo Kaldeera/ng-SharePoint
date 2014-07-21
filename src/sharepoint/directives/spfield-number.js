@@ -1,5 +1,5 @@
 /*
-	SPFieldText - directive
+	SPFieldNumber - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -11,10 +11,10 @@
 
 
 ///////////////////////////////////////
-//	SPFieldText
+//	SPFieldNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldText', 
+angular.module('ngSharePoint').directive('spfieldNumber', 
 
 	['$compile', '$templateCache', '$http',
 
@@ -58,7 +58,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 				//
 				function renderField(mode) {
 
-					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield-number-' + mode + '.html', { cache: $templateCache }).success(function(html) {
 						var newElement = $compile(html)($scope);
 						$element.replaceWith(newElement);
 						$element = newElement;

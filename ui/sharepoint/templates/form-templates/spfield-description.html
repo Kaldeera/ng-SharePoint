@@ -1,1 +1,1 @@
-<span class="ms-metadata" ng-bind="schema.Description" ng-show="currentMode == 'edit'"></span>
+<span class="ms-metadata" ng-bind-html="schema.Description | newlines" ng-if="currentMode == 'edit'"></span>

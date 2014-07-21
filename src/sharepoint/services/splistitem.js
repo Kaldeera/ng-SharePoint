@@ -31,6 +31,8 @@ angular.module('ngSharePoint').factory('SPListItem',
 		//
 		var SPListItemObj = function(list, data) {
 
+			var self = this;
+
 			if (list === void 0) {
 				throw '@list parameter not specified in SPListItem constructor.';
 			}
@@ -44,6 +46,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 				if (typeof data === 'object' && data.concat === void 0) { //-> is object && not is array
 
 					angular.extend(this, data);
+					this.clean();
 
 				} else {
 
@@ -62,6 +65,52 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 
+		// ****************************************************************************
+		// isNew
+		//
+		// Returns a boolean value indicating if the item is anew item.
+		//
+		// @returns: {Boolean} True if the item is a new item. Otherwise false.
+		//
+		SPListItemObj.prototype.isNew = function() {
+			return this.Id === void 0;
+		};
+
+
+
+		// ****************************************************************************
+		// clean
+		//
+		// Cleans undesirable item properties obtained form SharePoint.
+		//
+		// @returns: {SPListItem} The item itself to allow chaining calls.
+		//
+		SPListItemObj.prototype.clean = function() {
+
+			var self = this;
+
+			angular.forEach(this, function(value, key) {
+
+				if (typeof value === 'object' && value !== null) {
+					if (value.__deferred) {
+						delete self[key];
+					}
+				}
+
+			});
+
+			return this;
+		};
+
+
+
+		// ****************************************************************************		
+		// getAPIUrl
+		//
+		// Gets the SharePoint 2013 REST API url for the item.
+		//
+		// @returns: {String} The item API url.
+		//
 		SPListItemObj.prototype.getAPIUrl = function() {
 
 			var apiUrl = this.list.apiUrl + '/Items';
@@ -144,7 +193,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 			return def.promise;
 
-		};
+		}; // getProperties
 
 
 
@@ -238,6 +287,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 				}
 			});
 
+
 			return def.promise;
 
 		};
@@ -260,35 +310,50 @@ angular.module('ngSharePoint').factory('SPListItem',
 			self.list.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
 				var executor = new SP.RequestExecutor(self.list.web.url);
+
+
+				// Set the contents for the REST API call.
+				// ----------------------------------------------------------------------------
 				var body = {
 					__metadata: {
 						type: listItemEntityTypeFullName
 					}
 				};
 
-
 				var saveObj = angular.extend({}, self);
 				delete saveObj.list;
 				delete saveObj.apiUrl;
 
-				angular.forEach(saveObj, function(value, key) {
-
-					if (typeof value === 'object') {
-						delete saveObj[key];
+				angular.forEach(self.list.Fields, function(field) {
+					
+					if (field.TypeAsString === 'Computed' || field.ReadOnlyField) {
+						delete saveObj[field.InternalName];
 					}
+
 				});
 
-				console.log(saveObj);
-				
 				angular.extend(body, saveObj);
+				console.log(saveObj, angular.toJson(saveObj));
 
+
+
+				// Set the headers for the REST API call.
+				// ----------------------------------------------------------------------------
 				var headers = {
 					"Accept": "application/json; odata=verbose",
-					"content-type": "application/json;odata=verbose",
-					"X-RequestDigest": $("#__REQUESTDIGEST").val()
+					"content-type": "application/json;odata=verbose"
 				};
 
-				if (self.Id !== void 0) {
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+				// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+				// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+				if (requestDigest !== null) {
+					headers['X-RequestDigest'] = requestDigest.value;
+				}
+
+				// If the item has 'Id', means that is not a new item, so set the call headers for make an update.
+				if (!self.isNew()) {
 
 					// UPDATE
 					angular.extend(headers, {
@@ -298,6 +363,9 @@ angular.module('ngSharePoint').factory('SPListItem',
 					});
 				}
 
+
+				// Make the call.
+				// ----------------------------------------------------------------------------
 				executor.executeAsync({
 
 					url: self.getAPIUrl(),
@@ -331,33 +399,48 @@ angular.module('ngSharePoint').factory('SPListItem',
 
             return def.promise;
 
-		}; // updateItem
+		}; // save
 
 
 
 		// ****************************************************************************		
-		// delete
+		// remove
 		//
-		// Deletes this item in the list. 
+		// Removes this item from the list. 
 		//
 		// @returns: Promise with the result of the REST query.
 		//
-		SPListItemObj.prototype.delete = function() {
+		SPListItemObj.prototype.remove = function() {
 
 			var self = this;
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.list.web.url);
 
+
+			// Set the headers for the REST API call.
+			// ----------------------------------------------------------------------------
+			var headers = {
+				"Accept": "application/json; odata=verbose",
+				"X-HTTP-Method": "DELETE",
+				"IF-MATCH": "*"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+			// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+
+			// Make the call.
+			// ----------------------------------------------------------------------------
 			executor.executeAsync({
 
 				url: self.getAPIUrl(),
 				method: 'POST',
-				headers: { 
-					"Accept": "application/json; odata=verbose",
-					"X-RequestDigest": $("#__REQUESTDIGEST").val(),
-					"X-HTTP-Method": "DELETE",
-					"IF-MATCH": "*"
-				},
+				headers: headers,
 
 				success: function(data) {
 
@@ -381,7 +464,8 @@ angular.module('ngSharePoint').factory('SPListItem',
 
             return def.promise;
 
-		}; // deleteItem
+		}; // remove
+
 
 		// Returns the SPListItemObj class
 		return SPListItemObj;

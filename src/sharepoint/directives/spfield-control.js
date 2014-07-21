@@ -16,27 +16,26 @@
 
 angular.module('ngSharePoint').directive('spfieldControl', 
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+	['$compile', '$templateCache', '$http',
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	function($compile, $templateCache, $http) {
 
 		return {
 
 			restrict: 'EA',
 			require: '^spform',
 			replace: true,
-			//template: '<div class="ms-formbody"></div>',
 			templateUrl: 'templates/form-templates/spfield-control.html',
 
 
 			link: function($scope, $element, $attrs, spformController) {
+				
+				spformController.initField($attrs.name);
 
-				//console.log('SPFieldControl.postLink (' + $attrs.name + ')');
-
-				var fieldDefinition = spformController.getFieldSchema($attrs.name);
-				var fieldType = fieldDefinition.TypeAsString;
+				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
+				var fieldType = $scope.fieldSchema.TypeAsString;
 				var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-				var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + $attrs.name + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
+				var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' ? 'Id' : '') + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
 
 				$element.append(fieldControlHTML);
 				$compile($element)($scope);

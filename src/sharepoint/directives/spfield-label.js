@@ -14,42 +14,40 @@
 //	SPFieldLabel
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldLabel', 
+angular.module('ngSharePoint')
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+.directive('spfieldLabel', function() {
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	return {
 
-		return {
-
-			restrict: 'EA',
-			require: '^spform',
-			replace: true,
-			templateUrl: 'templates/form-templates/spfield-label.html',
-			scope: {
-				mode: '@'
-			},
+		restrict: 'EA',
+		require: '^spform',
+		replace: true,
+		templateUrl: 'templates/form-templates/spfield-label.html',
+		scope: {
+			mode: '@'
+		},
 
 
-			link: function($scope, $element, $attrs, spformController) {
+		link: function($scope, $element, $attrs, spformController) {
 
-				//console.log('SPFieldLabel.postLink (' + $attrs.name + ')');
-
-				$scope.schema = spformController.getFieldSchema($attrs.name);
-				//$scope.label = schema.Title;
-				//$scope.required = schema.Required;
+			$scope.schema = spformController.getFieldSchema($attrs.name);
 
 
-				$scope.$watch(function() {
 
-					return $scope.mode || spformController.getFormMode();
+			// ****************************************************************************
+			// Watch for form mode changes.
+			//
+			$scope.$watch(function() {
 
-				}, function(newValue) {
+				return $scope.mode || spformController.getFormMode();
 
-					$scope.currentMode = newValue;
+			}, function(newValue) {
 
-				});
-			}
-		};
-	}
-]);
+				$scope.currentMode = newValue;
+
+			});
+		}
+	};
+	
+});

@@ -1,5 +1,5 @@
 /*
-	SPFieldText - directive
+	SPFieldBoolean - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -11,10 +11,10 @@
 
 
 ///////////////////////////////////////
-//	SPFieldText
+//	SPFieldBoolean
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldText', 
+angular.module('ngSharePoint').directive('spfieldBoolean', 
 
 	['$compile', '$templateCache', '$http',
 
@@ -34,6 +34,16 @@ angular.module('ngSharePoint').directive('spfieldText',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+
+
+				// ****************************************************************************
+				// Watch for model value changes to parse the display value.
+				//
+				$scope.$watch('value', function(newValue) {
+
+					$scope.displayValue = newValue ? Strings.STS.L_SPYes : Strings.STS.L_SPNo;
+				});
 
 
 
@@ -58,14 +68,13 @@ angular.module('ngSharePoint').directive('spfieldText',
 				//
 				function renderField(mode) {
 
-					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield-boolean-' + mode + '.html', { cache: $templateCache }).success(function(html) {
 						var newElement = $compile(html)($scope);
 						$element.replaceWith(newElement);
 						$element = newElement;
 					});
 
 				}
-
 			}
 
 		};

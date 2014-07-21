@@ -24,6 +24,9 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 	var isSharePointReady = false;
 
 	return {
+
+
+
 		inDesignMode: function () {
 			var publishingEdit = window.g_disableCheckoutInEditMode;
 			var form = document.forms[MSOWebPartPageFormName];
@@ -32,8 +35,12 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 			return !!(publishingEdit || (input && input.value));
 		},
 
+
+
 		SharePointReady: function () {
+
 			var deferred = $q.defer();
+			var self = this;
 
 			if (isSharePointReady) {
 
@@ -44,21 +51,43 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 				// Load sp.js
 				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
 
-					// Load SP.RequestExecutor.js
-					SP.SOD.registerSod('SP.RequestExecutor.js', SP.Utilities.Utility.getLayoutsPageUrl('SP.RequestExecutor.js'));
+					var loadScriptPromises = [];
 
-					EnsureScriptFunc('SP.RequestExecutor.js', 'SP.RequestExecutor', function() {
+					// Loads additional needed scripts
+					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
+					loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
+					loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
+
+					$q.all(loadScriptPromises).then(function() {
 
 						isSharePointReady = true;
 						deferred.resolve();
 
 					});
 
-				}, "sp.js");
+
+				}, 'sp.js');
 			}
 
 			return deferred.promise;
 		},
+
+
+
+		loadScript: function(scriptFilename, functionName) {
+
+			var def = $q.defer();
+
+			SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
+
+			EnsureScriptFunc(scriptFilename, functionName, function() {
+				def.resolve();
+			});
+
+			return def.promise;
+		},
+
+
 
 		generateCamlQuery: function (queryInfo, listSchema) {
 			/*
@@ -100,6 +129,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 			return camlQuery;
 		},
 
+
+
 		parseQuery: function(query) {
 
 			var strQuery = '';
@@ -110,6 +141,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 
 			return strQuery;
 		},
+
+
 
 		parseError: function(errorData) {
 
@@ -129,8 +162,92 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 
 			console.error(errorObject.message);
 			return errorObject;
+		},
+
+
+
+		getRegionalSettings: function() {
+
+			var self = this;
+			var deferred = $q.defer();
+
+			this.SharePointReady().then(function() {
+				var ctx = new SP.ClientContext.get_current();
+				var web = ctx.get_web();
+				var regionalSettings = web.get_regionalSettings();
+				var timeZone = regionalSettings.get_timeZone();
+
+				ctx.load(regionalSettings);
+				ctx.load(timeZone);
+
+				ctx.executeQueryAsync(function() {
+
+					regionalSettings.TimeZone = timeZone;
+					deferred.resolve(regionalSettings);
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+			});
+
+			return deferred.promise;
+		},
+
+
+		getCurrentUser: function() {
+
+			var self = this;
+			var deferred = $q.defer();
+
+			this.SharePointReady().then(function() {
+				var ctx = new SP.ClientContext.get_current();
+				var web = ctx.get_web();
+				var user = web.get_currentUser();
+
+				ctx.load(user);
+
+				ctx.executeQueryAsync(function() {
+
+					deferred.resolve(user);
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+			});
+
+			return deferred.promise;
+		},
+
+
+		getUserRegionalSettings: function(loginName) {
+
+			var self = this;
+			var deferred = $q.defer();
+
+			this.SharePointReady().then(function() {
+				var ctx = new SP.ClientContext.get_current();
+				var peopleManager = new SP.UserProfiles.PeopleManager(ctx);
+				//var userRegionalSettings = peopleManager.getUserProfilePropertyFor(loginName, 'RegionalSettings');
+				//var userProperties = peopleManager.getPropertiesFor(loginName);
+				var userProperties = peopleManager.getMyProperties();
+
+				ctx.load(userProperties);
+
+				ctx.executeQueryAsync(function() {
+
+					deferred.resolve(userProperties);
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+			});
+
+			return deferred.promise;			
 		}
 
-
 	};
+
 }]);

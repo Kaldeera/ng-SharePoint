@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPList', 
 
-	['$q', 'SPCache', 'SPUtils', 'SPListItem', 
+	['$q', 'SPCache', 'SPListItem', 
 
-	function($q, SPCache, SPUtils, SPListItem) {
+	function($q, SPCache, SPListItem) {
 
 		'use strict';
 
@@ -64,9 +64,10 @@ angular.module('ngSharePoint').factory('SPList',
 			}
 
 
-			// Inicializa la url de la API REST de SharePoint
+			// Initializes the SharePoint API REST url for the list.
 			this.apiUrl = web.apiUrl + this.apiUrl;
 
+			// Gets the list fields (Schema) from the cache if exists.
 			this.Fields = SPCache.getCacheValue('SPListFieldsCache', this.apiUrl);
 
 		};
@@ -118,10 +119,13 @@ angular.module('ngSharePoint').factory('SPList',
 			var self = this;
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.web.url);
+			var query = {
+				$expand: 'Views,Forms'
+			};
 
 			executor.executeAsync({
 
-				url: self.apiUrl,
+				url: self.apiUrl + utils.parseQuery(query),
 				method: 'GET', 
 				headers: { 
 					"Accept": "application/json; odata=verbose"
@@ -299,11 +303,14 @@ angular.module('ngSharePoint').factory('SPList',
 					});
 					*/
 
+
+
 					// Código por defecto que retorna la colección de items que retorna la llamada REST.
 					/*
 					var d = utils.parseSPResponse(data);
 					def.resolve(d);
 					*/
+
 
 
 					// Código que retorna una colección de objectos SPListItem ya inicializados.
@@ -406,6 +413,10 @@ angular.module('ngSharePoint').factory('SPList',
 			self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
 				var executor = new SP.RequestExecutor(self.web.url);
+
+
+				// Set the contents for the REST API call.
+				// ----------------------------------------------------------------------------
 				var body = {
 					__metadata: {
 						type: listItemEntityTypeFullName
@@ -414,16 +425,31 @@ angular.module('ngSharePoint').factory('SPList',
 
 				angular.extend(body, properties);
 
+
+				// Set the headers for the REST API call.
+				// ----------------------------------------------------------------------------
+				var headers = {
+					"Accept": "application/json; odata=verbose",
+					"content-type": "application/json;odata=verbose"
+				};
+
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+				// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+				// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+				if (requestDigest !== null) {
+					headers['X-RequestDigest'] = requestDigest.value;
+				}
+
+
+				// Make the call.
+				// ----------------------------------------------------------------------------
 				executor.executeAsync({
 
 					url: self.apiUrl + '/items',
 					method: 'POST',
 					body: angular.toJson(body),
-					headers: { 
-						"Accept": "application/json; odata=verbose",
-						"content-type": "application/json;odata=verbose",
-						"X-RequestDigest": $("#__REQUESTDIGEST").val()
-					}, 
+					headers: headers, 
 
 					success: function(data) {
 
@@ -471,6 +497,10 @@ angular.module('ngSharePoint').factory('SPList',
 			self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
 				var executor = new SP.RequestExecutor(self.web.url);
+
+
+				// Set the contents for the REST API call.
+				// ----------------------------------------------------------------------------
 				var body = {
 					__metadata: {
 						type: listItemEntityTypeFullName
@@ -479,20 +509,32 @@ angular.module('ngSharePoint').factory('SPList',
 
 				angular.extend(body, properties);
 
+
+				// Set the headers for the REST API call.
+				// ----------------------------------------------------------------------------
+				var headers = {
+					"Accept": "application/json; odata=verbose",
+					"content-type": "application/json;odata=verbose",
+					"X-HTTP-Method": "MERGE",
+					"IF-MATCH": "*" // Overwrite any changes in the item. 
+									// Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
+				};
+
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+
+				if (requestDigest !== null) {
+					headers['X-RequestDigest'] = requestDigest.value;
+				}
+
+
+				// Make the call.
+				// ----------------------------------------------------------------------------
 				executor.executeAsync({
 
 					url: self.apiUrl + '/items(' + id + ')',
 					method: 'POST',
 					body: angular.toJson(body),
-					headers: { 
-						"Accept": "application/json; odata=verbose",
-						"content-type": "application/json;odata=verbose",
-						"X-RequestDigest": $("#__REQUESTDIGEST").val(), // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-																		// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-    					"X-HTTP-Method": "MERGE",
-						"IF-MATCH": "*" // Overwrite any changes in the item. 
-										// Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
-					},
+					headers: headers,
 
 					success: function(data) {
 
@@ -525,7 +567,7 @@ angular.module('ngSharePoint').factory('SPList',
 		// ****************************************************************************		
 		// deleteItem
 		//
-		// Deletes an item in the list. 
+		// Removes an item from the list.
 		//
 		// @id: {counter} The ID of the item to delete.
 		// @returns: Promise with the result of the REST query.
@@ -536,16 +578,29 @@ angular.module('ngSharePoint').factory('SPList',
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.web.url);
 
+
+			// Set the headers for the REST API call.
+			// ----------------------------------------------------------------------------
+			var headers = {
+				"Accept": "application/json; odata=verbose",
+				"X-HTTP-Method": "DELETE",
+				"IF-MATCH": "*"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+
+			// Make the call.
+			// ----------------------------------------------------------------------------				
 			executor.executeAsync({
 
 				url: self.apiUrl + '/items(' + id + ')',
 				method: 'POST',
-				headers: { 
-					"Accept": "application/json; odata=verbose",
-					"X-RequestDigest": $("#__REQUESTDIGEST").val(),
-					"X-HTTP-Method": "DELETE",
-					"IF-MATCH": "*"
-				},
+				headers: headers,
 
 				success: function(data) {
 

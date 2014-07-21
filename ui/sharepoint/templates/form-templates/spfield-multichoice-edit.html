@@ -3,7 +3,7 @@
 		<tr ng-repeat="choice in schema.Choices.results">
 			<td>
 				<span class="ms-RadioText" title="{{choice}}">
-					<input type="checkbox" id="{{schema.Title}}_{{$index}}" ng-click="toggleCheckbox(choice, $index, $event)" ng-checked="choices.indexOf(choice) != -1" />
+					<input type="checkbox" id="{{schema.Title}}_{{$index}}" ng-click="toggleCheckbox(choice)" ng-checked="choices.indexOf(choice) != -1" />
 					<label for="{{schema.Title}}_{{$index}}">{{choice}}</label>
 				</span>
 			</td>

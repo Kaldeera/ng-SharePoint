@@ -64,9 +64,13 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 				var executor = new SP.RequestExecutor(self.url);
 
+				var query = {
+					$expand: 'RegionalSettings/TimeZone'
+				};
+
 				executor.executeAsync({
 
-					url: self.apiUrl,
+					url: self.apiUrl + utils.parseQuery(query),
 					method: 'GET', 
 					headers: { 
 						"Accept": "application/json; odata=verbose"

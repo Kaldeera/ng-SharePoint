@@ -1,8 +1,10 @@
-<span dir="ltr">
-	<textarea ng-model="value" ng-required="{{schema.Required}}" rows="{{schema.NumberOfLines}}" cols="20" title="{{schema.Title}}" class="ms-long"></textarea>
-</span>
-<br/>
-<span class="ms-formdescription" ng-if="schema.RichText" ng-show="currentMode == 'edit'">
-	<a href="javascript:HelpWindowKey('nsrichtext')">Click for help about adding basic HTML formatting.</a>
-</span>
-<br/>
+<div>
+	<span dir="ltr">
+		<textarea ng-model="value" ng-required="{{schema.Required}}" rows="{{schema.NumberOfLines}}" cols="20" title="{{schema.Title}}" class="ms-long"></textarea>
+	</span>
+	<br/>
+	<span class="ms-formdescription" ng-if="schema.RichText" ng-show="currentMode == 'edit'">
+		<a href="javascript:HelpWindowKey('nsrichtext')">Click for help about adding basic HTML formatting.</a>
+	</span>
+	<br ng-if="schema.RichText" />
+</div>

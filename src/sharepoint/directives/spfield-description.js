@@ -14,39 +14,38 @@
 //	SPFieldDescription
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldDescription', 
+angular.module('ngSharePoint')
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+.directive('spfieldDescription', function() {
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	return {
 
-		return {
-
-			restrict: 'EA',
-			require: '^spform',
-			replace: true,
-			templateUrl: 'templates/form-templates/spfield-description.html',
-			scope: true,
+		restrict: 'EA',
+		require: '^spform',
+		replace: true,
+		templateUrl: 'templates/form-templates/spfield-description.html',
+		scope: true,
 
 
-			link: function($scope, $element, $attrs, spformController) {
+		link: function($scope, $element, $attrs, spformController) {
 
-				//console.log('SPFieldDescription.postLink (' + $attrs.name + ')');
-
-				$scope.schema = spformController.getFieldSchema($attrs.name);
-				//$scope.description = schema.Description;
+			$scope.schema = spformController.getFieldSchema($attrs.name);
 
 
-				$scope.$watch(function() {
 
-					return $scope.mode || spformController.getFormMode();
+			// ****************************************************************************
+			// Watch for form mode changes.
+			//
+			$scope.$watch(function() {
 
-				}, function(newValue) {
+				return $scope.mode || spformController.getFormMode();
 
-					$scope.currentMode = newValue;
+			}, function(newValue) {
 
-				});
-			}
-		};
-	}
-]);
+				$scope.currentMode = newValue;
+
+			});
+		}
+	};
+	
+});
