@@ -29,11 +29,16 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<img src="/_layouts/15/images/loadingcirclests16.gif" alt="" />',
+			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
 
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+				$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
+				$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
+				$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
+				$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
 
 
 
@@ -42,23 +47,32 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					// Adjust the model if no value is provided
+					if ($scope.value === null) {
+						$scope.value = { results: [] };
+					}
+					
+					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
 
-				}, function(newValue) {
+				}, function(newValue, oldValue) {
 
-					$scope.currentMode = newValue;
+					$scope.currentMode = newValue.mode;
+
+					if (newValue.value.results !== oldValue.value.results) {
+						$scope.selectedLookupItems = void 0;
+					}
 
 					// Show loading animation.
-					setElementHTML('<img src="/_layouts/15/images/loadingcirclests16.gif" alt="" />');
+					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData(newValue).then(function(){
+					getLookupData($scope.currentMode).then(function(){
 
-						renderField(newValue);
+						renderField($scope.currentMode);
 
 					});
 
-				});
+				}, true);
 
 
 
@@ -121,9 +135,13 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 								$scope.lookupList = list;
 
-								list.getProperties().then(function() {
+								list.getProperties({ $expand: 'Forms' }).then(function() {
 
-									def.resolve($scope.lookupList);
+									list.getFields().then(function() {
+
+										def.resolve($scope.lookupList);
+
+									});
 
 								});
 
@@ -191,6 +209,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						// Initialize the selected items array
 						$scope.selectedLookupItems = [];
 
+						// Gets the lookup items and populate the selected items array
 						getLookupItems().then(function(items) {
 
 							angular.forEach($scope.value.results, function(selectedItem) {
@@ -199,8 +218,23 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 								if (lookupItem !== void 0) {
 
+									var displayValue = lookupItem[$scope.schema.LookupField];
+									var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
+
+									if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
+										var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+										var date = new Date(displayValue);
+										displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+									}
+
+									// When the field is a Computed field, shows its title.
+									// TODO: Resolve computed fields.
+									if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
+										displayValue = lookupItem.Title;
+									}
+
 									$scope.selectedLookupItems.push({
-										Title: lookupItem.Title,
+										Title: displayValue,
 										url: lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + selectedItem + '&Source=' + encodeURIComponent(window.location)
 									});
 
@@ -208,7 +242,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 							});
 
-							def.resolve();
+							def.resolve($scope.selectedLookupItems);
 
 						});
 
@@ -224,14 +258,122 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				// Gets the lookup data for edit mode.
 				//
 				function getLookupDataForEdit() {
-					
+
 					var def = $q.defer();
 
-					def.resolve();
+					getLookupItems().then(function(candidateItems) {
 
+						$scope.candidateItems = [];
+						$scope.selectedCandidateItems = [];
+						$scope.resultItems = [];
+						$scope.selectedResultItems = [];
+
+						// Populate selected and candicate items for data-binding
+						angular.forEach(candidateItems, function(item) {
+
+							var displayValue = item[$scope.schema.LookupField];
+							var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
+
+							if (fieldSchema.TypeAsString === 'DateTime') {
+								var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+								var date = new Date(displayValue);
+								displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+							}
+
+							var bindingItem = {
+								id: item.Id,
+								name: displayValue,
+								title: displayValue
+							};
+
+							if ($scope.value.results.indexOf(item.Id) != -1) {
+
+								$scope.resultItems.push(bindingItem);
+
+							} else {
+
+								$scope.candidateItems.push(bindingItem);
+
+							}
+
+						});
+
+						def.resolve();
+
+					});
+
+					
 					return def.promise;
 
 				}
+
+
+
+				function updateModel() {
+
+					$scope.value.results = [];
+
+					angular.forEach($scope.resultItems, function(item) {
+						$scope.value.results.push(item.id);
+					});
+				}
+
+
+
+				$scope.addItems = function() {
+
+					// Adds the selected candidate items to the results array
+					$scope.resultItems = $scope.resultItems.concat($scope.selectedCandidateItems);
+
+					// Removes the selected candidate items from the candidates array
+					$scope.candidateItems = $filter('filter')($scope.candidateItems, function(item) {
+						var isSelected = false;
+
+						for (var i = 0; i < $scope.selectedCandidateItems.length; i++) {
+							if (item.id == $scope.selectedCandidateItems[i].id) {
+								isSelected = true;
+								break;
+							}
+						}
+
+						return !isSelected;
+					});
+
+					// Initialize the selected cadidates array
+					$scope.selectedCandidateItems = [];
+
+					// Finaly update the model
+					updateModel();
+
+				};
+
+
+
+				$scope.removeItems = function() {
+
+					// Adds the selected results items to the cadidates array
+					$scope.candidateItems = $scope.candidateItems.concat($scope.selectedResultItems);
+
+					// Removes the selected results items from the results array
+					$scope.resultItems = $filter('filter')($scope.resultItems, function(item) {
+						var isSelected = false;
+
+						for (var i = 0; i < $scope.selectedResultItems.length; i++) {
+							if (item.id == $scope.selectedResultItems[i].id) {
+								isSelected = true;
+								break;
+							}
+						}
+
+						return !isSelected;
+					});
+
+					// Initialize the selected results array
+					$scope.selectedResultItems = [];
+
+					// Finaly update the model
+					updateModel();
+				};
 
 			}
 

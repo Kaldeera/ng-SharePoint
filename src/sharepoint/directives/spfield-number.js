@@ -1,5 +1,6 @@
 /*
 	SPFieldNumber - directive
+	SPNumber - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -16,9 +17,9 @@
 
 angular.module('ngSharePoint').directive('spfieldNumber', 
 
-	['$compile', '$templateCache', '$http',
+	['$compile', '$templateCache', '$http', 'SPUtils',
 
-	function($compile, $templateCache, $http) {
+	function($compile, $templateCache, $http, SPUtils) {
 
 		return {
 
@@ -33,7 +34,16 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+				var schema = controllers[0].getFieldSchema($attrs.name);
+				var xml = SPUtils.parseXmlString(schema.SchemaXml);
+				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
+				var decimals = xml.documentElement.getAttribute('Decimals') || '0';
+				schema.Percentage = percentage.toLowerCase() === 'true';
+				schema.Decimals = parseInt(decimals);
+
+
+				$scope.schema = schema;
+				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
 
 
@@ -73,3 +83,42 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 	}
 
 ]);
+
+
+
+
+
+///////////////////////////////////////
+//	SPNumber
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spNumber', function() {
+
+	return {
+
+		restrict: 'A',
+		require: 'ngModel',
+
+		link: function($scope, $element, $attrs, ngModel) {
+
+			ngModel.$formatters.push(function(value) {
+				if ($scope.schema.Percentage) {
+					return (value * 100).toFixed($scope.schema.Decimals);
+				} else {
+					return value;
+				}
+			});
+
+
+			ngModel.$parsers.push(function(value) {
+				if ($scope.schema.Percentage) {
+					return (value / 100).toFixed($scope.schema.Decimals);
+				} else {
+					return value;
+				}
+			});
+		}
+
+	};
+
+});

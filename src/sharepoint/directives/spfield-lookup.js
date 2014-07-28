@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldLookup', 
 
-	['$compile', '$templateCache', '$http', '$q', 'SharePoint',
+	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
 
-	function($compile, $templateCache, $http, $q, SharePoint) {
+	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
 
 		return {
 
@@ -29,7 +29,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<img src="/_layouts/15/images/loadingcirclests16.gif" alt="" />',
+			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
 
 			link: function($scope, $element, $attrs, controllers) {
 
@@ -42,23 +42,27 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
 
-				}, function(newValue) {
+				}, function(newValue, oldValue) {
 
-					$scope.currentMode = newValue;
+					$scope.currentMode = newValue.mode;
+
+					if (newValue.value !== oldValue.value) {
+						$scope.lookupItem = void 0;
+					}
 
 					// Show loading animation.
-					setElementHTML('<img src="/_layouts/15/images/loadingcirclests16.gif" alt="" />');
+					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData(newValue).then(function(){
+					getLookupData($scope.currentMode).then(function(){
 
-						renderField(newValue);
+						renderField($scope.currentMode);
 
 					});
 
-				});
+				}, true);
 
 
 
@@ -70,6 +74,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					var newElement = $compile(html)($scope);
 					$element.replaceWith(newElement);
 					$element = newElement;
+
 				}
 
 
@@ -111,7 +116,6 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				//
 				function getLookupList() {
 
-
 					var def = $q.defer();
 
 					if ($scope.lookupList === void 0) {
@@ -122,9 +126,13 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								$scope.lookupList = list;
 
-								list.getProperties().then(function() {
+								list.getProperties({ $expand: 'Forms' }).then(function() {
 
-									def.resolve($scope.lookupList);
+									list.getFields().then(function() {
+
+										def.resolve($scope.lookupList);
+
+									});
 
 								});
 
@@ -134,6 +142,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					} else {
 
+						// Returns cached list
 						def.resolve($scope.lookupList);
 					}
 
@@ -152,7 +161,8 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupItem !== void 0) {
 
-						def.resolve();
+						// Returns cached selected item
+						def.resolve($scope.lookupItem);
 
 					} else {
 
@@ -166,18 +176,39 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									url: ''
 								};
 
-								def.resolve();
+								def.resolve($scope.lookupItem);
 
 							} else {
 
 								list.getItemById($scope.value).then(function(item) {
 
+									var displayValue = item[$scope.schema.LookupField];
+									var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
+
+									if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
+										var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+										var date = new Date(displayValue);
+										displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+									}
+
+									if (fieldSchema.TypeAsString === 'Number') {
+										if (fieldSchema.Percentage) {
+											displayValue += '%';
+										}
+									}
+
+									// When the field is a Computed field, shows its title.
+									// TODO: Resolve computed fields.
+									if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
+										displayValue = item.Title;
+									}
+
 									$scope.lookupItem = {
-										Title: item.Title,
+										Title: displayValue,
 										url: item.list.Forms.results[0].ServerRelativeUrl + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location)
 									};
 
-									def.resolve();
+									def.resolve($scope.lookupItem);
 
 								});
 							}
@@ -200,7 +231,8 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupItems !== void 0){
 
-						def.resolve();
+						// Returns cached selected items
+						def.resolve($scope.lookupItems);
 
 					} else {
 						
@@ -210,6 +242,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								$scope.lookupItems = items;
 
+								// Adds an extra empty element '(None)' if the field is not required.
 								if (!$scope.schema.Required) {
 									$scope.lookupItems = [{ Id: 0, Title: STSHtmlEncode(Strings.STS.L_LookupFieldNoneOption) }].concat(items);
 								}
@@ -219,7 +252,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									$scope.value = 0;
 								}
 
-								def.resolve();
+								def.resolve($scope.lookupItems);
 
 							});
 

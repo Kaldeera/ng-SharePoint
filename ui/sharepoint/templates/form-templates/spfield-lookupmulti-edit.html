@@ -1,1 +1,20 @@
-<span>En desarrollo...</span>
+<table id="{{idPrefix}}_MultiLookup_topTable" class="ms-long" cellpadding="0" cellspacing="0" border="0">
+	<tbody>
+		<tr>
+			<td class="ms-input">
+				<select id="{{idPrefix}}_SelectCandidate" ng-model="selectedCandidateItems" ng-options="item as item.name for item in candidateItems | orderBy:'name'" multiple="multiple" title="{{candidateAltText}}" style="width:143px; height:125px; overflow:scroll;" ng-focus="selectedResultItems = []" ng-dblclick="addItems()"></select>
+			</td>
+			<td style="padding-left:10px"></td>
+			<td align="center" valign="middle" class="ms-input ms-noWrap">
+				<input type="button" id="{{idPrefix}}_AddButton" class="ms-ButtonHeightWidth" value="{{addButtonText}}" ng-disabled="selectedCandidateItems.length == 0" ng-click="addItems()" />
+				<br/>
+				<br/>
+				<input type="button" id="{{idPrefix}}_RemoveButton" class="ms-ButtonHeightWidth" value="{{removeButtonText}}" ng-disabled="selectedResultItems.length == 0" ng-click="removeItems()" />
+			</td>
+			<td style="padding-left:10px"></td>
+			<td class="ms-input">
+				<select id="{{idPrefix}}_SelectResult" ng-model="selectedResultItems" ng-options="item as item.name for item in resultItems | orderBy: 'name'" multiple="multiple" title="{{resultAltText}}" style="width:143px;height:125px;overflow:scroll;" ng-focus="selectedCandidateItems = []" ng-dblclick="removeItems()"></select>
+			</td>
+		</tr>
+	</tbody>
+</table>

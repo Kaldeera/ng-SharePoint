@@ -57,6 +57,11 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 					loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
 					loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
+					loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
+					loadScriptPromises.push(self.loadScript('clientforms.js', ''));
+					loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
+					loadScriptPromises.push(self.loadScript('autofill.js', ''));
+					
 
 					$q.all(loadScriptPromises).then(function() {
 
@@ -76,15 +81,15 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 
 		loadScript: function(scriptFilename, functionName) {
 
-			var def = $q.defer();
+			var deferred = $q.defer();
 
 			SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
 
 			EnsureScriptFunc(scriptFilename, functionName, function() {
-				def.resolve();
+				deferred.resolve();
 			});
 
-			return def.promise;
+			return deferred.promise;
 		},
 
 
@@ -195,6 +200,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 		},
 
 
+		// TODA ESTA FUNCIONALIDAD DEBE ESTAR DENTRO DE UN SERVICIO SPUser (o algo asi)
+		// O en todo caso, la llamada a getCurrentUser debe ser del SPWeb!!!
 		getCurrentUser: function() {
 
 			var self = this;
@@ -215,6 +222,27 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 
 					deferred.reject({ sender: sender, args: args });
 				});
+			});
+
+			return deferred.promise;
+		},
+
+
+		getUserId: function(loginName) {
+
+			var self = this;
+			var deferred = $q.defer();
+
+			var ctx = new SP.ClientContext.get_current();
+			var user = ctx.get_web().ensureUser(loginName);
+			ctx.load(user);
+			ctx.executeQueryAsync(function() {
+
+				deferred.resolve(user.get_id());
+
+			}, function(sender, args) {
+
+				deferred.reject({ sender: sender, args: args });
 			});
 
 			return deferred.promise;
@@ -246,7 +274,33 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 			});
 
 			return deferred.promise;			
-		}
+		},
+
+
+		parseXmlString: function(xmlDocStr) {
+
+	        var xmlDoc;
+
+	        if (window.DOMParser) {
+
+	            var parser = new window.DOMParser();          
+	            xmlDoc = parser.parseFromString(xmlDocStr, "text/xml");
+
+	        } else {
+	        
+	            // IE :(
+	            if(xmlDocStr.indexOf("<?") === 0) {
+	                xmlDocStr = xmlDocStr.substr(xmlDocStr.indexOf("?>") + 2);
+	            }
+	        
+	            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+	            xmlDoc.async = "false";
+	            xmlDoc.loadXML(xmlDocStr);
+
+	        }
+
+	        return xmlDoc;
+	    }
 
 	};
 

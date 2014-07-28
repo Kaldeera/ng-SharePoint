@@ -1,1 +1,1 @@
-<div ng-bind="value" class="field-display-value"></div>
+<div ng-bind="(schema.Percentage ? (value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : value.toFixed(schema.Decimals))" class="field-display-value"></div>

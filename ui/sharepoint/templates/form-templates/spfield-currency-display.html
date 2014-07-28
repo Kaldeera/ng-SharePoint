@@ -1,1 +1,1 @@
-<div ng-bind="value" class="field-display-value"></div>
+<div ng-bind="value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol" class="field-display-value"></div>

@@ -34,7 +34,14 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				// Adjust the model if no value is provided
+				if ($scope.value === null) {
+					$scope.value = { results: [] };
+				}
+
 				$scope.choices = $scope.value.results;
+				sortChoices();
 
 
 
@@ -82,7 +89,28 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 						$scope.choices.push(choice);
 					}
 
+					sortChoices();
+
 				};
+
+
+
+				// ****************************************************************************
+				// Sort the choices according to the definition order.
+				//
+				function sortChoices() {
+
+					var sortedChoices = [];
+
+					angular.forEach($scope.schema.Choices.results, function(choice) {
+
+						if($scope.choices.indexOf(choice) != -1) {
+							sortedChoices.push(choice);
+						}
+					});
+
+					$scope.choices = $scope.value.results = sortedChoices;
+				}
 
 			}
 

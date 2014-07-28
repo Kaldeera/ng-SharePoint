@@ -33,7 +33,8 @@ module.exports = function(grunt) {
           'src/sharepoint/ng-sharepoint.js',
           'src/sharepoint/services/**/*.js',
           'src/sharepoint/directives/**/*.js',
-          'src/sharepoint/filters/**/*.js'
+          'src/sharepoint/filters/**/*.js',
+          'src/sharepoint/ng-sharepoint-formpage.js'
         ],
         dest: 'build/<%= pkg.name %>.js'
       }
@@ -93,7 +94,18 @@ module.exports = function(grunt) {
         dest: '../jsdelivr/files/angular.ng-sharepoint/<%= pkg.version %>/',
         flatten: true,
         filter: 'isFile'
-      }
+      },
+
+      toServer: {
+          files: [
+            {
+              cwd: 'build/',
+              expand: true,
+              src: '**',
+              dest: 'R:\\app\\ng-sharepoint'
+            }
+          ]
+        }      
     }
     
   });
@@ -112,7 +124,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat', 'html2js']);
+  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat', 'html2js', 'copy:toServer']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
 

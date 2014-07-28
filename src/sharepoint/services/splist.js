@@ -114,14 +114,24 @@ angular.module('ngSharePoint').factory('SPList',
 		// http://msdn.microsoft.com/es-es/library/office/jj164022(v=office.15).aspx
 		// @returns: Promise with the result of the REST query.
 		//
-		SPListObj.prototype.getProperties = function() {
+		SPListObj.prototype.getProperties = function(query) {
 
 			var self = this;
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.web.url);
-			var query = {
-				$expand: 'Views,Forms'
-			};
+			var defaultExpandProperties = 'Views';
+			// NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
+			// que si la lista es la 'SiteUserInfoList' se genera un error porque no 
+			// tiene formularios sino que se utiliza la página /_layouts/15/UserDisp.aspx
+			// para visualizar un usuario y un popup para la edición.
+
+			if (query) {
+				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+			} else {
+				query = { 
+					$expand: defaultExpandProperties
+				};
+			}
 
 			executor.executeAsync({
 
@@ -190,19 +200,12 @@ angular.module('ngSharePoint').factory('SPList',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-	/*
-						// Parse SchemaXml
-						angular.forEach(d, function(field) {
-							field.SchemaXmlObj = utils.x2js.xml_str2json(field.SchemaXml).Field;
-							field.AuthoringInfo = field.SchemaXmlObj.AuthoringInfo || '';
-							field.DisplayName = field.SchemaXmlObj.DisplayName;
-						});
-	*/
-
 						var fields = {};
 
 						angular.forEach(d, function(field) {
+
 							fields[field.InternalName] = field;
+
 						});
 
 						self.Fields = fields;

@@ -33,7 +33,6 @@
 ///////////////////////////////////////
 
 angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
-angular.module('kld.ngSharePoint', []);
 
 
 
@@ -51,7 +50,7 @@ angular.module('ngSharePoint').constant('SPConfig', {
 
 angular.module('ngSharePoint').config(['SPConfig', function(SPConfig) {
 
-	SPConfig.CSOM = true;
+	//SPConfig.CSOM = true;
 
 }]);
 

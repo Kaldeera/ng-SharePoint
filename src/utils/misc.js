@@ -47,10 +47,13 @@ var utils = {
 	//
 	// @return: X2JS object.
 	//
+
+	/* No external dependences! */
+	/*
 	x2js: new X2JS({ 
 		attributePrefix: ''
 	}),
-
+	*/
 
 
 	// ***************************************************************************

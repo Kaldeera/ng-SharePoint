@@ -131,6 +131,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 					success: function(data) {
 
+						// NOTE: this function could return an array of SPList objects?
 						def.resolve(utils.parseSPResponse(data));
 					}, 
 

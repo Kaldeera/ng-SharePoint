@@ -324,6 +324,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 				delete saveObj.list;
 				delete saveObj.apiUrl;
 
+				// Remove all Computed and ReadOnlyFields
 				angular.forEach(self.list.Fields, function(field) {
 					
 					if (field.TypeAsString === 'Computed' || field.ReadOnlyField) {

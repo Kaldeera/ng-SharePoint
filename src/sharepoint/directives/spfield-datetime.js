@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
-	['$compile', '$templateCache', '$http', '$filter', 'SPUtils',
+	['$compile', '$templateCache', '$http', '$filter', '$timeout', 'SPUtils',
 
-	function($compile, $templateCache, $http, $filter, SPUtils) {
+	function($compile, $templateCache, $http, $filter, $timeout, SPUtils) {
 
 		return {
 
@@ -43,11 +43,36 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				// NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
 				//		 la propiedad 'direction' (rtl/ltr) de aquí.
 				//		 Una vez se consigan recuperar, habrá que ver si existe este valor.
+				//
 				SPUtils.getRegionalSettings().then(function(regionalSettings) {
 					$scope.regionalSettings = regionalSettings;
 					$scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
 				});
 
+
+				// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
+				// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
+				// se deben realizar los siguientes pasos:
+				// 
+				// 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
+				//
+				//    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
+				//
+				//
+				// 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
+				//    ESTE PASO REALMENTE NO ES NECESARIO.
+				//
+				//	  <system.web>
+    			//        <globalization uiCulture="auto" culture="auto" />
+    			//        ...
+				//
+				//
+				// A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
+				// realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
+				// se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
+				// y se podrán obtener los valores de formato para números y fechas correctos.
+				//
+				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
 				var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
 				var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
@@ -65,8 +90,8 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				$scope.datePickerPath = getDatePickerPath();
 				$scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
 									   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
-									   '&lcid=' + STSHtmlEncode(SP.Res.lcid) +
-									   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 
+									   '&lcid=' + STSHtmlEncode(SP.Res.lcid) + 									// Locale (Regional Settings)
+									   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 		// Language (UI Language)
 									   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
 									   '&ww=' + STSHtmlEncode(WorkWeek) + 
 									   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
@@ -82,7 +107,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 				// Initialize the models for data-binding.
 				$scope.dateModel = new Date($scope.value);
-				$scope.dateOnlyModel = $filter('date')($scope.dateModel, 'shortDate'); // TODO: Formatear la fecha en el LCID correcto.
+				$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
 				$scope.minutesModel = $scope.dateModel.getMinutes().toString();
 				var hours = $scope.dateModel.getHours();
 				$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
@@ -153,8 +178,10 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 						resultfunc();
 
 						// Updates the model with the selected value from the DatePicker iframe.
-						$scope.$apply(function() {
-							$scope.dateOnlyModel = self.resultfield.value;
+						$timeout(function() {
+							$scope.$apply(function() {
+								$scope.dateOnlyModel = self.resultfield.value;
+							});
 						});
 					};
 				}
@@ -172,7 +199,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				// Updates the field model with the correct value and format.
 				//
 				function updateModel() {
-
+					/*
 					var dateValue = new Date($scope.dateOnlyModel);
 					var hours = $scope.hoursModel;
 					var minutes = $scope.minutesModel;
@@ -183,7 +210,20 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					dateValue.setMinutes(minutes);
 
 					$scope.value = dateValue.toISOString();
+					*/
 
+					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+					var dateComponents = {};
+					for(var i = 0; i < dateParts.length; i++) {
+						dateComponents[dateParts[i]] = dateValues[i];
+					}
+					var hours = $scope.hoursModel;
+					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					var minutes = $scope.minutesModel;
+					var date = new Date(Date.UTC(dateComponents.yyyy, dateComponents.MM || dateComponents.M, dateComponents.dd || dateComponents.d, hours, minutes));
+
+					$scope.value = date.toISOString();
 				}
 
 
