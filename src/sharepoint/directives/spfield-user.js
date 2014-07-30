@@ -61,6 +61,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					// Show loading animation.
 					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
+					// Initialize the 'selectedUserItems' array if the value was changed.
 					if ($scope.schema.AllowMultipleValues) {
 						if (newValue.value.join(',') !== oldValue.value.join(',')) {
 							$scope.selectedUserItems = void 0;
@@ -73,9 +74,13 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 					// Gets the data for the user (lookup) and then render the field.
 					getUserData().then(function() {
+
 						renderField($scope.currentMode);
+
 					}, function() {
+
 						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
+
 					});
 
 				}, true);
@@ -228,7 +233,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 								// If no value returns an empty object for corrent binding
 								var userItem = {
 									Title: '',
-									url: ''
+									url: '',
+									data: null
 								};
 
 								if ($scope.value === null || $scope.value === 0) {
@@ -331,43 +337,47 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 				    angular.forEach($scope.selectedUserItems, function(user) {
 
-				    	var displayName = user.data.Title; //user.data[$scope.schema.LookupField];
-				    	var userName = user.data.Name;
+				    	if (user.data !== null) {
 
-				    	// MSDN .NET PickerEntity members
-				    	/*
-						Claim					Gets or sets an object that represents whether an entity has the right to claim the specified values.
-						Description				Gets or sets text in a text box in the browser.
-						DisplayText				Gets or sets text in the editing control.
-						EntityData				Gets or sets a data-mapping structure that is defined by the consumer of the PickerEntity class.
-						EntityDataElements	
-						EntityGroupName			Group under which this entity is filed in the picker.
-						EntityType				Gets or sets the name of the entity data type.
-						HierarchyIdentifier		Gets or sets the identifier of the current picker entity within the hierarchy provider.
-						IsResolved				Gets or sets a value that indicates whether the entity has been validated.
-						Key						Gets or sets the identifier of a database record.
-						MultipleMatches	
-						ProviderDisplayName	
-						ProviderName
-						*/
+					    	var displayName = user.data.Title; //user.data[$scope.schema.LookupField];
+					    	var userName = user.data.Name;
 
-				    	var pickerEntity = {
-							AutoFillDisplayText: displayName,
-							AutoFillKey: userName,
-							AutoFillSubDisplayText: '',
-							Description: displayName,
-							DisplayText: displayName,
-							//EntityData: {},
-							EntityType: 'User', //-> Para el administrador es ''
-							IsResolved: true,
-							Key: userName,
-							//LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
-							ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
-							ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
-							Resolved: true
-				    	};
+					    	// MSDN .NET PickerEntity members
+					    	/*
+							Claim					Gets or sets an object that represents whether an entity has the right to claim the specified values.
+							Description				Gets or sets text in a text box in the browser.
+							DisplayText				Gets or sets text in the editing control.
+							EntityData				Gets or sets a data-mapping structure that is defined by the consumer of the PickerEntity class.
+							EntityDataElements	
+							EntityGroupName			Group under which this entity is filed in the picker.
+							EntityType				Gets or sets the name of the entity data type.
+							HierarchyIdentifier		Gets or sets the identifier of the current picker entity within the hierarchy provider.
+							IsResolved				Gets or sets a value that indicates whether the entity has been validated.
+							Key						Gets or sets the identifier of a database record.
+							MultipleMatches	
+							ProviderDisplayName	
+							ProviderName
+							*/
 
-				    	pickerEntities.push(pickerEntity);
+					    	var pickerEntity = {
+								AutoFillDisplayText: displayName,
+								AutoFillKey: userName,
+								AutoFillSubDisplayText: '',
+								Description: displayName,
+								DisplayText: displayName,
+								//EntityData: {},
+								EntityType: 'User', //-> Para el administrador es ''
+								IsResolved: true,
+								Key: userName,
+								//LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
+								ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
+								ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
+								Resolved: true
+					    	};
+
+					    	pickerEntities.push(pickerEntity);
+
+				    	}
 
 				    });
 
@@ -379,18 +389,27 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    this.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, pickerEntities, schema);
 
 
-				    // Maps the needed callback functions
+				    
+				    // Get the people picker object from the page.
 				    var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
 				    if (peoplePicker !== void 0 && peoplePicker !== null) {
+
+				    	// Get information about all users.
+				    	//var users = peoplePicker.GetAllUserInfo();
+
+
+				    	// Maps the needed callback functions...
+
 				    	//peoplePicker.OnControlValidateClientScript = function(peoplePickerId, entitiesArray) {};
+
 				    	//peoplePicker.OnValueChangedClientScript = function(peoplePickerId, entitiesArray) {};
+
 				    	peoplePicker.OnUserResolvedClientScript = function(peoplePickerId, entitiesArray) {
 
-				    		console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
+				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
 				    		if ($scope.schema.AllowMultipleValues === true) {
-
 				    			$scope.value.results = [];
 				    		}
 

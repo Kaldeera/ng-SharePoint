@@ -2052,7 +2052,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', function ($q, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserProvider', function ($q, $http, ODataParserProvider) {
 
 	'use strict';
 
@@ -2336,6 +2336,39 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 	        }
 
 	        return xmlDoc;
+	    },
+
+
+	    getCurrentUserLCID: function() {
+
+	    	var self = this;
+	    	var deferred = $q.defer();
+
+			var url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx?Type=User";
+
+			$http.get(url).success(function(data) {
+
+				var html = angular.element(data);
+				var form, lcid;
+
+				angular.forEach(html, function(element) {
+					if (element.tagName && element.tagName.toLowerCase() === 'form') {
+						form = element;
+					}
+				});
+
+				if (form !== void 0) {
+					var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
+					var selectedOption = regionalSettingsSelect.querySelector('[selected]');
+					lcid = selectedOption.value;
+				}
+
+
+				deferred.resolve(lcid);
+
+			});
+
+			return deferred.promise;
 	    }
 
 	};
@@ -2849,9 +2882,9 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
-	['$compile', '$templateCache', '$http', '$filter', '$timeout', 'SPUtils',
+	['$compile', '$templateCache', '$http', '$filter', '$timeout', '$q', 'SPUtils',
 
-	function($compile, $templateCache, $http, $filter, $timeout, SPUtils) {
+	function($compile, $templateCache, $http, $filter, $timeout, $q, SPUtils) {
 
 		return {
 
@@ -2868,87 +2901,6 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
-				// Gets web regional settings
-				$scope.webRegionalSettings = controllers[0].getWebRegionalSettings();
-
-				// Gets addicional properties from the Regional Settings via CSOM.
-				//
-				// NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
-				//		 la propiedad 'direction' (rtl/ltr) de aquí.
-				//		 Una vez se consigan recuperar, habrá que ver si existe este valor.
-				//
-				SPUtils.getRegionalSettings().then(function(regionalSettings) {
-					$scope.regionalSettings = regionalSettings;
-					$scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
-				});
-
-
-				// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
-				// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
-				// se deben realizar los siguientes pasos:
-				// 
-				// 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
-				//
-				//    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
-				//
-				//
-				// 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
-				//    ESTE PASO REALMENTE NO ES NECESARIO.
-				//
-				//	  <system.web>
-    			//        <globalization uiCulture="auto" culture="auto" />
-    			//        ...
-				//
-				//
-				// A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
-				// realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
-				// se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
-				// y se podrán obtener los valores de formato para números y fechas correctos.
-				//
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-
-				var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-				var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
-				var hours24 = ["00:", "01:", "02:", "03:", "04:", "05:", "06:", "07:", "08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:", "21:", "22:", "23:"];
-				var TimeZoneDifference = '01:59:59.9999809';			// TODO: Recuperar o calcular.
-				var WorkWeek = '0111110';								// TODO: Recuperar o calcular.
-				var MinJDay = '109207';									// TODO: Recuperar o calcular.
-				var MaxJDay = '2666269';								// TODO: Recuperar o calcular.
-				$scope.hoursMode24 = $scope.webRegionalSettings.Time24;	// TODO: Recuperar el modo de hora (12/24) de las 'RegionalSettings' del usuario.
-
-
-				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
-				$scope.minutes = minutes;
-				$scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
-				$scope.datePickerPath = getDatePickerPath();
-				$scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
-									   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
-									   '&lcid=' + STSHtmlEncode(SP.Res.lcid) + 									// Locale (Regional Settings)
-									   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 		// Language (UI Language)
-									   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
-									   '&ww=' + STSHtmlEncode(WorkWeek) + 
-									   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
-									   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
-									   '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) + 	// HijriAdjustment ?
-									   '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) + 			// ShowWeekNumber ?
-									   '&minjday=' + STSHtmlEncode(MinJDay) + 
-									   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
-									   '&date=';
-
-				$scope.DatePickerFrameID = g_strDatePickerFrameID;
-				$scope.DatePickerImageID = g_strDatePickerImageID;
-
-				// Initialize the models for data-binding.
-				$scope.dateModel = new Date($scope.value);
-				$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
-				$scope.minutesModel = $scope.dateModel.getMinutes().toString();
-				var hours = $scope.dateModel.getHours();
-				$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
-				if (hours < 10) {
-					$scope.hoursModel = '0' + $scope.hoursModel;
-				}
-
-
 
 				// ****************************************************************************
 				// Watch for form mode changes.
@@ -2960,9 +2912,122 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				}, function(newValue) {
 
 					$scope.currentMode = newValue;
-					renderField(newValue);
+
+					getData().then(function() {
+						renderField(newValue);
+					});
 
 				});
+
+
+
+				function getData() {
+
+					var def = $q.defer();
+
+					// Gets web regional settings
+					controllers[0].getWebRegionalSettings().then(function(webRegionalSettings) {
+
+						$scope.webRegionalSettings = webRegionalSettings;
+
+						// Gets addicional properties from the Regional Settings via CSOM.
+						//
+						// NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
+						//		 la propiedad 'direction' (rtl/ltr) de aquí.
+						//		 Una vez se consigan recuperar, habrá que ver si existe este valor.
+						//
+						SPUtils.getRegionalSettings().then(function(regionalSettings) {
+							$scope.regionalSettings = regionalSettings;
+							$scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
+						});
+
+
+						//$scope.lcid = SP.Res.lcid;
+
+						// Gets current user language (LCID) from user regional settings configuration.
+						//
+						SPUtils.getCurrentUserLCID().then(function(lcid) {
+
+							$scope.lcid = lcid;
+
+
+							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
+							// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
+							// se deben realizar los siguientes pasos:
+							// 
+							// 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
+							//
+							//    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
+							//
+							//
+							// 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
+							//    ESTE PASO REALMENTE NO ES NECESARIO.
+							//
+							//	  <system.web>
+			    			//        <globalization uiCulture="auto" culture="auto" />
+			    			//        ...
+							//
+							//
+							// A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
+							// realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
+							// se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
+							// y se podrán obtener los valores de formato para números y fechas correctos.
+							//
+							$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+							var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+							var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
+							var hours24 = ["00:", "01:", "02:", "03:", "04:", "05:", "06:", "07:", "08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:", "21:", "22:", "23:"];
+							var TimeZoneDifference = '01:59:59.9999809';			// TODO: Recuperar o calcular.
+							var WorkWeek = '0111110';								// TODO: Recuperar o calcular.
+							var MinJDay = '109207';									// TODO: Recuperar o calcular.
+							var MaxJDay = '2666269';								// TODO: Recuperar o calcular.
+							$scope.hoursMode24 = $scope.webRegionalSettings.Time24;	// TODO: Recuperar el modo de hora (12/24) de las 'RegionalSettings' del usuario.
+
+
+							$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+							$scope.minutes = minutes;
+							$scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
+							$scope.datePickerPath = getDatePickerPath();
+							$scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
+												   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
+												   '&lcid=' + STSHtmlEncode($scope.lcid) + 									// Locale (User Regional Settings)
+												   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 		// Language (UI Language)
+												   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
+												   '&ww=' + STSHtmlEncode(WorkWeek) + 
+												   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
+												   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
+												   '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) + 	// HijriAdjustment ?
+												   '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) + 			// ShowWeekNumber ?
+												   '&minjday=' + STSHtmlEncode(MinJDay) + 
+												   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
+												   '&date=';
+
+							$scope.DatePickerFrameID = g_strDatePickerFrameID;
+							$scope.DatePickerImageID = g_strDatePickerImageID;
+
+							// Initialize the models for data-binding.
+							$scope.dateModel = new Date($scope.value);
+							$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
+							$scope.minutesModel = $scope.dateModel.getMinutes().toString();
+							var hours = $scope.dateModel.getHours();
+							$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
+							if (hours < 10) {
+								$scope.hoursModel = '0' + $scope.hoursModel;
+							}
+
+
+							// All data collected and processed, continue...
+							def.resolve();
+
+						});
+
+					});
+
+
+					return def.promise;
+
+				}
 
 
 
@@ -3031,19 +3096,11 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				// ****************************************************************************
 				// Updates the field model with the correct value and format.
 				//
-				function updateModel() {
-					/*
-					var dateValue = new Date($scope.dateOnlyModel);
-					var hours = $scope.hoursModel;
-					var minutes = $scope.minutesModel;
+				function updateModel(newValue, oldValue) {
 
-					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					if (newValue === oldValue || $scope.dateOnlyModel === void 0) return;
 
-					dateValue.setHours(hours);
-					dateValue.setMinutes(minutes);
-
-					$scope.value = dateValue.toISOString();
-					*/
+					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
 
 					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
@@ -4162,7 +4219,7 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 		link: function($scope, $element, $attrs, ngModel) {
 
 			ngModel.$formatters.push(function(value) {
-				if ($scope.schema.Percentage) {
+				if ($scope.schema.Percentage && value !== void 0) {
 					return (value * 100).toFixed($scope.schema.Decimals);
 				} else {
 					return value;
@@ -4171,7 +4228,7 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 
 			ngModel.$parsers.push(function(value) {
-				if ($scope.schema.Percentage) {
+				if ($scope.schema.Percentage && value !== void 0) {
 					return (value / 100).toFixed($scope.schema.Decimals);
 				} else {
 					return value;
@@ -4320,6 +4377,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					// Show loading animation.
 					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
+					// Initialize the 'selectedUserItems' array if the value was changed.
 					if ($scope.schema.AllowMultipleValues) {
 						if (newValue.value.join(',') !== oldValue.value.join(',')) {
 							$scope.selectedUserItems = void 0;
@@ -4332,9 +4390,13 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 					// Gets the data for the user (lookup) and then render the field.
 					getUserData().then(function() {
+
 						renderField($scope.currentMode);
+
 					}, function() {
+
 						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
+
 					});
 
 				}, true);
@@ -4487,7 +4549,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 								// If no value returns an empty object for corrent binding
 								var userItem = {
 									Title: '',
-									url: ''
+									url: '',
+									data: null
 								};
 
 								if ($scope.value === null || $scope.value === 0) {
@@ -4590,43 +4653,47 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 				    angular.forEach($scope.selectedUserItems, function(user) {
 
-				    	var displayName = user.data.Title; //user.data[$scope.schema.LookupField];
-				    	var userName = user.data.Name;
+				    	if (user.data !== null) {
 
-				    	// MSDN .NET PickerEntity members
-				    	/*
-						Claim					Gets or sets an object that represents whether an entity has the right to claim the specified values.
-						Description				Gets or sets text in a text box in the browser.
-						DisplayText				Gets or sets text in the editing control.
-						EntityData				Gets or sets a data-mapping structure that is defined by the consumer of the PickerEntity class.
-						EntityDataElements	
-						EntityGroupName			Group under which this entity is filed in the picker.
-						EntityType				Gets or sets the name of the entity data type.
-						HierarchyIdentifier		Gets or sets the identifier of the current picker entity within the hierarchy provider.
-						IsResolved				Gets or sets a value that indicates whether the entity has been validated.
-						Key						Gets or sets the identifier of a database record.
-						MultipleMatches	
-						ProviderDisplayName	
-						ProviderName
-						*/
+					    	var displayName = user.data.Title; //user.data[$scope.schema.LookupField];
+					    	var userName = user.data.Name;
 
-				    	var pickerEntity = {
-							AutoFillDisplayText: displayName,
-							AutoFillKey: userName,
-							AutoFillSubDisplayText: '',
-							Description: displayName,
-							DisplayText: displayName,
-							//EntityData: {},
-							EntityType: 'User', //-> Para el administrador es ''
-							IsResolved: true,
-							Key: userName,
-							//LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
-							ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
-							ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
-							Resolved: true
-				    	};
+					    	// MSDN .NET PickerEntity members
+					    	/*
+							Claim					Gets or sets an object that represents whether an entity has the right to claim the specified values.
+							Description				Gets or sets text in a text box in the browser.
+							DisplayText				Gets or sets text in the editing control.
+							EntityData				Gets or sets a data-mapping structure that is defined by the consumer of the PickerEntity class.
+							EntityDataElements	
+							EntityGroupName			Group under which this entity is filed in the picker.
+							EntityType				Gets or sets the name of the entity data type.
+							HierarchyIdentifier		Gets or sets the identifier of the current picker entity within the hierarchy provider.
+							IsResolved				Gets or sets a value that indicates whether the entity has been validated.
+							Key						Gets or sets the identifier of a database record.
+							MultipleMatches	
+							ProviderDisplayName	
+							ProviderName
+							*/
 
-				    	pickerEntities.push(pickerEntity);
+					    	var pickerEntity = {
+								AutoFillDisplayText: displayName,
+								AutoFillKey: userName,
+								AutoFillSubDisplayText: '',
+								Description: displayName,
+								DisplayText: displayName,
+								//EntityData: {},
+								EntityType: 'User', //-> Para el administrador es ''
+								IsResolved: true,
+								Key: userName,
+								//LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
+								ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
+								ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
+								Resolved: true
+					    	};
+
+					    	pickerEntities.push(pickerEntity);
+
+				    	}
 
 				    });
 
@@ -4638,18 +4705,27 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    this.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, pickerEntities, schema);
 
 
-				    // Maps the needed callback functions
+				    
+				    // Get the people picker object from the page.
 				    var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
 				    if (peoplePicker !== void 0 && peoplePicker !== null) {
+
+				    	// Get information about all users.
+				    	//var users = peoplePicker.GetAllUserInfo();
+
+
+				    	// Maps the needed callback functions...
+
 				    	//peoplePicker.OnControlValidateClientScript = function(peoplePickerId, entitiesArray) {};
+
 				    	//peoplePicker.OnValueChangedClientScript = function(peoplePickerId, entitiesArray) {};
+
 				    	peoplePicker.OnUserResolvedClientScript = function(peoplePickerId, entitiesArray) {
 
-				    		console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
+				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
 				    		if ($scope.schema.AllowMultipleValues === true) {
-
 				    			$scope.value.results = [];
 				    		}
 
@@ -4851,9 +4927,9 @@ angular.module('ngSharePoint').directive('spformRule',
 
 angular.module('ngSharePoint').directive('spformToolbar', 
 
-	['$compile', '$templateCache', '$http',
+	['$compile', '$templateCache', '$http', 'SPUtils',
 
-	function($compile, $templateCache, $http) {
+	function($compile, $templateCache, $http, SPUtils) {
 
 		return {
 
@@ -4864,6 +4940,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 			link: function($scope, $element, $attrs, spformController) {
+
+
+				$scope.isInDesignMode = SPUtils.inDesignMode();
 
 
 
@@ -4916,9 +4995,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 angular.module('ngSharePoint').directive('spform', 
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+	['SPUtils', '$compile', '$templateCache', '$http', '$q',
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	function(SPUtils, $compile, $templateCache, $http, $q) {
 
 		return {
 			restrict: 'EA',
@@ -4928,8 +5007,9 @@ angular.module('ngSharePoint').directive('spform',
 			priority: 100,
 			scope: {
 				originalItem: '=item',
-				preSave: '&',
-				postSave: '&'
+				onPreSave: '&',
+				onPostSave: '&',
+				onCancel: '&'
 			},
 
 
@@ -4998,11 +5078,17 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.getWebRegionalSettings = function() {
 
-					if ($scope.item.list.web.RegionalSettings === void 0) {
-						$scope.item.list.web.getProperties();//.then(...); // Puede ser necesario hacer esta función una promesa.
+					var def = $q.defer();
+
+					if ($scope.item.list.web.RegionalSettings !== void 0) {
+						def.resolve($scope.item.list.web.RegionalSettings);
+					} else {
+						$scope.item.list.web.getProperties().then(function() {
+							def.resolve($scope.item.list.web.RegionalSettings);
+						});
 					}
 
-					return $scope.item.list.web.RegionalSettings;
+					return def.promise;
 				};
 
 
@@ -5013,22 +5099,48 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.save = function() {
 
+					var self = this;
+
 					$scope.formStatus = this.status.PROCESSING;
 
-					if ($scope.preSave({ item: $scope.item }) !== false) {
+					// Shows the 'Working on it...' dialog.
+					var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+
+					if ($scope.onPreSave({ item: $scope.item }) !== false) {
 						
 						$scope.item.save().then(function(data) {
 
 							console.log(data);
 							angular.extend($scope.originalItem, data);
 
-							$scope.postSave({ item: $scope.originalItem });
+							$scope.onPostSave({ item: $scope.originalItem });
 
 							$scope.formStatus = this.status.IDLE;
+
+							// CLose the 'Working on it...' dialog.
+							dlg.close();
+
+							// TODO: Performs the 'after-save' action/s or redirect
+
+							// Default 'after-save' action.
+							self.closeForm();
 
 						}, function(err) {
 
 							console.error(err);
+
+							dlg.close();
+
+							var dom = document.createElement('div');
+							dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
+
+
+							SP.UI.ModalDialog.showModalDialog({
+								title: SP.Res.dlgTitleError,
+								html: dom,
+								showClose: true,
+								autoSize: true
+							});
 
 						});
 
@@ -5040,6 +5152,21 @@ angular.module('ngSharePoint').directive('spform',
 				this.cancel = function() {
 
 					$scope.item = angular.copy($scope.originalItem);
+
+					if ($scope.onCancel({ item: $scope.item }) !== false) {
+
+						// Performs the default 'cancel' action.
+						this.closeForm();
+
+					}
+				};
+
+
+
+				this.closeForm = function() {
+
+					window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+
 				};
 
 			}],
@@ -5245,10 +5372,10 @@ angular.module('ngSharePoint')
     };
 
 }]);
-angular.module('ngSharePointFormpage', ['ngSharePoint']);
+angular.module('ngSharePointFormPage', ['ngSharePoint']);
 
 
-angular.module('ngSharePointFormpage').directive('spformpage', ['SharePoint', 'SPUtils', function(SharePoint, SPUtils) {
+angular.module('ngSharePointFormPage').directive('spformpage', ['SharePoint', 'SPUtils', function(SharePoint, SPUtils) {
 	
 	return {
 
@@ -5256,24 +5383,34 @@ angular.module('ngSharePointFormpage').directive('spformpage', ['SharePoint', 'S
 
 		link: function($scope, $element, $attrs) {
 
-			console.log(">>>>> SPFormPage directive");
-
 			var listId = _spPageContextInfo.pageListId;
 			var itemId = utils.getQueryStringParamByName('ID');
 
-			SharePoint.getWeb()
-				.then(function(web) { return web.getList(listId); })
-				.then(function(list) { return list.getItemById(itemId); })
-				.then(function(item) {
-					$scope.item = item;
+			if (listId !== void 0 && itemId !== void 0) {
 
-					SPUtils.loadScript('sp.ribbon.js', '').then(function() {
-
-						_ribbonInitFunc1();
+				SharePoint.getWeb()
+					.then(function(web) { return web.getList(listId); })
+					.then(function(list) { return list.getItemById(itemId); })
+					.then(function(item) {
+						$scope.item = item;
 					});
 					
-				});
+			}
 
+
+			$scope.onPreSave = function(item) {
+				console.log('>>>> onPreSave', item);
+			};
+
+
+			$scope.onPostSave = function(item) {
+				console.log('>>>> onPostSave', item);
+			};
+
+
+			$scope.onCancel = function(item) {
+				console.log('>>>> onCancel', item);
+			};
 
 		}
 
@@ -5287,5 +5424,5 @@ angular.module('ngSharePointFormpage').directive('spformpage', ['SharePoint', 'S
 var element = document.querySelector('[data-spformpage]');
 
 if (element) {
-	angular.bootstrap(element, ['ngSharePointFormpage']);
+	angular.bootstrap(element, ['ngSharePointFormPage']);
 }

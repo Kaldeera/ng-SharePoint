@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
-	['$compile', '$templateCache', '$http', '$filter', '$timeout', 'SPUtils',
+	['$compile', '$templateCache', '$http', '$filter', '$timeout', '$q', 'SPUtils',
 
-	function($compile, $templateCache, $http, $filter, $timeout, SPUtils) {
+	function($compile, $templateCache, $http, $filter, $timeout, $q, SPUtils) {
 
 		return {
 
@@ -35,87 +35,6 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
-				// Gets web regional settings
-				$scope.webRegionalSettings = controllers[0].getWebRegionalSettings();
-
-				// Gets addicional properties from the Regional Settings via CSOM.
-				//
-				// NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
-				//		 la propiedad 'direction' (rtl/ltr) de aquí.
-				//		 Una vez se consigan recuperar, habrá que ver si existe este valor.
-				//
-				SPUtils.getRegionalSettings().then(function(regionalSettings) {
-					$scope.regionalSettings = regionalSettings;
-					$scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
-				});
-
-
-				// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
-				// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
-				// se deben realizar los siguientes pasos:
-				// 
-				// 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
-				//
-				//    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
-				//
-				//
-				// 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
-				//    ESTE PASO REALMENTE NO ES NECESARIO.
-				//
-				//	  <system.web>
-    			//        <globalization uiCulture="auto" culture="auto" />
-    			//        ...
-				//
-				//
-				// A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
-				// realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
-				// se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
-				// y se podrán obtener los valores de formato para números y fechas correctos.
-				//
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-
-				var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-				var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
-				var hours24 = ["00:", "01:", "02:", "03:", "04:", "05:", "06:", "07:", "08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:", "21:", "22:", "23:"];
-				var TimeZoneDifference = '01:59:59.9999809';			// TODO: Recuperar o calcular.
-				var WorkWeek = '0111110';								// TODO: Recuperar o calcular.
-				var MinJDay = '109207';									// TODO: Recuperar o calcular.
-				var MaxJDay = '2666269';								// TODO: Recuperar o calcular.
-				$scope.hoursMode24 = $scope.webRegionalSettings.Time24;	// TODO: Recuperar el modo de hora (12/24) de las 'RegionalSettings' del usuario.
-
-
-				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
-				$scope.minutes = minutes;
-				$scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
-				$scope.datePickerPath = getDatePickerPath();
-				$scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
-									   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
-									   '&lcid=' + STSHtmlEncode(SP.Res.lcid) + 									// Locale (Regional Settings)
-									   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 		// Language (UI Language)
-									   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
-									   '&ww=' + STSHtmlEncode(WorkWeek) + 
-									   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
-									   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
-									   '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) + 	// HijriAdjustment ?
-									   '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) + 			// ShowWeekNumber ?
-									   '&minjday=' + STSHtmlEncode(MinJDay) + 
-									   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
-									   '&date=';
-
-				$scope.DatePickerFrameID = g_strDatePickerFrameID;
-				$scope.DatePickerImageID = g_strDatePickerImageID;
-
-				// Initialize the models for data-binding.
-				$scope.dateModel = new Date($scope.value);
-				$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
-				$scope.minutesModel = $scope.dateModel.getMinutes().toString();
-				var hours = $scope.dateModel.getHours();
-				$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
-				if (hours < 10) {
-					$scope.hoursModel = '0' + $scope.hoursModel;
-				}
-
-
 
 				// ****************************************************************************
 				// Watch for form mode changes.
@@ -127,9 +46,122 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				}, function(newValue) {
 
 					$scope.currentMode = newValue;
-					renderField(newValue);
+
+					getData().then(function() {
+						renderField(newValue);
+					});
 
 				});
+
+
+
+				function getData() {
+
+					var def = $q.defer();
+
+					// Gets web regional settings
+					controllers[0].getWebRegionalSettings().then(function(webRegionalSettings) {
+
+						$scope.webRegionalSettings = webRegionalSettings;
+
+						// Gets addicional properties from the Regional Settings via CSOM.
+						//
+						// NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
+						//		 la propiedad 'direction' (rtl/ltr) de aquí.
+						//		 Una vez se consigan recuperar, habrá que ver si existe este valor.
+						//
+						SPUtils.getRegionalSettings().then(function(regionalSettings) {
+							$scope.regionalSettings = regionalSettings;
+							$scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
+						});
+
+
+						//$scope.lcid = SP.Res.lcid;
+
+						// Gets current user language (LCID) from user regional settings configuration.
+						//
+						SPUtils.getCurrentUserLCID().then(function(lcid) {
+
+							$scope.lcid = lcid;
+
+
+							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
+							// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
+							// se deben realizar los siguientes pasos:
+							// 
+							// 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
+							//
+							//    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
+							//
+							//
+							// 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
+							//    ESTE PASO REALMENTE NO ES NECESARIO.
+							//
+							//	  <system.web>
+			    			//        <globalization uiCulture="auto" culture="auto" />
+			    			//        ...
+							//
+							//
+							// A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
+							// realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
+							// se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
+							// y se podrán obtener los valores de formato para números y fechas correctos.
+							//
+							$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+							var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+							var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
+							var hours24 = ["00:", "01:", "02:", "03:", "04:", "05:", "06:", "07:", "08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:", "21:", "22:", "23:"];
+							var TimeZoneDifference = '01:59:59.9999809';			// TODO: Recuperar o calcular.
+							var WorkWeek = '0111110';								// TODO: Recuperar o calcular.
+							var MinJDay = '109207';									// TODO: Recuperar o calcular.
+							var MaxJDay = '2666269';								// TODO: Recuperar o calcular.
+							$scope.hoursMode24 = $scope.webRegionalSettings.Time24;	// TODO: Recuperar el modo de hora (12/24) de las 'RegionalSettings' del usuario.
+
+
+							$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+							$scope.minutes = minutes;
+							$scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
+							$scope.datePickerPath = getDatePickerPath();
+							$scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
+												   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
+												   '&lcid=' + STSHtmlEncode($scope.lcid) + 									// Locale (User Regional Settings)
+												   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) + 		// Language (UI Language)
+												   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
+												   '&ww=' + STSHtmlEncode(WorkWeek) + 
+												   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
+												   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
+												   '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) + 	// HijriAdjustment ?
+												   '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) + 			// ShowWeekNumber ?
+												   '&minjday=' + STSHtmlEncode(MinJDay) + 
+												   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
+												   '&date=';
+
+							$scope.DatePickerFrameID = g_strDatePickerFrameID;
+							$scope.DatePickerImageID = g_strDatePickerImageID;
+
+							// Initialize the models for data-binding.
+							$scope.dateModel = new Date($scope.value);
+							$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
+							$scope.minutesModel = $scope.dateModel.getMinutes().toString();
+							var hours = $scope.dateModel.getHours();
+							$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
+							if (hours < 10) {
+								$scope.hoursModel = '0' + $scope.hoursModel;
+							}
+
+
+							// All data collected and processed, continue...
+							def.resolve();
+
+						});
+
+					});
+
+
+					return def.promise;
+
+				}
 
 
 
@@ -198,19 +230,11 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				// ****************************************************************************
 				// Updates the field model with the correct value and format.
 				//
-				function updateModel() {
-					/*
-					var dateValue = new Date($scope.dateOnlyModel);
-					var hours = $scope.hoursModel;
-					var minutes = $scope.minutesModel;
+				function updateModel(newValue, oldValue) {
 
-					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					if (newValue === oldValue || $scope.dateOnlyModel === void 0) return;
 
-					dateValue.setHours(hours);
-					dateValue.setMinutes(minutes);
-
-					$scope.value = dateValue.toISOString();
-					*/
+					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
 
 					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);

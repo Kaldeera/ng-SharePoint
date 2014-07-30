@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spform', 
 
-	['SPUtils', '$compile', '$templateCache', '$http',
+	['SPUtils', '$compile', '$templateCache', '$http', '$q',
 
-	function(SPUtils, $compile, $templateCache, $http) {
+	function(SPUtils, $compile, $templateCache, $http, $q) {
 
 		return {
 			restrict: 'EA',
@@ -28,8 +28,9 @@ angular.module('ngSharePoint').directive('spform',
 			priority: 100,
 			scope: {
 				originalItem: '=item',
-				preSave: '&',
-				postSave: '&'
+				onPreSave: '&',
+				onPostSave: '&',
+				onCancel: '&'
 			},
 
 
@@ -98,11 +99,17 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.getWebRegionalSettings = function() {
 
-					if ($scope.item.list.web.RegionalSettings === void 0) {
-						$scope.item.list.web.getProperties();//.then(...); // Es necesario hacer esta función una promesa.
+					var def = $q.defer();
+
+					if ($scope.item.list.web.RegionalSettings !== void 0) {
+						def.resolve($scope.item.list.web.RegionalSettings);
+					} else {
+						$scope.item.list.web.getProperties().then(function() {
+							def.resolve($scope.item.list.web.RegionalSettings);
+						});
 					}
 
-					return $scope.item.list.web.RegionalSettings;
+					return def.promise;
 				};
 
 
@@ -113,22 +120,48 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.save = function() {
 
+					var self = this;
+
 					$scope.formStatus = this.status.PROCESSING;
 
-					if ($scope.preSave({ item: $scope.item }) !== false) {
+					// Shows the 'Working on it...' dialog.
+					var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+
+					if ($scope.onPreSave({ item: $scope.item }) !== false) {
 						
 						$scope.item.save().then(function(data) {
 
-							console.log(data);
 							angular.extend($scope.originalItem, data);
-
-							$scope.postSave({ item: $scope.originalItem });
-
 							$scope.formStatus = this.status.IDLE;
+
+							if ($scope.onPostSave({ item: $scope.originalItem })) {}
+
+								// Close the 'Working on it...' dialog.
+								dlg.close();
+
+								// TODO: Performs the 'after-save' action/s or redirect
+
+								// Default 'after-save' action.
+								self.closeForm();
+								
+							}
 
 						}, function(err) {
 
 							console.error(err);
+
+							dlg.close();
+
+							var dom = document.createElement('div');
+							dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
+
+
+							SP.UI.ModalDialog.showModalDialog({
+								title: SP.Res.dlgTitleError,
+								html: dom,
+								showClose: true,
+								autoSize: true
+							});
 
 						});
 
@@ -140,6 +173,21 @@ angular.module('ngSharePoint').directive('spform',
 				this.cancel = function() {
 
 					$scope.item = angular.copy($scope.originalItem);
+
+					if ($scope.onCancel({ item: $scope.item }) !== false) {
+
+						// Performs the default 'cancel' action.
+						this.closeForm();
+
+					}
+				};
+
+
+
+				this.closeForm = function() {
+
+					window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+
 				};
 
 			}],

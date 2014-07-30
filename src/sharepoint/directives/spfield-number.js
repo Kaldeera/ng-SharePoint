@@ -102,7 +102,7 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 		link: function($scope, $element, $attrs, ngModel) {
 
 			ngModel.$formatters.push(function(value) {
-				if ($scope.schema.Percentage) {
+				if ($scope.schema.Percentage && value !== void 0) {
 					return (value * 100).toFixed($scope.schema.Decimals);
 				} else {
 					return value;
@@ -111,7 +111,7 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 
 			ngModel.$parsers.push(function(value) {
-				if ($scope.schema.Percentage) {
+				if ($scope.schema.Percentage && value !== void 0) {
 					return (value / 100).toFixed($scope.schema.Decimals);
 				} else {
 					return value;

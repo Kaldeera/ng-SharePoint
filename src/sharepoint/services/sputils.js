@@ -16,7 +16,7 @@
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', function ($q, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserProvider', function ($q, $http, ODataParserProvider) {
 
 	'use strict';
 
@@ -300,6 +300,39 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', 'ODataParserProvider', 
 	        }
 
 	        return xmlDoc;
+	    },
+
+
+	    getCurrentUserLCID: function() {
+
+	    	var self = this;
+	    	var deferred = $q.defer();
+
+			var url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx?Type=User";
+
+			$http.get(url).success(function(data) {
+
+				var html = angular.element(data);
+				var form, lcid;
+
+				angular.forEach(html, function(element) {
+					if (element.tagName && element.tagName.toLowerCase() === 'form') {
+						form = element;
+					}
+				});
+
+				if (form !== void 0) {
+					var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
+					var selectedOption = regionalSettingsSelect.querySelector('[selected]');
+					lcid = selectedOption.value;
+				}
+
+
+				deferred.resolve(lcid);
+
+			});
+
+			return deferred.promise;
 	    }
 
 	};

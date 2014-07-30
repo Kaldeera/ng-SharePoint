@@ -269,7 +269,7 @@ angular.module("templates/form-templates/spform-default.html", []).run(["$templa
 
 angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-toolbar.html",
-    "<div>\n" +
+    "<div ng-if=\"!isInDesignMode\">\n" +
     "	<!-- Form Toolbar DISPLAY MODE -->\n" +
     "	<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"padding-top: 7px\" ng-if=\"mode == 'display'\">\n" +
     "		<tbody>\n" +
@@ -481,8 +481,6 @@ angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templa
 angular.module("templates/form-templates/spform.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform.html",
     "<form>\n" +
-    "	<div spworkingonit=\"\" ng-show=\"formStatus == 1\"></div>\n" +
-    "\n" +
     "	<table class=\"ms-formtable\" style=\"margin-top: 8px;\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" +
     "		<tbody transclude-fields>\n" +
     "		</tbody>\n" +
@@ -506,7 +504,7 @@ angular.module("templates/spworking-on-it.html", []).run(["$templateCache", func
   $templateCache.put("templates/spworking-on-it.html",
     "<div id=\"ms-loading-box\" class=\"ms-dlgContent\">\n" +
     "	<div id=\"ms-gearPageTitle\">\n" +
-    "		<h1 class=\"ms-dlgTitle\">Working on it...</h1>\n" +
+    "		<h1 class=\"ms-dlgTitle\">{{SP.Res.dialogLoading15}}</h1>\n" +
     "	</div>\n" +
     "	<div id=\"ms-gearPageBody\">\n" +
     "		<span class=\"ms-textLarge\">\n" +

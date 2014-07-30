@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spformToolbar', 
 
-	['$compile', '$templateCache', '$http',
+	['$compile', '$templateCache', '$http', 'SPUtils',
 
-	function($compile, $templateCache, $http) {
+	function($compile, $templateCache, $http, SPUtils) {
 
 		return {
 
@@ -29,6 +29,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 			link: function($scope, $element, $attrs, spformController) {
+
+
+				$scope.isInDesignMode = SPUtils.inDesignMode();
 
 
 
