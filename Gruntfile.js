@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       options: {
         separator: '\n'
       },
-      dist: {
+      ngSharePoint: {
         src: [
           'src/utils/**/*.js',
           'src/camlhelper/**/*.js', 
@@ -37,11 +37,19 @@ module.exports = function(grunt) {
           'src/sharepoint/ng-sharepoint-formpage.js'
         ],
         dest: 'build/<%= pkg.name %>.js'
+      },
+      formsEditor: {
+        src: [
+          'forms-editor/src/ng-sharepoint-formseditor.js',
+          'forms-editor/src/directives/**/*.js',
+          'forms-editor/src/ng-sharepoint-formseditor-bootstrap.js'
+        ],
+        dest: 'build/<%= pkg.name %>.forms-editor.js'
       }
     },
 
     jshint: {
-      all: ['Gruntfile.js', 'src/**/*.js', '!src/libs/**/*.js'],
+      all: ['Gruntfile.js', 'src/**/*.js', '!src/libs/**/*.js', 'forms-editor/src/**/*.js'],
       beforeconcat: ['src/**/*.js'],
       afterconcat: ['build/*.js'],
       options: {
@@ -68,6 +76,15 @@ module.exports = function(grunt) {
         src: ['ui/bootstrap/templates/**/*.html'],
         dest: 'build/<%= pkg.name %>.bootstrap.templates.js'
       },
+
+      editor: {
+        options: {
+          module: 'ngSharePointFormsEditor.templates',
+          base: './forms-editor/ui'
+        },
+        src: ['forms-editor/ui/templates/**/*.html'],
+        dest: 'build/<%= pkg.name %>.forms-editor.templates.js'
+      }
     },
 
     watch: {
@@ -102,10 +119,7 @@ module.exports = function(grunt) {
               cwd: 'build/',
               expand: true,
               src: '**',
-              //dest: 'R:\\app\\ng-sharepoint'
-              //dest: 'X:\\ComercialyMktg\\Ofertas\\app\\js\\libs'
-              //dest: 'W:\\app\\js'
-              dest: 'X:\\app\\ngSharePoint'
+              dest: 'R:\\app\\kld-testforms\\js'
             }
           ]
         }      
@@ -127,7 +141,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat', 'html2js', 'copy:toServer']);
+  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat:ngSharePoint', 'concat:formsEditor', 'html2js']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
 
