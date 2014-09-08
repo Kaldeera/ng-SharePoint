@@ -38,3 +38,5 @@ Icon
 
 node_modules
 oldJs
+forms-editor
+build\ng-sharepoint.forms-editor.*
