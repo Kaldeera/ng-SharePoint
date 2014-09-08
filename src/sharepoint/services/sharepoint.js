@@ -51,7 +51,11 @@ angular.module('ngSharePoint')
 			var def = $q.defer();
 
 			SPUtils.SharePointReady().then(function() {
-				def.resolve(new SPWeb(url));
+
+				new SPWeb(url).then(function(web) {
+					def.resolve(web);
+				});
+
 			});
 
 			return def.promise;

@@ -60,6 +60,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 						renderField($scope.currentMode);
 
+					}, function(err) {
+
+						$scope.errorMsg = err.message;
+
+						if ($scope.value === void 0) {
+							setElementHTML('');
+						} else {
+							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+						}
 					});
 
 				}, true);
@@ -120,7 +129,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupList === void 0) {
 
-						SharePoint.getWeb().then(function(web) {
+						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
 
@@ -132,10 +141,19 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 										def.resolve($scope.lookupList);
 
+									}, function(err) {
+
+										def.reject(err);
 									});
 
+								}, function(err) {
+
+									def.reject(err);
 								});
 
+							}, function(err) {
+
+								def.reject(err);
 							});
 
 						});
@@ -168,9 +186,9 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 						getLookupList().then(function(list) {
 
-							if ($scope.value === null || $scope.value === 0) {
+							if ($scope.value === null || $scope.value === 0 || $scope.value === void 0) {
 
-								// If no value returns an empty object for corrent binding
+								// If no value returns an empty object for correct binding
 								$scope.lookupItem = {
 									Title: '',
 									url: ''
@@ -210,9 +228,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 									def.resolve($scope.lookupItem);
 
+								}, function(err) {
+
+									def.reject(err);
 								});
 							}
 
+						}, function(err) {
+
+							def.reject(err);
 						});
 					}
 
@@ -254,8 +278,14 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								def.resolve($scope.lookupItems);
 
+							}, function(err) {
+
+								def.reject(err);
 							});
 
+						}, function(err) {
+
+							def.reject(err);
 						});
 					}
 

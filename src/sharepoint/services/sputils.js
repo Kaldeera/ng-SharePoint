@@ -47,6 +47,13 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 				deferred.resolve();
 
 			} else {
+/*
+				// Max 2.5 sec. to load all needed scripts
+				setTimeout(function() {
+					isSharePointReady = true;
+					deferred.resolve();
+				}, 2500);
+*/
 
 				// Load sp.js
 				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
@@ -61,6 +68,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 					loadScriptPromises.push(self.loadScript('clientforms.js', ''));
 					loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
 					loadScriptPromises.push(self.loadScript('autofill.js', ''));
+					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
+					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
 					
 
 					$q.all(loadScriptPromises).then(function() {
@@ -68,6 +77,10 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 						isSharePointReady = true;
 						deferred.resolve();
 
+					}, function(error) {
+
+						console.error('Error loading SharePoint script dependences', error);
+						deferred.reject(error);
 					});
 
 
@@ -333,7 +346,34 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 			});
 
 			return deferred.promise;
-	    }
+	    },
+
+
+
+		getWebById: function(webId) {
+			
+			var self = this;
+			var deferred = $q.defer();
+
+			this.SharePointReady().then(function() {
+				var ctx = new SP.ClientContext();
+				var site = ctx.get_site();
+				var web = site.openWebById(webId.ltrim('{').rtrim('}'));
+
+				ctx.load(web, 'ServerRelativeUrl');
+
+				ctx.executeQueryAsync(function() {
+
+					deferred.resolve(web);
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+			});
+
+			return deferred.promise;
+		}
 
 	};
 

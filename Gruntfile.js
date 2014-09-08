@@ -102,7 +102,10 @@ module.exports = function(grunt) {
               cwd: 'build/',
               expand: true,
               src: '**',
-              dest: 'R:\\app\\ng-sharepoint'
+              //dest: 'R:\\app\\ng-sharepoint'
+              //dest: 'X:\\ComercialyMktg\\Ofertas\\app\\js\\libs'
+              //dest: 'W:\\app\\js'
+              dest: 'X:\\app\\ngSharePoint'
             }
           ]
         }      

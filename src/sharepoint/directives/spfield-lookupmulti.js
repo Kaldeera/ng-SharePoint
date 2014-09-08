@@ -129,7 +129,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					if ($scope.lookupList === void 0) {
 
-						SharePoint.getWeb().then(function(web) {
+						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
 

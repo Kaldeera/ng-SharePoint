@@ -32,17 +32,20 @@ angular.module('ngSharePoint').directive('spfieldControl',
 				
 				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
 				
-				spformController.initField($attrs.name);
+				if ($scope.fieldSchema !== void 0) {
+					spformController.initField($attrs.name);
 
-				var fieldType = $scope.fieldSchema.TypeAsString;
-				if (fieldType === 'UserMulti') fieldType = 'User';
-				var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
-				var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-				var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
+					var fieldType = $scope.fieldSchema.TypeAsString;
+					if (fieldType === 'UserMulti') fieldType = 'User';
+					var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+					var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
 
-				$element.append(fieldControlHTML);
-				$compile($element)($scope);
-
+					$element.append(fieldControlHTML);
+					$compile($element)($scope);
+				} else {
+					console.error('Unknown field ' + $attrs.name);
+				}
 			}
 
 		};

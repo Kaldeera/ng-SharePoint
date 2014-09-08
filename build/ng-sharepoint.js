@@ -54,6 +54,7 @@ var utils = {
 		attributePrefix: ''
 	}),
 	*/
+	
 
 
 	// ***************************************************************************
@@ -230,7 +231,7 @@ var utils = {
 
 			d = angular.fromJson(response.body || '{ "d": {} }').d;
 
-			if (d.results){
+			if (d.results) {
 				d = d.results;
 			}
 		}
@@ -841,7 +842,11 @@ angular.module('ngSharePoint')
 			var def = $q.defer();
 
 			SPUtils.SharePointReady().then(function() {
-				def.resolve(new SPWeb(url));
+
+				new SPWeb(url).then(function(web) {
+					def.resolve(web);
+				});
+
 			});
 
 			return def.promise;
@@ -2084,6 +2089,13 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 
 			} else {
 
+				// Max 2.5 sec. to load all needed scripts
+				setTimeout(function() {
+					isSharePointReady = true;
+					deferred.resolve();
+				}, 2500);
+
+
 				// Load sp.js
 				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
 
@@ -2097,6 +2109,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 					loadScriptPromises.push(self.loadScript('clientforms.js', ''));
 					loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
 					loadScriptPromises.push(self.loadScript('autofill.js', ''));
+					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
+					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
 					
 
 					$q.all(loadScriptPromises).then(function() {
@@ -2369,7 +2383,34 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 			});
 
 			return deferred.promise;
-	    }
+	    },
+
+
+
+		getWebById: function(webId) {
+			
+			var self = this;
+			var deferred = $q.defer();
+
+			this.SharePointReady().then(function() {
+				var ctx = new SP.ClientContext();
+				var site = ctx.get_site();
+				var web = site.openWebById(webId.ltrim('{').rtrim('}'));
+
+				ctx.load(web, 'ServerRelativeUrl');
+
+				ctx.executeQueryAsync(function() {
+
+					deferred.resolve(web);
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+			});
+
+			return deferred.promise;
+		}
 
 	};
 
@@ -2409,18 +2450,65 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			this.url = url;
 
-			// Si no se ha especificado url, obtiene la url del web actual 
-			if (!this.url) {
-
-				this.url = _spPageContextInfo.webServerRelativeUrl;
-
-			}
-
-
-			// Inicializa la url de la API REST de SharePoint
-			this.apiUrl = this.url.rtrim('/') + '/_api/web';
+			return this.getApiUrl();
 
 		};
+
+
+
+		// ****************************************************************************
+		// getApiUrl
+		//
+		// @returns: Promise that will be resolved after the initialization of the 
+		//			 SharePoint web API REST url.
+		//
+		SPWebObj.prototype.getApiUrl = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+
+			if (this.apiUrl !== void 0) {
+
+				def.resolve(this);
+
+			} else {
+
+				// Si no se ha especificado url, obtiene la url del web actual 
+				if (this.url === void 0) {
+
+					this.url = _spPageContextInfo.webServerRelativeUrl;
+					this.apiUrl = this.url.rtrim('/') + '/_api/web';
+					def.resolve(this);
+
+				} else {
+
+					// Cleans the 'url' parameter.
+					this.url = this.url.trim().ltrim('{').rtrim('}');
+
+					if (utils.isGuid(this.url)) {
+
+						SPUtils.getWebById(this.url).then(function(jsomWeb) {
+
+							self.url = jsomWeb.get_serverRelativeUrl();
+							self.apiUrl = self.url.rtrim('/') + '/_api/web';
+							def.resolve(self);
+
+						});
+
+					} else {
+
+						this.apiUrl = this.url.rtrim('/') + '/_api/web';
+						def.resolve(this);
+					}
+
+				}
+			}
+
+			return def.promise;
+
+		};
+
 
 
 
@@ -3323,6 +3411,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 						renderField($scope.currentMode);
 
+					}, function(err) {
+
+						$scope.errorMsg = err.message;
+
+						if ($scope.value === void 0) {
+							setElementHTML('');
+						} else {
+							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+						}
 					});
 
 				}, true);
@@ -3383,7 +3480,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupList === void 0) {
 
-						SharePoint.getWeb().then(function(web) {
+						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
 
@@ -3395,10 +3492,19 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 										def.resolve($scope.lookupList);
 
+									}, function(err) {
+
+										def.reject(err);
 									});
 
+								}, function(err) {
+
+									def.reject(err);
 								});
 
+							}, function(err) {
+
+								def.reject(err);
 							});
 
 						});
@@ -3431,9 +3537,9 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 						getLookupList().then(function(list) {
 
-							if ($scope.value === null || $scope.value === 0) {
+							if ($scope.value === null || $scope.value === 0 || $scope.value === void 0) {
 
-								// If no value returns an empty object for corrent binding
+								// If no value returns an empty object for correct binding
 								$scope.lookupItem = {
 									Title: '',
 									url: ''
@@ -3473,9 +3579,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 									def.resolve($scope.lookupItem);
 
+								}, function(err) {
+
+									def.reject(err);
 								});
 							}
 
+						}, function(err) {
+
+							def.reject(err);
 						});
 					}
 
@@ -3517,8 +3629,14 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								def.resolve($scope.lookupItems);
 
+							}, function(err) {
+
+								def.reject(err);
 							});
 
+						}, function(err) {
+
+							def.reject(err);
 						});
 					}
 
@@ -4815,7 +4933,7 @@ angular.module('ngSharePoint').directive('spfield',
 		return {
 
 			restrict: 'EA',
-			replace: true,
+			//replace: true,
 			template: '<tr></tr>',
 
 			compile: function(element, attrs) {
@@ -4828,7 +4946,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
 							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name).replace(/\{\{mode\}\}/g, mode);
-								
+							
 							var newElement = $compile(html)($scope);
 							$element.replaceWith(newElement);
 							$element = newElement;
@@ -4885,17 +5003,24 @@ angular.module('ngSharePoint').directive('spformRule',
 						$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
 							var newElement = $compile(html)($scope);
-									$element.replaceWith(newElement);
-									$element = newElement;
+							$element.replaceWith(newElement);
+							$element = newElement;
 
 						});
 
 					} else {
 
 						$transclude($scope, function (clone) {
+							/*
 							angular.forEach(clone, function (e) {
 								$animate.enter(e, $element.parent(), $element);
 							});
+							*/
+
+							for (var i = clone.length - 1; i > 0; i--) {
+								var e = clone[i];
+								$animate.enter(e, $element.parent(), $element);
+							}
 						});
 
 						$element.remove();
@@ -4943,6 +5068,12 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 				$scope.isInDesignMode = SPUtils.inDesignMode();
+
+				SPUtils.SharePointReady().then(function() {
+					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
+					$scope.SaveButtonCaption = STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
+					$scope.CancelButtonCaption = STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
+				});
 
 
 
@@ -5033,6 +5164,7 @@ angular.module('ngSharePoint').directive('spform',
 
 						var fieldSchema = this.getFieldSchema(fieldName);
 
+						// Set field default value.
 						switch(fieldSchema.TypeAsString) {
 
 							case 'MultiChoice':
@@ -5110,20 +5242,20 @@ angular.module('ngSharePoint').directive('spform',
 						
 						$scope.item.save().then(function(data) {
 
-							console.log(data);
 							angular.extend($scope.originalItem, data);
-
-							$scope.onPostSave({ item: $scope.originalItem });
-
 							$scope.formStatus = this.status.IDLE;
 
-							// CLose the 'Working on it...' dialog.
-							dlg.close();
+							if ($scope.onPostSave({ item: $scope.originalItem }) || true) {
 
-							// TODO: Performs the 'after-save' action/s or redirect
+								// Close the 'Working on it...' dialog.
+								dlg.close();
 
-							// Default 'after-save' action.
-							self.closeForm();
+								// TODO: Performs the 'post-save' action/s or redirect
+
+								// Default 'post-save' action.
+								self.closeForm();
+								
+							}
 
 						}, function(err) {
 
@@ -5179,9 +5311,12 @@ angular.module('ngSharePoint').directive('spform',
 
 					pre: function($scope, $element, $attrs, spformController) {
 
-						if (SPUtils.inDesignMode()) return;
+						$scope.isInDesignMode = SPUtils.inDesignMode();
+						
+						if ($scope.isInDesignMode) return;
 
 
+						// Watch for form mode changes
 						$scope.$watch(function() {
 
 							return spformController.getFormMode();
@@ -5199,6 +5334,8 @@ angular.module('ngSharePoint').directive('spform',
 							}
 						});
 
+
+						// Watch for item changes
 						$scope.$watch('originalItem', function(newValue) {
 
 							// Checks if the item has a value
@@ -5224,6 +5361,12 @@ angular.module('ngSharePoint').directive('spform',
 
 							}
 
+
+							/*
+							 * NOTA: El if..else anterior se puede eliminar dejando únicamente la llamada a $scope.item.list.getFields().then(...) ya que 
+							 * 		 el objeto SPList ya cachea los Fields y la función 'getFields' realiza la comprobación internamente.
+							 */
+
 						}, true);
 
 
@@ -5248,34 +5391,10 @@ angular.module('ngSharePoint').directive('spform',
 
 							elementToTransclude.empty();
 
-							transclude($scope, function (clone) {
-								angular.forEach(clone, function (e) {
+							parseRules();
 
-									// if e (element) is a spform-rule, evaluates first the test expression
-									if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
-
-										var testExpression = e.attributes.test.value;
-
-										if (!terminalRuleAdded && $scope.$eval(testExpression)) {
-
-											elementToTransclude.append(e);
-
-											if (e.attributes.terminal !== void 0) {
-
-												terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
-											}
-
-										} else {
-											e.remove();
-											e = null;
-										}
-										
-									} else {
-
-										elementToTransclude.append(e);
-									}
-								});
-							});
+							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper');
+							if (loadingAnimation !== void 0) loadingAnimation.remove();
 
 
 							if ($attrs.templateUrl) {
@@ -5283,6 +5402,7 @@ angular.module('ngSharePoint').directive('spform',
 								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
 									$element.html('').append(html);
+									parseRules();
 									$compile($element)($scope);
 
 								});
@@ -5312,11 +5432,51 @@ angular.module('ngSharePoint').directive('spform',
 							}
 
 							$scope.templateLoaded = true;
-						};
+
+						}; //-> $scope.loadItemTemplate
+
+
+
+						function parseRules() {
+
+							transclude($scope, function (clone) {
+
+								angular.forEach(clone, function (e) {
+
+									// if e (element) is a spform-rule, evaluates first the test expression
+									if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
+
+										var testExpression = e.attributes.test.value;
+
+										if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+
+											elementToTransclude.append(e);
+
+											if (e.attributes.terminal !== void 0) {
+
+												terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
+											}
+
+										} else {
+											e.remove();
+											e = null;
+										}
+										
+									} else {
+
+										elementToTransclude.append(e);
+									}
+
+								});
+
+							});
+
+						}; //-> parseRules
 
 					}
 					
 				};
+
 
 			}
 
@@ -5371,6 +5531,23 @@ angular.module('ngSharePoint')
         return $sce.trustAsHtml(text.replace(/\n/g, '<br/>'));
     };
 
+}]);
+/*
+	newlines - filter
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+angular.module('ngSharePoint')
+
+.filter('unsafe', ['$sce', function($sce) {
+    return function(val) {
+        return $sce.trustAsHtml(val);
+    };
 }]);
 angular.module('ngSharePointFormPage', ['ngSharePoint']);
 

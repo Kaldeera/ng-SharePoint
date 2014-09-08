@@ -14,13 +14,34 @@ angular.module('ngSharePointFormPage').directive('spformpage', ['SharePoint', 'S
 
 			if (listId !== void 0 && itemId !== void 0) {
 
-				SharePoint.getWeb()
-					.then(function(web) { return web.getList(listId); })
+				SharePoint.getWeb().then(function(web) {
+					web.getList(listId).then(function(list) {
+
+						list.getItemById(itemId).then(function(item) {
+
+							$scope.item = item;
+
+						}, function(error) {
+							console.log('Error item', error);
+						});
+
+					}, function(error) {
+						console.log('Error list', error);
+					});
+
+				}, function(error) {
+					console.log('Error web', error);
+				});
+
+/*
 					.then(function(list) { return list.getItemById(itemId); })
 					.then(function(item) {
 						$scope.item = item;
+					})
+					.fail(function(err) {
+						console.log('ERROR!', err);
 					});
-					
+*/					
 			}
 
 

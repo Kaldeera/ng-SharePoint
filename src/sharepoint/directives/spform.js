@@ -54,6 +54,7 @@ angular.module('ngSharePoint').directive('spform',
 
 						var fieldSchema = this.getFieldSchema(fieldName);
 
+						// Set field default value.
 						switch(fieldSchema.TypeAsString) {
 
 							case 'MultiChoice':
@@ -134,14 +135,14 @@ angular.module('ngSharePoint').directive('spform',
 							angular.extend($scope.originalItem, data);
 							$scope.formStatus = this.status.IDLE;
 
-							if ($scope.onPostSave({ item: $scope.originalItem })) {}
+							if ($scope.onPostSave({ item: $scope.originalItem }) || true) {
 
 								// Close the 'Working on it...' dialog.
 								dlg.close();
 
-								// TODO: Performs the 'after-save' action/s or redirect
+								// TODO: Performs the 'post-save' action/s or redirect
 
-								// Default 'after-save' action.
+								// Default 'post-save' action.
 								self.closeForm();
 								
 							}
@@ -200,9 +201,12 @@ angular.module('ngSharePoint').directive('spform',
 
 					pre: function($scope, $element, $attrs, spformController) {
 
-						if (SPUtils.inDesignMode()) return;
+						$scope.isInDesignMode = SPUtils.inDesignMode();
+						
+						if ($scope.isInDesignMode) return;
 
 
+						// Watch for form mode changes
 						$scope.$watch(function() {
 
 							return spformController.getFormMode();
@@ -213,13 +217,18 @@ angular.module('ngSharePoint').directive('spform',
 
 							if ($scope.item !== void 0) {
 
-								if ($scope.item.list.Fields !== void 0) {
+								$scope.item.list.getFields().then(function(fields) {
 
+									$scope.schema = fields;
 									$scope.loadItemTemplate();
-								}
+
+								});
+
 							}
 						});
 
+
+						// Watch for item changes
 						$scope.$watch('originalItem', function(newValue) {
 
 							// Checks if the item has a value
@@ -228,22 +237,12 @@ angular.module('ngSharePoint').directive('spform',
 							$scope.item = angular.copy(newValue);
 							$scope.item.clean();
 
-							// Checks if list fields (schema) were loaded
-							if ($scope.item.list.Fields === void 0) {
+							$scope.item.list.getFields().then(function(fields) {
 
-								$scope.item.list.getFields().then(function(fields) {
-
-									$scope.schema = fields;
-									$scope.loadItemTemplate();
-
-								});
-
-							} else {
-
-								$scope.schema = $scope.item.list.Fields;
+								$scope.schema = fields;
 								$scope.loadItemTemplate();
 
-							}
+							});
 
 						}, true);
 
@@ -270,6 +269,7 @@ angular.module('ngSharePoint').directive('spform',
 							elementToTransclude.empty();
 
 							transclude($scope, function (clone) {
+
 								angular.forEach(clone, function (e) {
 
 									// if e (element) is a spform-rule, evaluates first the test expression
@@ -296,7 +296,12 @@ angular.module('ngSharePoint').directive('spform',
 										elementToTransclude.append(e);
 									}
 								});
+
 							});
+
+
+							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper');
+							if (loadingAnimation !== void 0) loadingAnimation.remove();
 
 
 							if ($attrs.templateUrl) {
@@ -310,6 +315,7 @@ angular.module('ngSharePoint').directive('spform',
 
 							} else {
 
+								// If no template-url attribute was provided
 								if (elementToTransclude[0].children.length === 0) {
 
 									// if no template then generate a default template.

@@ -36,17 +36,19 @@ angular.module('ngSharePoint').directive('spformRule',
 						$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
 							var newElement = $compile(html)($scope);
-									$element.replaceWith(newElement);
-									$element = newElement;
+							$element.replaceWith(newElement);
+							$element = newElement;
 
 						});
 
 					} else {
 
 						$transclude($scope, function (clone) {
-							angular.forEach(clone, function (e) {
+
+							for(var i = clone.length - 1; i >= 0; i--) {
+								var e = clone[i];
 								$animate.enter(e, $element.parent(), $element);
-							});
+							}
 						});
 
 						$element.remove();

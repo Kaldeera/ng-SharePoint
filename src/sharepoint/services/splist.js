@@ -29,7 +29,7 @@ angular.module('ngSharePoint').factory('SPList',
 		// @web: SPWeb instance that contains the list in SharePoint.
 		// @listName: Name or Guid of the list you want to instantiate.
 		//
-		var SPListObj = function(web, listName) {
+		var SPListObj = function(web, listName, listProperties) {
 
 			if (web === void 0) {
 				throw '@web parameter not specified in SPList constructor.';
@@ -70,6 +70,10 @@ angular.module('ngSharePoint').factory('SPList',
 			// Gets the list fields (Schema) from the cache if exists.
 			this.Fields = SPCache.getCacheValue('SPListFieldsCache', this.apiUrl);
 
+			// Init listProperties (if exists)
+			if (listProperties !== void 0) {
+				angular.extend(this, listProperties);
+			}
 		};
 
 

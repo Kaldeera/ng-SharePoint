@@ -23,7 +23,7 @@ angular.module('ngSharePoint').directive('spfield',
 		return {
 
 			restrict: 'EA',
-			replace: true,
+			//replace: true,
 			template: '<tr></tr>',
 
 			compile: function(element, attrs) {
@@ -36,7 +36,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
 							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name).replace(/\{\{mode\}\}/g, mode);
-								
+							
 							var newElement = $compile(html)($scope);
 							$element.replaceWith(newElement);
 							$element = newElement;

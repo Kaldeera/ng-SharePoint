@@ -32,18 +32,65 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			this.url = url;
 
-			// Si no se ha especificado url, obtiene la url del web actual 
-			if (!this.url) {
-
-				this.url = _spPageContextInfo.webServerRelativeUrl;
-
-			}
-
-
-			// Inicializa la url de la API REST de SharePoint
-			this.apiUrl = this.url.rtrim('/') + '/_api/web';
+			return this.getApiUrl();
 
 		};
+
+
+
+		// ****************************************************************************
+		// getApiUrl
+		//
+		// @returns: Promise that will be resolved after the initialization of the 
+		//			 SharePoint web API REST url.
+		//
+		SPWebObj.prototype.getApiUrl = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+
+			if (this.apiUrl !== void 0) {
+
+				def.resolve(this);
+
+			} else {
+
+				// Si no se ha especificado url, obtiene la url del web actual 
+				if (this.url === void 0) {
+
+					this.url = _spPageContextInfo.webServerRelativeUrl;
+					this.apiUrl = this.url.rtrim('/') + '/_api/web';
+					def.resolve(this);
+
+				} else {
+
+					// Cleans the 'url' parameter.
+					this.url = this.url.trim().ltrim('{').rtrim('}');
+
+					if (utils.isGuid(this.url)) {
+
+						SPUtils.getWebById(this.url).then(function(jsomWeb) {
+
+							self.url = jsomWeb.get_serverRelativeUrl();
+							self.apiUrl = self.url.rtrim('/') + '/_api/web';
+							def.resolve(self);
+
+						});
+
+					} else {
+
+						this.apiUrl = this.url.rtrim('/') + '/_api/web';
+						def.resolve(this);
+					}
+
+				}
+			}
+
+			return def.promise;
+
+		};
+
 
 
 
@@ -131,8 +178,16 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 					success: function(data) {
 
-						// NOTE: this function could return an array of SPList objects?
-						def.resolve(utils.parseSPResponse(data));
+						var d = utils.parseSPResponse(data);
+						var lists = [];
+
+						angular.forEach(d, function(listProperties) {
+							var spList = new SPList(self, listProperties.Id, listProperties);
+							lists.push(spList);
+						});
+
+						def.resolve(lists);
+						// def.resolve(utils.parseSPResponse(data));
 					}, 
 
 					error: function(data, errorCode, errorMessage) {

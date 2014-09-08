@@ -33,6 +33,12 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 				$scope.isInDesignMode = SPUtils.inDesignMode();
 
+				SPUtils.SharePointReady().then(function() {
+					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
+					$scope.SaveButtonCaption = STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
+					$scope.CancelButtonCaption = STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
+				});
+
 
 
 				// ****************************************************************************

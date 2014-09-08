@@ -54,6 +54,7 @@ var utils = {
 		attributePrefix: ''
 	}),
 	*/
+	
 
 
 	// ***************************************************************************
@@ -230,7 +231,7 @@ var utils = {
 
 			d = angular.fromJson(response.body || '{ "d": {} }').d;
 
-			if (d.results){
+			if (d.results) {
 				d = d.results;
 			}
 		}
