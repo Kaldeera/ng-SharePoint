@@ -42,6 +42,7 @@ angular.module('ngSharePoint').directive('spform',
 					PROCESSING: 1
 				};
 
+
 				this.isNew = function() {
 
 					return $scope.originalItem.isNew();
@@ -88,7 +89,23 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.getFieldSchema = function(fieldName) {
 	
-					return $scope.schema[fieldName];
+					if (utils.isGuid(fieldName)) {
+
+						var fieldSchema = void 0;
+
+						angular.forEach($scope.schema, function(field) {
+							if (field.Id == fieldName) {
+								fieldSchema = field;
+							}
+						});
+
+						return fieldSchema;
+
+					} else {
+
+						return $scope.schema[fieldName];
+					}
+
 				};
 
 
@@ -161,7 +178,11 @@ angular.module('ngSharePoint').directive('spform',
 								title: SP.Res.dlgTitleError,
 								html: dom,
 								showClose: true,
-								autoSize: true
+								autoSize: true,
+								dialogReturnValueCallback: function() {
+									$scope.formStatus = self.status.IDLE;
+									$scope.$apply();
+								}
 							});
 
 						});
@@ -250,6 +271,8 @@ angular.module('ngSharePoint').directive('spform',
 
 						$scope.loadItemTemplate = function() {
 							
+							$scope.formStatus = spformController.status.PROCESSING;
+
 							var terminalRuleAdded = false;
 
 							var elements = $element.find('*');
@@ -269,60 +292,36 @@ angular.module('ngSharePoint').directive('spform',
 							elementToTransclude.empty();
 
 							transclude($scope, function (clone) {
-
-								angular.forEach(clone, function (e) {
-
-									// if e (element) is a spform-rule, evaluates first the test expression
-									if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
-
-										var testExpression = e.attributes.test.value;
-
-										if (!terminalRuleAdded && $scope.$eval(testExpression)) {
-
-											elementToTransclude.append(e);
-
-											if (e.attributes.terminal !== void 0) {
-
-												terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
-											}
-
-										} else {
-											e.remove();
-											e = null;
-										}
-										
-									} else {
-
-										elementToTransclude.append(e);
-									}
-								});
-
+								parseRules(elementToTransclude, clone, true);
 							});
 
 
 							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper');
-							if (loadingAnimation !== void 0) loadingAnimation.remove();
+							if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
 
 							if ($attrs.templateUrl) {
 
 								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
-									$element.html('').append(html);
+									terminalRuleAdded = false;
+									$element.html('');
+									parseRules($element, angular.element(html), false);
 									$compile($element)($scope);
+									$scope.formStatus = spformController.status.IDLE;
 
 								});
 
 							} else {
 
-								// If no template-url attribute was provided
+								// If no template-url attribute was provided generate a default form template
 								if (elementToTransclude[0].children.length === 0) {
 
-									// if no template then generate a default template.
 									$scope.fields = [];
 
 									angular.forEach($scope.item.list.Fields, function(field) {
-										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType' && field.InternalName !== 'Attachments') {
+										//if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType' && field.InternalName !== 'Attachments') {
+										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
 											$scope.fields.push(field);
 										}
 									});
@@ -331,15 +330,49 @@ angular.module('ngSharePoint').directive('spform',
 
 										elementToTransclude.html('').append(html);
 										$compile(elementToTransclude)($scope);
+										$scope.formStatus = spformController.status.IDLE;
 
 									});
 
 								}
 								
 							}
-
-							$scope.templateLoaded = true;
+							
 						};
+
+
+						function parseRules(targetElement, sourceElements, isTransclude) {
+
+							var terminalRuleAdded = false;
+
+							angular.forEach(sourceElements, function (e) {
+
+								// if e (element) is a spform-rule, evaluates first the test expression
+								if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
+
+									var testExpression = e.attributes.test.value;
+
+									if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+
+										targetElement.append(e);
+
+										if (e.attributes.terminal !== void 0) {
+
+											terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
+										}
+
+									} else if (isTransclude) {
+										e.remove();
+										e = null;
+									}
+									
+								} else {
+
+									targetElement.append(e);
+								}
+							});
+
+						}
 
 					}
 					

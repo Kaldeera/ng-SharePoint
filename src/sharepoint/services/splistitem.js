@@ -11,7 +11,7 @@
 
 
 ///////////////////////////////////////
-//	SPList
+//	SPListItem
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPListItem', 
@@ -68,7 +68,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 		// ****************************************************************************
 		// isNew
 		//
-		// Returns a boolean value indicating if the item is anew item.
+		// Returns a boolean value indicating if the item is a new item.
 		//
 		// @returns: {Boolean} True if the item is a new item. Otherwise false.
 		//
@@ -295,6 +295,235 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 		// ****************************************************************************		
+		// getAttachments
+		//
+		// Gets the attachments of the item.
+		// If the item is a DocumentLibrary item, also gets the File and/or Folder.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.getAttachments = function() {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+			executor.executeAsync({
+
+				url: self.getAPIUrl() + '/AttachmentFiles',
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					self.AttachmentFiles = d;
+
+					// Initialize the attachments arrays (See processAttachments method).
+					self.attachments = {
+						add: [],
+						remove: []
+					};
+
+					def.resolve(d);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getAttachments
+
+
+
+		// ****************************************************************************		
+		// addAttachment
+		//
+		// Attach a file to the item.
+		//
+		// @file: A file object from the files property of the DOM element <input type="File" ... />.
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.addAttachment = function(file) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+			SPUtils.getFileBinary(file).then(function(binaryData) {
+
+				executor.executeAsync({
+
+					url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + file.name + "')",
+					method: "POST",
+			        binaryStringRequestBody: true,
+			        body: binaryData,
+			        state: "Update",
+					headers: { 
+						"Accept": "application/json; odata=verbose"
+					},
+
+					success: function(data) {
+
+						var d = utils.parseSPResponse(data);
+
+						def.resolve(d);
+					}, 
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+
+			});
+
+
+			return def.promise;
+
+		}; // addAttachment
+
+
+
+		// ****************************************************************************		
+		// removeAttachment
+		//
+		// Removes a file attached to the item.
+		//
+		// @file: Object from the DOM element <input type="File" />.
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.removeAttachment = function(fileName) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+
+			// Set the headers for the REST API call.
+			// ----------------------------------------------------------------------------
+			var headers = {
+				"Accept": "application/json; odata=verbose",
+				"X-HTTP-Method": "DELETE"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+			// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+
+			executor.executeAsync({
+
+				url: self.getAPIUrl() + "/AttachmentFiles('" + fileName + "')",
+				method: "POST",
+				headers: headers,
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+
+					def.resolve(d);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+
+			return def.promise;
+
+		}; // removeAttachment
+
+
+
+
+		// ****************************************************************************		
+		// processAttachments
+		//
+		// Process the attachments arrays (See SPFieldAttachments directive).
+		// The attachments arrays contains the files to attach to the item and the
+		// attachments to remove from the item.
+		// After the process, the attachments arrays will be initialized.
+		//
+		// @returns: Promise with the result of the process.
+		//
+		SPListItemObj.prototype.processAttachments = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+
+			// Check if the attachments property has been initialized
+			if (this.attachments !== void 0) {
+
+				var promises = [];
+
+				if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
+					angular.forEach(this.attachments.add, function(file) {
+						promises.push(self.addAttachment(file));
+					});
+				}
+
+				if (this.attachments.remove !== void 0 && this.attachments.remove.length > 0) {
+					angular.forEach(this.attachments.remove, function(fileName) {
+						promises.push(self.removeAttachment(fileName));
+					});
+				}
+
+				$q.all(promises).then(function() {
+
+					// Clean up the attachments arrays
+					self.attachments.add = [];
+					self.attachments.remove = [];
+
+					def.resolve();
+				});
+
+			} else {
+
+				// Nothing to do
+				def.resolve();
+			}
+
+
+            return def.promise;
+
+		}; // processAttachments
+
+
+
+
+		// ****************************************************************************		
 		// save
 		//
 		// Creates this item in the list. 
@@ -321,8 +550,17 @@ angular.module('ngSharePoint').factory('SPListItem',
 				};
 
 				var saveObj = angular.extend({}, self);
+
+				// Remove not valid properties
 				delete saveObj.list;
 				delete saveObj.apiUrl;
+
+				// Remove functions
+				for (var p in saveObj) {
+					if (typeof saveObj[p] == 'function') {
+						delete saveObj[p];
+					}
+				}
 
 				// Remove all Computed and ReadOnlyFields
 				angular.forEach(self.list.Fields, function(field) {
@@ -332,6 +570,10 @@ angular.module('ngSharePoint').factory('SPListItem',
 					}
 
 				});
+
+				// Remove attachments
+				delete saveObj.attachments;
+				delete saveObj.AttachmentFiles;
 
 				angular.extend(body, saveObj);
 				console.log(saveObj, angular.toJson(saveObj));
@@ -377,10 +619,13 @@ angular.module('ngSharePoint').factory('SPListItem',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-
 						angular.extend(self, d);
 
-						def.resolve(d);
+						self.processAttachments().then(function() {
+							def.resolve(d);
+						}, function() {
+							def.resolve(d);
+						});
 					}, 
 
 					error: function(data, errorCode, errorMessage) {

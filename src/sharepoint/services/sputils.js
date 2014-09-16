@@ -373,6 +373,44 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 			});
 
 			return deferred.promise;
+		},
+
+
+
+
+		// ****************************************************************************		
+		// getFileBinary
+		//
+		// Converts a file object to binary data string.
+		//
+		// @file: A file object from the files property of the DOM element <input type="File" ... />.
+		// @returns: Promise with the binary data.
+		//
+		getFileBinary: function(file) {
+
+			var self = this;
+			var deferred = $q.defer();
+			var reader = new FileReader();
+
+			reader.onload = function(e) {
+				var buffer = e.target.result;
+				var bytes = new Uint8Array(buffer);
+				var binaryData = '';
+
+				for (var i = 0; i < bytes.length; i++) {
+					binaryData += String.fromCharCode(bytes[i]);
+				}
+
+				deferred.resolve(binaryData);
+			};
+
+			reader.onerror = function(e) {
+				deferred.reject(e.target.error);
+			};
+
+			reader.readAsArrayBuffer(file);
+
+			return deferred.promise;
 		}
 
 	};

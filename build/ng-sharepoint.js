@@ -956,7 +956,7 @@ angular.module('ngSharePoint').factory('SPList',
 		// @web: SPWeb instance that contains the list in SharePoint.
 		// @listName: Name or Guid of the list you want to instantiate.
 		//
-		var SPListObj = function(web, listName) {
+		var SPListObj = function(web, listName, listProperties) {
 
 			if (web === void 0) {
 				throw '@web parameter not specified in SPList constructor.';
@@ -997,6 +997,10 @@ angular.module('ngSharePoint').factory('SPList',
 			// Gets the list fields (Schema) from the cache if exists.
 			this.Fields = SPCache.getCacheValue('SPListFieldsCache', this.apiUrl);
 
+			// Init listProperties (if exists)
+			if (listProperties !== void 0) {
+				angular.extend(this, listProperties);
+			}
 		};
 
 
@@ -1577,7 +1581,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 ///////////////////////////////////////
-//	SPList
+//	SPListItem
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPListItem', 
@@ -1634,7 +1638,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 		// ****************************************************************************
 		// isNew
 		//
-		// Returns a boolean value indicating if the item is anew item.
+		// Returns a boolean value indicating if the item is a new item.
 		//
 		// @returns: {Boolean} True if the item is a new item. Otherwise false.
 		//
@@ -1861,6 +1865,235 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 		// ****************************************************************************		
+		// getAttachments
+		//
+		// Gets the attachments of the item.
+		// If the item is a DocumentLibrary item, also gets the File and/or Folder.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.getAttachments = function() {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+			executor.executeAsync({
+
+				url: self.getAPIUrl() + '/AttachmentFiles',
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					self.AttachmentFiles = d;
+
+					// Initialize the attachments arrays (See processAttachments method).
+					self.attachments = {
+						add: [],
+						remove: []
+					};
+
+					def.resolve(d);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getAttachments
+
+
+
+		// ****************************************************************************		
+		// addAttachment
+		//
+		// Attach a file to the item.
+		//
+		// @file: A file object from the files property of the DOM element <input type="File" ... />.
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.addAttachment = function(file) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+			SPUtils.getFileBinary(file).then(function(binaryData) {
+
+				executor.executeAsync({
+
+					url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + file.name + "')",
+					method: "POST",
+			        binaryStringRequestBody: true,
+			        body: binaryData,
+			        state: "Update",
+					headers: { 
+						"Accept": "application/json; odata=verbose"
+					},
+
+					success: function(data) {
+
+						var d = utils.parseSPResponse(data);
+
+						def.resolve(d);
+					}, 
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+
+			});
+
+
+			return def.promise;
+
+		}; // addAttachment
+
+
+
+		// ****************************************************************************		
+		// removeAttachment
+		//
+		// Removes a file attached to the item.
+		//
+		// @file: Object from the DOM element <input type="File" />.
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListItemObj.prototype.removeAttachment = function(fileName) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.list.web.url);
+
+
+			// Set the headers for the REST API call.
+			// ----------------------------------------------------------------------------
+			var headers = {
+				"Accept": "application/json; odata=verbose",
+				"X-HTTP-Method": "DELETE"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+			// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+
+			executor.executeAsync({
+
+				url: self.getAPIUrl() + "/AttachmentFiles('" + fileName + "')",
+				method: "POST",
+				headers: headers,
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+
+					def.resolve(d);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+
+			return def.promise;
+
+		}; // removeAttachment
+
+
+
+
+		// ****************************************************************************		
+		// processAttachments
+		//
+		// Process the attachments arrays (See SPFieldAttachments directive).
+		// The attachments arrays contains the files to attach to the item and the
+		// attachments to remove from the item.
+		// After the process, the attachments arrays will be initialized.
+		//
+		// @returns: Promise with the result of the process.
+		//
+		SPListItemObj.prototype.processAttachments = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+
+			// Check if the attachments property has been initialized
+			if (this.attachments !== void 0) {
+
+				var promises = [];
+
+				if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
+					angular.forEach(this.attachments.add, function(file) {
+						promises.push(self.addAttachment(file));
+					});
+				}
+
+				if (this.attachments.remove !== void 0 && this.attachments.remove.length > 0) {
+					angular.forEach(this.attachments.remove, function(fileName) {
+						promises.push(self.removeAttachment(fileName));
+					});
+				}
+
+				$q.all(promises).then(function() {
+
+					// Clean up the attachments arrays
+					self.attachments.add = [];
+					self.attachments.remove = [];
+
+					def.resolve();
+				});
+
+			} else {
+
+				// Nothing to do
+				def.resolve();
+			}
+
+
+            return def.promise;
+
+		}; // processAttachments
+
+
+
+
+		// ****************************************************************************		
 		// save
 		//
 		// Creates this item in the list. 
@@ -1887,8 +2120,17 @@ angular.module('ngSharePoint').factory('SPListItem',
 				};
 
 				var saveObj = angular.extend({}, self);
+
+				// Remove not valid properties
 				delete saveObj.list;
 				delete saveObj.apiUrl;
+
+				// Remove functions
+				for (var p in saveObj) {
+					if (typeof saveObj[p] == 'function') {
+						delete saveObj[p];
+					}
+				}
 
 				// Remove all Computed and ReadOnlyFields
 				angular.forEach(self.list.Fields, function(field) {
@@ -1898,6 +2140,10 @@ angular.module('ngSharePoint').factory('SPListItem',
 					}
 
 				});
+
+				// Remove attachments
+				delete saveObj.attachments;
+				delete saveObj.AttachmentFiles;
 
 				angular.extend(body, saveObj);
 				console.log(saveObj, angular.toJson(saveObj));
@@ -1943,10 +2189,13 @@ angular.module('ngSharePoint').factory('SPListItem',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-
 						angular.extend(self, d);
 
-						def.resolve(d);
+						self.processAttachments().then(function() {
+							def.resolve(d);
+						}, function() {
+							def.resolve(d);
+						});
 					}, 
 
 					error: function(data, errorCode, errorMessage) {
@@ -2088,13 +2337,13 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 				deferred.resolve();
 
 			} else {
-
+/*
 				// Max 2.5 sec. to load all needed scripts
 				setTimeout(function() {
 					isSharePointReady = true;
 					deferred.resolve();
 				}, 2500);
-
+*/
 
 				// Load sp.js
 				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
@@ -2118,6 +2367,10 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 						isSharePointReady = true;
 						deferred.resolve();
 
+					}, function(error) {
+
+						console.error('Error loading SharePoint script dependences', error);
+						deferred.reject(error);
 					});
 
 
@@ -2410,6 +2663,44 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 			});
 
 			return deferred.promise;
+		},
+
+
+
+
+		// ****************************************************************************		
+		// getFileBinary
+		//
+		// Converts a file object to binary data string.
+		//
+		// @file: A file object from the files property of the DOM element <input type="File" ... />.
+		// @returns: Promise with the binary data.
+		//
+		getFileBinary: function(file) {
+
+			var self = this;
+			var deferred = $q.defer();
+			var reader = new FileReader();
+
+			reader.onload = function(e) {
+				var buffer = e.target.result;
+				var bytes = new Uint8Array(buffer);
+				var binaryData = '';
+
+				for (var i = 0; i < bytes.length; i++) {
+					binaryData += String.fromCharCode(bytes[i]);
+				}
+
+				deferred.resolve(binaryData);
+			};
+
+			reader.onerror = function(e) {
+				deferred.reject(e.target.error);
+			};
+
+			reader.readAsArrayBuffer(file);
+
+			return deferred.promise;
 		}
 
 	};
@@ -2596,8 +2887,16 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 					success: function(data) {
 
-						// NOTE: this function could return an array of SPList objects?
-						def.resolve(utils.parseSPResponse(data));
+						var d = utils.parseSPResponse(data);
+						var lists = [];
+
+						angular.forEach(d, function(listProperties) {
+							var spList = new SPList(self, listProperties.Id, listProperties);
+							lists.push(spList);
+						});
+
+						def.resolve(lists);
+						// def.resolve(utils.parseSPResponse(data));
 					}, 
 
 					error: function(data, errorCode, errorMessage) {
@@ -2659,6 +2958,265 @@ angular.module('ngSharePoint').factory('SPWeb',
 		return SPWebObj;
 
 	}
+]);
+
+/*
+	SPFieldAttachments - directive
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPFieldAttachments
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spfieldAttachments', 
+
+	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+
+	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+
+		return {
+
+			restrict: 'EA',
+			require: ['^spform', 'ngModel'],
+			replace: true,
+			scope: {
+				mode: '@',
+				value: '=ngModel'
+			},
+			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+
+			link: function($scope, $element, $attrs, controllers) {
+
+				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || controllers[0].getFormMode();
+
+				}, function(newValue) {
+
+					$scope.currentMode = newValue;
+
+					// Show loading animation.
+					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+
+					// Gets the files attached to the item
+					$scope.$parent.item.getAttachments().then(function(attachmentFiles){
+
+						$scope.attachmentFiles = attachmentFiles;
+						renderField($scope.currentMode);
+
+					}, function(err) {
+
+						$scope.errorMsg = err.message;
+						setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+					});
+
+				}, true);
+
+
+
+				// ****************************************************************************
+				// Add new attachment to the item locally.
+				// NOTE: Attachments will be effective when save the item.
+				//
+				$scope.onFileSelect = function($files, $event) {
+
+					angular.forEach($files, function(file) {
+
+						// Checks if filename has already been selected
+						var itemIndex = -1;
+
+						for (var i = 0; i < $scope.attachmentFiles.length; i++) {
+							if ($scope.attachmentFiles[i].FileName == file.name) {
+								itemIndex = i;
+								break;
+							}
+						}
+
+
+						if (itemIndex >= 0) {
+
+							alert('Ya existe un archivo adjunto con el nombre \'' + file.name + '\'.');
+
+						} else {
+
+							$scope.$parent.item.attachments.add.push(file);
+							$scope.attachmentFiles.push({ FileName: file.name, local: true });
+
+						}
+
+					});
+
+					// Initialize the 'files' property in the <input type="file" /> object.
+					$event.target.value = '';
+
+				};
+
+
+
+				// ****************************************************************************
+				// Removes existing attachment, local o server side.
+				// NOTE: Attachments will be effective when save the item.
+				//
+				$scope.removeAttachment = function(index, local) {
+
+					if (local) {
+
+						for (var i = 0; i < $scope.$parent.item.attachments.add.length; i++) {
+							if ($scope.$parent.item.attachments.add[i].name == $scope.attachmentFiles[index].FileName) {
+								$scope.$parent.item.attachments.add.splice(i, 1);
+								break;
+							}
+						}
+
+						$scope.attachmentFiles.splice(index, 1);
+
+					} else {
+
+						var confirmMessage = Strings.STS.L_ConfirmDelete_TXT;
+
+						if (!!recycleBinEnabled) {
+							confirmMessage = Strings.STS.L_ConfirmRecycle_TXT;
+						}
+
+						if (confirm(confirmMessage)) {
+
+							$scope.$parent.item.attachments.remove.push($scope.attachmentFiles[index].FileName);
+							$scope.attachmentFiles.splice(index, 1);
+						}
+					}
+				};
+
+
+
+				// ****************************************************************************
+				// Replaces the directive element HTML.
+				//
+				function setElementHTML(html) {
+
+					var newElement = $compile(html)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
+
+				}
+
+
+
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
+				function renderField(mode) {
+
+					$http.get('templates/form-templates/spfield-attachments-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+
+						setElementHTML(html);
+					});
+
+				}
+
+			}
+
+		};
+
+	}
+
+]);
+
+
+
+
+angular.module('ngSharePoint').directive('fileSelect', 
+
+	['$parse', '$timeout', 
+
+	function($parse, $timeout) {
+
+		return function($scope, $element, $attrs) {
+
+			var fn = $parse($attrs.fileSelect);
+
+			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase()) !== 'file') {
+
+				var fileElem = angular.element('<input type="file">');
+
+				for (var i = 0; i < $element[0].attributes.length; i++) {
+					fileElem.attr($element[0].attributes[i].name, $element[0].attributes[i].value);
+				}
+
+				if ($element.attr("data-multiple")) fileElem.attr("multiple", "true");
+
+				//fileElem.css("top", 0).css("bottom", 0).css("left", 0).css("right", 0).css("width", "100%").css("opacity", 0).css("position", "absolute").css('filter', 'alpha(opacity=0)');
+				fileElem.css({
+					position: 'absolute',
+					top: '0px',
+					bottom: '0px',
+					left: '0px',
+					right: '0px',
+					width: '100%',
+					margin: '0px',
+					padding: '0px',
+					opacity: '0',
+					filter: 'alpha(opacity=0)',
+					'z-index': '1000'
+
+				});
+
+				$element.append(fileElem);
+
+				if (fileElem.parent()[0] != $element[0]) {
+					//fix #298
+					$element.wrap('<span>');
+					$element.css("z-index", "-1000");
+					$element.parent().append(fileElem);
+					$element = $element.parent();
+				}
+
+				if ($element.css("position") === '' || $element.css("position") === 'static') {
+					$element.css("position", "relative");
+				}
+
+				$element = fileElem;
+			}
+
+
+			$element.bind('change', function(evt) {
+
+				var files = [];
+				var fileList = evt.__files_ || evt.target.files;
+
+				if (fileList !== null) {
+					for (var i = 0; i < fileList.length; i++) {
+						files.push(fileList.item(i));
+					}
+				}
+
+				$timeout(function() {
+					fn($scope, {
+						$files : files,
+						$event : evt
+					});
+				});
+
+			});
+
+		};
+
+	}
+
 ]);
 
 /*
@@ -2854,17 +3412,38 @@ angular.module('ngSharePoint').directive('spfieldControl',
 				
 				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
 				
-				spformController.initField($attrs.name);
+				if ($scope.fieldSchema !== void 0) {
 
-				var fieldType = $scope.fieldSchema.TypeAsString;
-				if (fieldType === 'UserMulti') fieldType = 'User';
-				var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
-				var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-				var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
+					// Sets the default value for the field
+					spformController.initField($attrs.name);
 
-				$element.append(fieldControlHTML);
-				$compile($element)($scope);
+					// Gets the field type
+					var fieldType = $scope.fieldSchema.TypeAsString;
+					if (fieldType === 'UserMulti') fieldType = 'User';
 
+					// Gets the field name
+					var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && $scope.fieldSchema.PrimaryFieldId !== null) {
+						var primaryFieldSchema = spformController.getFieldSchema($scope.fieldSchema.PrimaryFieldId);
+
+						if (primaryFieldSchema !== void 0) {
+							fieldName = primaryFieldSchema.InternalName + 'Id';
+						}
+					}
+
+					// Gets the field mode
+					var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+
+					// Mount the field directive HTML
+					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
+
+					$element.append(fieldControlHTML);
+					$compile($element)($scope);
+
+				} else {
+
+					console.error('Unknown field ' + $attrs.name);
+				}
 			}
 
 		};
@@ -3039,7 +3618,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 							$scope.lcid = lcid;
 
 
-							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
+							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor.
 							// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
 							// se deben realizar los siguientes pasos:
 							// 
@@ -3095,13 +3674,21 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 							$scope.DatePickerImageID = g_strDatePickerImageID;
 
 							// Initialize the models for data-binding.
-							$scope.dateModel = new Date($scope.value);
-							$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
-							$scope.minutesModel = $scope.dateModel.getMinutes().toString();
-							var hours = $scope.dateModel.getHours();
-							$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
-							if (hours < 10) {
-								$scope.hoursModel = '0' + $scope.hoursModel;
+							if ($scope.value !== null && $scope.value !== void 0) {
+								
+								$scope.dateModel = new Date($scope.value);
+								$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
+								$scope.minutesModel = $scope.dateModel.getMinutes().toString();
+								var hours = $scope.dateModel.getHours();
+								$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
+								if (hours < 10) {
+									$scope.hoursModel = '0' + $scope.hoursModel;
+								}
+
+							} else {
+
+								$scope.dateModel = $scope.dateOnlyModel = $scope.minutesModel = $scope.hoursModel = null;
+
 							}
 
 
@@ -3186,7 +3773,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				//
 				function updateModel(newValue, oldValue) {
 
-					if (newValue === oldValue || $scope.dateOnlyModel === void 0) return;
+					if (newValue === oldValue || $scope.dateOnlyModel === void 0 || $scope.dateOnlyModel === null) return;
 
 					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
 
@@ -3199,7 +3786,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var hours = $scope.hoursModel;
 					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
 					var minutes = $scope.minutesModel;
-					var date = new Date(Date.UTC(dateComponents.yyyy, dateComponents.MM || dateComponents.M, dateComponents.dd || dateComponents.d, hours, minutes));
+					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
 
 					$scope.value = date.toISOString();
 				}
@@ -3480,6 +4067,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupList === void 0) {
 
+						// TODO: Check if the list is in the form's cache to improve performance and reduce XHR calls.
+						// NOTE: Do the same in other fields like SPFieldLookupMulti or SPFieldUser.
+						// NOTE 2: Also we could do the same with the SPWeb object.
+						//
+						//$scope.lookupList = SPCache.getCacheValue(<form_identifier>, $scope.schema.LookupList);
+						//if ($scope.lookupList === void 0) { //-> Not in the cache
+						//	recover the list...
+						//}
+
 						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
@@ -3490,6 +4086,8 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 									list.getFields().then(function() {
 
+										// TODO: Add the list to the form's cache when resolved
+										//SPCache.setCacheValue(<form_identifier>, $scope.schema.LookupList, $scope.lookupList);
 										def.resolve($scope.lookupList);
 
 									}, function(err) {
@@ -3511,7 +4109,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					} else {
 
-						// Returns cached list
+						// Returns previously resolved list
 						def.resolve($scope.lookupList);
 					}
 
@@ -3783,7 +4381,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					if ($scope.lookupList === void 0) {
 
-						SharePoint.getWeb().then(function(web) {
+						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
 
@@ -4272,7 +4870,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 				var schema = controllers[0].getFieldSchema($attrs.name);
 				var xml = SPUtils.parseXmlString(schema.SchemaXml);
 				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-				var decimals = xml.documentElement.getAttribute('Decimals') || '0';
+				var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
 				schema.Percentage = percentage.toLowerCase() === 'true';
 				schema.Decimals = parseInt(decimals);
 
@@ -4338,7 +4936,9 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 			ngModel.$formatters.push(function(value) {
 				if ($scope.schema.Percentage && value !== void 0) {
-					return (value * 100).toFixed($scope.schema.Decimals);
+					// If decimals is set to 'Auto', use 2 decimals for percentage values.
+					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+					return (value * 100).toFixed(decimals);
 				} else {
 					return value;
 				}
@@ -4347,7 +4947,9 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 			ngModel.$parsers.push(function(value) {
 				if ($scope.schema.Percentage && value !== void 0) {
-					return (value / 100).toFixed($scope.schema.Decimals);
+					// If decimals is set to 'Auto', use 2 decimals for percentage values.
+					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+					return (value / 100).toFixed(decimals);
 				} else {
 					return value;
 				}
@@ -4990,7 +5592,7 @@ angular.module('ngSharePoint').directive('spformRule',
 		return {
 			restrict: 'E',
 			replace: 'element',
-			scope: false,
+			//scope: false,
 			transclude: true,
 			priority: 50,
 
@@ -5011,16 +5613,12 @@ angular.module('ngSharePoint').directive('spformRule',
 					} else {
 
 						$transclude($scope, function (clone) {
-							/*
-							angular.forEach(clone, function (e) {
-								$animate.enter(e, $element.parent(), $element);
-							});
-							*/
 
-							for (var i = clone.length - 1; i > 0; i--) {
+							for(var i = clone.length - 1; i >= 0; i--) {
 								var e = clone[i];
 								$animate.enter(e, $element.parent(), $element);
 							}
+							
 						});
 
 						$element.remove();
@@ -5068,6 +5666,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 				$scope.isInDesignMode = SPUtils.inDesignMode();
+				$scope.status = spformController.status;
 
 				SPUtils.SharePointReady().then(function() {
 					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
@@ -5084,6 +5683,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 					$scope.mode = newValue;
 				});
 
+
+
+				// ****************************************************************************
+				// Watch for form status changes.
+				//
+				$scope.$watch(spformController.getFormStatus, function(newValue) {
+					$scope.formStatus = newValue;
+				});
 
 
 				$scope.saveForm = function() {
@@ -5152,6 +5759,7 @@ angular.module('ngSharePoint').directive('spform',
 					PROCESSING: 1
 				};
 
+
 				this.isNew = function() {
 
 					return $scope.originalItem.isNew();
@@ -5198,7 +5806,23 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.getFieldSchema = function(fieldName) {
 	
-					return $scope.schema[fieldName];
+					if (utils.isGuid(fieldName)) {
+
+						var fieldSchema = void 0;
+
+						angular.forEach($scope.schema, function(field) {
+							if (field.Id == fieldName) {
+								fieldSchema = field;
+							}
+						});
+
+						return fieldSchema;
+
+					} else {
+
+						return $scope.schema[fieldName];
+					}
+
 				};
 
 
@@ -5271,7 +5895,11 @@ angular.module('ngSharePoint').directive('spform',
 								title: SP.Res.dlgTitleError,
 								html: dom,
 								showClose: true,
-								autoSize: true
+								autoSize: true,
+								dialogReturnValueCallback: function() {
+									$scope.formStatus = self.status.IDLE;
+									$scope.$apply();
+								}
 							});
 
 						});
@@ -5327,10 +5955,13 @@ angular.module('ngSharePoint').directive('spform',
 
 							if ($scope.item !== void 0) {
 
-								if ($scope.item.list.Fields !== void 0) {
+								$scope.item.list.getFields().then(function(fields) {
 
+									$scope.schema = fields;
 									$scope.loadItemTemplate();
-								}
+
+								});
+
 							}
 						});
 
@@ -5344,28 +5975,12 @@ angular.module('ngSharePoint').directive('spform',
 							$scope.item = angular.copy(newValue);
 							$scope.item.clean();
 
-							// Checks if list fields (schema) were loaded
-							if ($scope.item.list.Fields === void 0) {
+							$scope.item.list.getFields().then(function(fields) {
 
-								$scope.item.list.getFields().then(function(fields) {
-
-									$scope.schema = fields;
-									$scope.loadItemTemplate();
-
-								});
-
-							} else {
-
-								$scope.schema = $scope.item.list.Fields;
+								$scope.schema = fields;
 								$scope.loadItemTemplate();
 
-							}
-
-
-							/*
-							 * NOTA: El if..else anterior se puede eliminar dejando únicamente la llamada a $scope.item.list.getFields().then(...) ya que 
-							 * 		 el objeto SPList ya cachea los Fields y la función 'getFields' realiza la comprobación internamente.
-							 */
+							});
 
 						}, true);
 
@@ -5373,6 +5988,8 @@ angular.module('ngSharePoint').directive('spform',
 
 						$scope.loadItemTemplate = function() {
 							
+							$scope.formStatus = spformController.status.PROCESSING;
+
 							var terminalRuleAdded = false;
 
 							var elements = $element.find('*');
@@ -5391,31 +6008,37 @@ angular.module('ngSharePoint').directive('spform',
 
 							elementToTransclude.empty();
 
-							parseRules();
+							transclude($scope, function (clone) {
+								parseRules(elementToTransclude, clone, true);
+							});
+
 
 							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper');
-							if (loadingAnimation !== void 0) loadingAnimation.remove();
+							if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
 
 							if ($attrs.templateUrl) {
 
 								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
-									$element.html('').append(html);
-									parseRules();
+									terminalRuleAdded = false;
+									$element.html('');
+									parseRules($element, angular.element(html), false);
 									$compile($element)($scope);
+									$scope.formStatus = spformController.status.IDLE;
 
 								});
 
 							} else {
 
+								// If no template-url attribute was provided generate a default form template
 								if (elementToTransclude[0].children.length === 0) {
 
-									// if no template then generate a default template.
 									$scope.fields = [];
 
 									angular.forEach($scope.item.list.Fields, function(field) {
-										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType' && field.InternalName !== 'Attachments') {
+										//if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType' && field.InternalName !== 'Attachments') {
+										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
 											$scope.fields.push(field);
 										}
 									});
@@ -5424,59 +6047,53 @@ angular.module('ngSharePoint').directive('spform',
 
 										elementToTransclude.html('').append(html);
 										$compile(elementToTransclude)($scope);
+										$scope.formStatus = spformController.status.IDLE;
 
 									});
 
 								}
 								
 							}
-
-							$scope.templateLoaded = true;
-
-						}; //-> $scope.loadItemTemplate
+							
+						};
 
 
+						function parseRules(targetElement, sourceElements, isTransclude) {
 
-						function parseRules() {
+							var terminalRuleAdded = false;
 
-							transclude($scope, function (clone) {
+							angular.forEach(sourceElements, function (e) {
 
-								angular.forEach(clone, function (e) {
+								// if e (element) is a spform-rule, evaluates first the test expression
+								if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
 
-									// if e (element) is a spform-rule, evaluates first the test expression
-									if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
+									var testExpression = e.attributes.test.value;
 
-										var testExpression = e.attributes.test.value;
+									if (!terminalRuleAdded && $scope.$eval(testExpression)) {
 
-										if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+										targetElement.append(e);
 
-											elementToTransclude.append(e);
+										if (e.attributes.terminal !== void 0) {
 
-											if (e.attributes.terminal !== void 0) {
-
-												terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
-											}
-
-										} else {
-											e.remove();
-											e = null;
+											terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
 										}
-										
-									} else {
 
-										elementToTransclude.append(e);
+									} else if (isTransclude) {
+										e.remove();
+										e = null;
 									}
+									
+								} else {
 
-								});
-
+									targetElement.append(e);
+								}
 							});
 
-						}; //-> parseRules
+						}
 
 					}
 					
 				};
-
 
 			}
 
@@ -5565,13 +6182,34 @@ angular.module('ngSharePointFormPage').directive('spformpage', ['SharePoint', 'S
 
 			if (listId !== void 0 && itemId !== void 0) {
 
-				SharePoint.getWeb()
-					.then(function(web) { return web.getList(listId); })
+				SharePoint.getWeb().then(function(web) {
+					web.getList(listId).then(function(list) {
+
+						list.getItemById(itemId).then(function(item) {
+
+							$scope.item = item;
+
+						}, function(error) {
+							console.log('Error item', error);
+						});
+
+					}, function(error) {
+						console.log('Error list', error);
+					});
+
+				}, function(error) {
+					console.log('Error web', error);
+				});
+
+/*
 					.then(function(list) { return list.getItemById(itemId); })
 					.then(function(item) {
 						$scope.item = item;
+					})
+					.fail(function(err) {
+						console.log('ERROR!', err);
 					});
-					
+*/					
 			}
 
 

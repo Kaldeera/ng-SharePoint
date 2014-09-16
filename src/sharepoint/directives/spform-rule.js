@@ -23,7 +23,7 @@ angular.module('ngSharePoint').directive('spformRule',
 		return {
 			restrict: 'E',
 			replace: 'element',
-			scope: false,
+			//scope: false,
 			transclude: true,
 			priority: 50,
 
@@ -49,6 +49,7 @@ angular.module('ngSharePoint').directive('spformRule',
 								var e = clone[i];
 								$animate.enter(e, $element.parent(), $element);
 							}
+							
 						});
 
 						$element.remove();

@@ -1,9 +1,42 @@
-angular.module('ngSharePoint.templates', ['templates/error.html', 'templates/form-templates/spfield-boolean-display.html', 'templates/form-templates/spfield-boolean-edit.html', 'templates/form-templates/spfield-choice-display.html', 'templates/form-templates/spfield-choice-edit.html', 'templates/form-templates/spfield-control.html', 'templates/form-templates/spfield-currency-display.html', 'templates/form-templates/spfield-currency-edit.html', 'templates/form-templates/spfield-datetime-display.html', 'templates/form-templates/spfield-datetime-edit.html', 'templates/form-templates/spfield-description.html', 'templates/form-templates/spfield-label.html', 'templates/form-templates/spfield-lookup-display.html', 'templates/form-templates/spfield-lookup-edit.html', 'templates/form-templates/spfield-lookupmulti-display.html', 'templates/form-templates/spfield-lookupmulti-edit.html', 'templates/form-templates/spfield-multichoice-display.html', 'templates/form-templates/spfield-multichoice-edit.html', 'templates/form-templates/spfield-note-display.html', 'templates/form-templates/spfield-note-edit.html', 'templates/form-templates/spfield-number-display.html', 'templates/form-templates/spfield-number-edit.html', 'templates/form-templates/spfield-text-display.html', 'templates/form-templates/spfield-text-edit.html', 'templates/form-templates/spfield-user-display.html', 'templates/form-templates/spfield-user-edit.html', 'templates/form-templates/spfield.html', 'templates/form-templates/spform-default.html', 'templates/form-templates/spform-toolbar.html', 'templates/form-templates/spform.html', 'templates/scroll.html', 'templates/spworking-on-it.html']);
+angular.module('ngSharePoint.templates', ['templates/error.html', 'templates/form-templates/spfield-attachments-display.html', 'templates/form-templates/spfield-attachments-edit.html', 'templates/form-templates/spfield-boolean-display.html', 'templates/form-templates/spfield-boolean-edit.html', 'templates/form-templates/spfield-choice-display.html', 'templates/form-templates/spfield-choice-edit.html', 'templates/form-templates/spfield-control.html', 'templates/form-templates/spfield-currency-display.html', 'templates/form-templates/spfield-currency-edit.html', 'templates/form-templates/spfield-datetime-display.html', 'templates/form-templates/spfield-datetime-edit.html', 'templates/form-templates/spfield-description.html', 'templates/form-templates/spfield-label.html', 'templates/form-templates/spfield-lookup-display.html', 'templates/form-templates/spfield-lookup-edit.html', 'templates/form-templates/spfield-lookupmulti-display.html', 'templates/form-templates/spfield-lookupmulti-edit.html', 'templates/form-templates/spfield-multichoice-display.html', 'templates/form-templates/spfield-multichoice-edit.html', 'templates/form-templates/spfield-note-display.html', 'templates/form-templates/spfield-note-edit.html', 'templates/form-templates/spfield-number-display.html', 'templates/form-templates/spfield-number-edit.html', 'templates/form-templates/spfield-text-display.html', 'templates/form-templates/spfield-text-edit.html', 'templates/form-templates/spfield-user-display.html', 'templates/form-templates/spfield-user-edit.html', 'templates/form-templates/spfield.html', 'templates/form-templates/spform-default.html', 'templates/form-templates/spform-toolbar.html', 'templates/form-templates/spform.html', 'templates/scroll.html', 'templates/spworking-on-it.html']);
 
 angular.module("templates/error.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/error.html",
     "<h3>Error!!</h3>\n" +
     "");
+}]);
+
+angular.module("templates/form-templates/spfield-attachments-display.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("templates/form-templates/spfield-attachments-display.html",
+    "<div ng-repeat=\"file in attachmentFiles\">\n" +
+    "	<a ng-href=\"{{file.ServerRelativeUrl}}\" ng-bind=\"file.FileName\"></a>\n" +
+    "</div>");
+}]);
+
+angular.module("templates/form-templates/spfield-attachments-edit.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("templates/form-templates/spfield-attachments-edit.html",
+    "<div>\n" +
+    "	<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" ng-style=\"{ true: { 'margin-bottom': '10px' } }[attachmentFiles.length > 0]\">\n" +
+    "		<tbody>\n" +
+    "			<tr ng-repeat=\"file in attachmentFiles\">\n" +
+    "				<td class=\"ms-vb\" style=\"white-space: nowrap;\">\n" +
+    "					<span ng-if=\"file.ServerRelativeUrl\"><a ng-href=\"{{file.ServerRelativeUrl}}\" ng-bind=\"file.FileName\"></a></span>\n" +
+    "					<span ng-if=\"!file.ServerRelativeUrl\" ng-bind=\"file.FileName\"></span>\n" +
+    "				</td>\n" +
+    "				<td class=\"ms-propertysheet\" style=\"white-space: nowrap; padding-left: 20px;\">\n" +
+    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">&nbsp;Eliminar</a>\n" +
+    "				</td>\n" +
+    "			</tr>\n" +
+    "		</tbody>\n" +
+    "	</table>\n" +
+    "\n" +
+    "	<a href=\"#\" file-select=\"onFileSelect($files, $event)\" data-multiple=\"true\">\n" +
+    "		<span style=\"width: 16px; height: 16px; overflow: hidden; display: inline-block; position: relative; top: 3px;\">\n" +
+    "			<img alt=\"\" src=\"/_layouts/15/3082/images/formatmap16x16.png?rev=23\" style=\"position: absolute; top: -235px; left: -235px;\" />\n" +
+    "		</span>\n" +
+    "		<span class=\"ms-cui-ctl-mediumlabel\">Adjuntar archivo</span>\n" +
+    "	</a>\n" +
+    "</div>");
 }]);
 
 angular.module("templates/form-templates/spfield-boolean-display.html", []).run(["$templateCache", function($templateCache) {
@@ -270,7 +303,7 @@ angular.module("templates/form-templates/spform-default.html", []).run(["$templa
 angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-toolbar.html",
     "<div>\n" +
-    "	<div ng-if=\"!isInDesignMode\">\n" +
+    "	<div ng-if=\"!isInDesignMode && formStatus == status.IDLE\">\n" +
     "		<!-- Form Toolbar DISPLAY MODE -->\n" +
     "		<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"padding-top: 7px\" ng-if=\"mode == 'display'\">\n" +
     "			<tbody>\n" +

@@ -129,6 +129,15 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lookupList === void 0) {
 
+						// TODO: Check if the list is in the form's cache to improve performance and reduce XHR calls.
+						// NOTE: Do the same in other fields like SPFieldLookupMulti or SPFieldUser.
+						// NOTE 2: Also we could do the same with the SPWeb object.
+						//
+						//$scope.lookupList = SPCache.getCacheValue(<form_identifier>, $scope.schema.LookupList);
+						//if ($scope.lookupList === void 0) { //-> Not in the cache
+						//	recover the list...
+						//}
+
 						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
 							web.getList($scope.schema.LookupList).then(function(list) {
@@ -139,6 +148,8 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 									list.getFields().then(function() {
 
+										// TODO: Add the list to the form's cache when resolved
+										//SPCache.setCacheValue(<form_identifier>, $scope.schema.LookupList, $scope.lookupList);
 										def.resolve($scope.lookupList);
 
 									}, function(err) {
@@ -160,7 +171,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					} else {
 
-						// Returns cached list
+						// Returns previously resolved list
 						def.resolve($scope.lookupList);
 					}
 

@@ -85,7 +85,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 							$scope.lcid = lcid;
 
 
-							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor mostrando.
+							// La clase Sys.CultureInfo contiene la información de la cultura actual del servidor.
 							// Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
 							// se deben realizar los siguientes pasos:
 							// 
@@ -141,13 +141,21 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 							$scope.DatePickerImageID = g_strDatePickerImageID;
 
 							// Initialize the models for data-binding.
-							$scope.dateModel = new Date($scope.value);
-							$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
-							$scope.minutesModel = $scope.dateModel.getMinutes().toString();
-							var hours = $scope.dateModel.getHours();
-							$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
-							if (hours < 10) {
-								$scope.hoursModel = '0' + $scope.hoursModel;
+							if ($scope.value !== null && $scope.value !== void 0) {
+								
+								$scope.dateModel = new Date($scope.value);
+								$scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
+								$scope.minutesModel = $scope.dateModel.getMinutes().toString();
+								var hours = $scope.dateModel.getHours();
+								$scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
+								if (hours < 10) {
+									$scope.hoursModel = '0' + $scope.hoursModel;
+								}
+
+							} else {
+
+								$scope.dateModel = $scope.dateOnlyModel = $scope.minutesModel = $scope.hoursModel = null;
+
 							}
 
 
@@ -232,7 +240,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				//
 				function updateModel(newValue, oldValue) {
 
-					if (newValue === oldValue || $scope.dateOnlyModel === void 0) return;
+					if (newValue === oldValue || $scope.dateOnlyModel === void 0 || $scope.dateOnlyModel === null) return;
 
 					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
 
@@ -245,7 +253,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var hours = $scope.hoursModel;
 					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
 					var minutes = $scope.minutesModel;
-					var date = new Date(Date.UTC(dateComponents.yyyy, dateComponents.MM || dateComponents.M, dateComponents.dd || dateComponents.d, hours, minutes));
+					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
 
 					$scope.value = date.toISOString();
 				}

@@ -37,7 +37,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 				var schema = controllers[0].getFieldSchema($attrs.name);
 				var xml = SPUtils.parseXmlString(schema.SchemaXml);
 				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-				var decimals = xml.documentElement.getAttribute('Decimals') || '0';
+				var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
 				schema.Percentage = percentage.toLowerCase() === 'true';
 				schema.Decimals = parseInt(decimals);
 
@@ -103,7 +103,9 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 			ngModel.$formatters.push(function(value) {
 				if ($scope.schema.Percentage && value !== void 0) {
-					return (value * 100).toFixed($scope.schema.Decimals);
+					// If decimals is set to 'Auto', use 2 decimals for percentage values.
+					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+					return (value * 100).toFixed(decimals);
 				} else {
 					return value;
 				}
@@ -112,7 +114,9 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 			ngModel.$parsers.push(function(value) {
 				if ($scope.schema.Percentage && value !== void 0) {
-					return (value / 100).toFixed($scope.schema.Decimals);
+					// If decimals is set to 'Auto', use 2 decimals for percentage values.
+					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+					return (value / 100).toFixed(decimals);
 				} else {
 					return value;
 				}

@@ -32,6 +32,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 				$scope.isInDesignMode = SPUtils.inDesignMode();
+				$scope.status = spformController.status;
 
 				SPUtils.SharePointReady().then(function() {
 					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
@@ -48,6 +49,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 					$scope.mode = newValue;
 				});
 
+
+
+				// ****************************************************************************
+				// Watch for form status changes.
+				//
+				$scope.$watch(spformController.getFormStatus, function(newValue) {
+					$scope.formStatus = newValue;
+				});
 
 
 				$scope.saveForm = function() {
