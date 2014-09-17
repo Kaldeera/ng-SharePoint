@@ -34,7 +34,8 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-
+				$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
+				$scope.AttachFileText = Resources.core.cui_ButAttachFile;
 
 
 				// ****************************************************************************
@@ -88,7 +89,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 						if (itemIndex >= 0) {
 
-							alert('Ya existe un archivo adjunto con el nombre \'' + file.name + '\'.');
+							alert(Strings.STS.L_ConflictReplaceTitle + ' \'' + file.name + '\'.');
 
 						} else {
 
@@ -197,7 +198,6 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 				if ($element.attr("data-multiple")) fileElem.attr("multiple", "true");
 
-				//fileElem.css("top", 0).css("bottom", 0).css("left", 0).css("right", 0).css("width", "100%").css("opacity", 0).css("position", "absolute").css('filter', 'alpha(opacity=0)');
 				fileElem.css({
 					position: 'absolute',
 					top: '0px',

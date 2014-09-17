@@ -308,39 +308,49 @@ angular.module('ngSharePoint').factory('SPListItem',
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.list.web.url);
 
-			executor.executeAsync({
+			if (this.isNew()) {
 
-				url: self.getAPIUrl() + '/AttachmentFiles',
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
+				// Initialize the attachments arrays (See processAttachments method).
+				self.AttachmentFiles = [];
+				self.attachments = { add: [], remove: [] };
+				def.resolve(self.AttachmentFiles);
 
-				success: function(data) {
+			} else {
 
-					var d = utils.parseSPResponse(data);
-					self.AttachmentFiles = d;
+				executor.executeAsync({
 
-					// Initialize the attachments arrays (See processAttachments method).
-					self.attachments = {
-						add: [],
-						remove: []
-					};
+					url: self.getAPIUrl() + '/AttachmentFiles',
+					method: 'GET', 
+					headers: { 
+						"Accept": "application/json; odata=verbose"
+					}, 
 
-					def.resolve(d);
-				}, 
+					success: function(data) {
 
-				error: function(data, errorCode, errorMessage) {
+						var d = utils.parseSPResponse(data);
+						self.AttachmentFiles = d;
 
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+						// Initialize the attachments arrays (See processAttachments method).
+						self.attachments = {
+							add: [],
+							remove: []
+						};
 
-					def.reject(err);
-				}
-			});
+						def.resolve(d);
+					}, 
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+			}
 
 			return def.promise;
 

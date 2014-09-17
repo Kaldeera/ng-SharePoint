@@ -70,7 +70,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 					loadScriptPromises.push(self.loadScript('autofill.js', ''));
 					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
 					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
-					
+					loadScriptPromises.push(self.loadResourceFile('core.resx'));
+					//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
 
 					$q.all(loadScriptPromises).then(function() {
 
@@ -86,6 +87,44 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 
 				}, 'sp.js');
 			}
+
+			return deferred.promise;
+		},
+
+
+
+		loadResourceFile: function(resourceFilename) {
+
+			var deferred = $q.defer();
+			var name = resourceFilename.substr(0, resourceFilename.lastIndexOf('.resx'));
+			var url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+
+			$http.get(url).success(function(data) {
+
+				window.Resources = window.Resources || {};
+
+				// Fix bad transformation in core.resx
+				data = data.replace(/align - right|align-right/g, 'align_right');
+				data = data.replace(/e - mail|e-mail/g, 'email');
+				data = data.replace(/e - Mail|e-Mail/g, 'email');
+				data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
+				
+				try {
+					var _eval = eval; // Fix jshint warning: eval can be harmful.
+					_eval(data);
+
+					window.Res = window.Res || void 0;
+
+					if (window.Res !== void 0) {
+						window.Resources[name] = window.Res;
+					}
+
+				} catch(ex) {
+					console.error(ex);
+				}
+
+				deferred.resolve();
+			});
 
 			return deferred.promise;
 		},

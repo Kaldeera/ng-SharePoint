@@ -1005,7 +1005,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getListItemEntityTypeFullName
 		//
 		// Gets the 'ListItemEntityTypeFullName' for the list and attach to 'this' object.
@@ -1037,7 +1037,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getProperties
 		//
 		// Gets list properties and attach it to 'this' object.
@@ -1076,7 +1076,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 					var d = utils.parseSPResponse(data);
 					delete d.Fields;
-
+					
 					angular.extend(self, d);
 
 					def.resolve(d);
@@ -1100,7 +1100,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getFields
 		//
 		// Gets list fields
@@ -1164,7 +1164,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getListItems
 		//
 		// Gets the list items
@@ -1278,7 +1278,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getItemById
 		//
 		// Gets an item from the list by its ID. 
@@ -1331,7 +1331,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// createItem
 		//
 		// Creates an item in the list. 
@@ -1413,7 +1413,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// updateItem
 		//
 		// Creates an item in the list. 
@@ -1498,7 +1498,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// deleteItem
 		//
 		// Removes an item from the list.
@@ -1878,39 +1878,49 @@ angular.module('ngSharePoint').factory('SPListItem',
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.list.web.url);
 
-			executor.executeAsync({
+			if (this.isNew()) {
 
-				url: self.getAPIUrl() + '/AttachmentFiles',
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
+				// Initialize the attachments arrays (See processAttachments method).
+				self.AttachmentFiles = [];
+				self.attachments = { add: [], remove: [] };
+				def.resolve(self.AttachmentFiles);
 
-				success: function(data) {
+			} else {
 
-					var d = utils.parseSPResponse(data);
-					self.AttachmentFiles = d;
+				executor.executeAsync({
 
-					// Initialize the attachments arrays (See processAttachments method).
-					self.attachments = {
-						add: [],
-						remove: []
-					};
+					url: self.getAPIUrl() + '/AttachmentFiles',
+					method: 'GET', 
+					headers: { 
+						"Accept": "application/json; odata=verbose"
+					}, 
 
-					def.resolve(d);
-				}, 
+					success: function(data) {
 
-				error: function(data, errorCode, errorMessage) {
+						var d = utils.parseSPResponse(data);
+						self.AttachmentFiles = d;
 
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+						// Initialize the attachments arrays (See processAttachments method).
+						self.attachments = {
+							add: [],
+							remove: []
+						};
 
-					def.reject(err);
-				}
-			});
+						def.resolve(d);
+					}, 
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+			}
 
 			return def.promise;
 
@@ -2360,7 +2370,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 					loadScriptPromises.push(self.loadScript('autofill.js', ''));
 					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
 					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
-					
+					loadScriptPromises.push(self.loadResourceFile('core.resx'));
+					//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
 
 					$q.all(loadScriptPromises).then(function() {
 
@@ -2376,6 +2387,44 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 
 				}, 'sp.js');
 			}
+
+			return deferred.promise;
+		},
+
+
+
+		loadResourceFile: function(resourceFilename) {
+
+			var deferred = $q.defer();
+			var name = resourceFilename.substr(0, resourceFilename.lastIndexOf('.resx'));
+			var url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+
+			$http.get(url).success(function(data) {
+
+				window.Resources = window.Resources || {};
+
+				// Fix bad transformation in core.resx
+				data = data.replace(/align - right|align-right/g, 'align_right');
+				data = data.replace(/e - mail|e-mail/g, 'email');
+				data = data.replace(/e - Mail|e-Mail/g, 'email');
+				data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
+				
+				try {
+					var _eval = eval; // Fix jshint warning: eval can be harmful.
+					_eval(data);
+
+					window.Res = window.Res || void 0;
+
+					if (window.Res !== void 0) {
+						window.Resources[name] = window.Res;
+					}
+
+				} catch(ex) {
+					console.error(ex);
+				}
+
+				deferred.resolve();
+			});
 
 			return deferred.promise;
 		},
@@ -2996,7 +3045,8 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-
+				$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
+				$scope.AttachFileText = Resources.core.cui_ButAttachFile;
 
 
 				// ****************************************************************************
@@ -3050,7 +3100,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 						if (itemIndex >= 0) {
 
-							alert('Ya existe un archivo adjunto con el nombre \'' + file.name + '\'.');
+							alert(Strings.STS.L_ConflictReplaceTitle + ' \'' + file.name + '\'.');
 
 						} else {
 
@@ -3159,7 +3209,6 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 				if ($element.attr("data-multiple")) fileElem.attr("multiple", "true");
 
-				//fileElem.css("top", 0).css("bottom", 0).css("left", 0).css("right", 0).css("width", "100%").css("opacity", 0).css("position", "absolute").css('filter', 'alpha(opacity=0)');
 				fileElem.css({
 					position: 'absolute',
 					top: '0px',
@@ -3263,7 +3312,7 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 				//
 				$scope.$watch('value', function(newValue) {
 
-					$scope.displayValue = newValue ? Strings.STS.L_SPYes : Strings.STS.L_SPNo;
+					$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
 				});
 
 
@@ -3780,11 +3829,15 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateComponents = {};
+					
 					for(var i = 0; i < dateParts.length; i++) {
 						dateComponents[dateParts[i]] = dateValues[i];
 					}
+
 					var hours = $scope.hoursModel;
-					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					if (hours !== null) {
+						hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					}
 					var minutes = $scope.minutesModel;
 					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
 
@@ -5976,6 +6029,14 @@ angular.module('ngSharePoint').directive('spform',
 							$scope.item.clean();
 
 							$scope.item.list.getFields().then(function(fields) {
+
+								// NOTE: We need to get list properties to know if the list has 
+								//		 ContentTypesEnabled and, if so, get the schema from the
+								//		 ContentType instead.
+								//		 Also we need to know which is the default ContentType
+								//		 to get the correct schema (I don't know how).
+								//
+								//		 If we don't, field properties like 'Required' will have incorrect data.
 
 								$scope.schema = fields;
 								$scope.loadItemTemplate();

@@ -247,11 +247,15 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
 					var dateComponents = {};
+					
 					for(var i = 0; i < dateParts.length; i++) {
 						dateComponents[dateParts[i]] = dateValues[i];
 					}
+
 					var hours = $scope.hoursModel;
-					hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					if (hours !== null) {
+						hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+					}
 					var minutes = $scope.minutesModel;
 					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
 

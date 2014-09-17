@@ -78,7 +78,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getListItemEntityTypeFullName
 		//
 		// Gets the 'ListItemEntityTypeFullName' for the list and attach to 'this' object.
@@ -110,7 +110,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getProperties
 		//
 		// Gets list properties and attach it to 'this' object.
@@ -149,7 +149,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 					var d = utils.parseSPResponse(data);
 					delete d.Fields;
-
+					
 					angular.extend(self, d);
 
 					def.resolve(d);
@@ -173,7 +173,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getFields
 		//
 		// Gets list fields
@@ -237,7 +237,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getListItems
 		//
 		// Gets the list items
@@ -351,7 +351,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// getItemById
 		//
 		// Gets an item from the list by its ID. 
@@ -404,7 +404,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// createItem
 		//
 		// Creates an item in the list. 
@@ -486,7 +486,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// updateItem
 		//
 		// Creates an item in the list. 
@@ -571,7 +571,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************
 		// deleteItem
 		//
 		// Removes an item from the list.

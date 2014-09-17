@@ -260,6 +260,14 @@ angular.module('ngSharePoint').directive('spform',
 
 							$scope.item.list.getFields().then(function(fields) {
 
+								// NOTE: We need to get list properties to know if the list has 
+								//		 ContentTypesEnabled and, if so, get the schema from the
+								//		 ContentType instead.
+								//		 Also we need to know which is the default ContentType
+								//		 to get the correct schema (I don't know how).
+								//
+								//		 If we don't, field properties like 'Required' will have incorrect data.
+
 								$scope.schema = fields;
 								$scope.loadItemTemplate();
 

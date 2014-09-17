@@ -42,7 +42,7 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 				//
 				$scope.$watch('value', function(newValue) {
 
-					$scope.displayValue = newValue ? Strings.STS.L_SPYes : Strings.STS.L_SPNo;
+					$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
 				});
 
 

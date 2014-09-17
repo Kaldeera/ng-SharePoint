@@ -24,7 +24,7 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "					<span ng-if=\"!file.ServerRelativeUrl\" ng-bind=\"file.FileName\"></span>\n" +
     "				</td>\n" +
     "				<td class=\"ms-propertysheet\" style=\"white-space: nowrap; padding-left: 20px;\">\n" +
-    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">&nbsp;Eliminar</a>\n" +
+    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">&nbsp;{{DeleteAttachmentText}}</a>\n" +
     "				</td>\n" +
     "			</tr>\n" +
     "		</tbody>\n" +
@@ -34,7 +34,7 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "		<span style=\"width: 16px; height: 16px; overflow: hidden; display: inline-block; position: relative; top: 3px;\">\n" +
     "			<img alt=\"\" src=\"/_layouts/15/3082/images/formatmap16x16.png?rev=23\" style=\"position: absolute; top: -235px; left: -235px;\" />\n" +
     "		</span>\n" +
-    "		<span class=\"ms-cui-ctl-mediumlabel\">Adjuntar archivo</span>\n" +
+    "		<span class=\"ms-cui-ctl-mediumlabel\">{{AttachFileText}}</span>\n" +
     "	</a>\n" +
     "</div>");
 }]);
@@ -88,7 +88,7 @@ angular.module("templates/form-templates/spfield-currency-display.html", []).run
 
 angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-edit.html",
-    "<input type=\"text\" ng-model=\"value\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-long ms-spellcheck-true\" />");
+    "<input type=\"text\" ng-model=\"value\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />");
 }]);
 
 angular.module("templates/form-templates/spfield-datetime-display.html", []).run(["$templateCache", function($templateCache) {
@@ -220,7 +220,7 @@ angular.module("templates/form-templates/spfield-number-display.html", []).run([
 
 angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-edit.html",
-    "<div><input type=\"text\" ng-model=\"value\" sp-number=\"\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\"><span ng-if=\"schema.Percentage\">{{cultureInfo.numberFormat.PercentSymbol}}</span></div>");
+    "<div><input type=\"text\" ng-model=\"value\" sp-number=\"\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" /><span ng-if=\"schema.Percentage\">{{cultureInfo.numberFormat.PercentSymbol}}</span></div>");
 }]);
 
 angular.module("templates/form-templates/spfield-text-display.html", []).run(["$templateCache", function($templateCache) {
