@@ -16,7 +16,7 @@
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserProvider', function ($q, $http, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODataParserProvider', function (Config, $q, $http, ODataParserProvider) {
 
 	'use strict';
 
@@ -55,23 +55,35 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 				}, 2500);
 */
 
+
+				// SP.SOD.executeOrDelayUntilScriptLoaded(function () {
+				// 	isSharePointReady = true;
+				// 	deferred.resolve();
+				// }, "sp.js");
+
+
+				// http://mahmoudfarhat.net/post/2013/03/23/SharePoint-2013-ExecuteOrDelayUntilScriptLoaded-not-executing-after-page-publish.aspx
 				// Load sp.js
-				SP.SOD.executeOrDelayUntilScriptLoaded(function () {
+				SP.SOD.executeFunc('sp.js', 'SP.ClientContext', function () {
 
 					var loadScriptPromises = [];
 
 					// Loads additional needed scripts
 					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
-					loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
-					loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
-					loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
-					loadScriptPromises.push(self.loadScript('clientforms.js', ''));
-					loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
-					loadScriptPromises.push(self.loadScript('autofill.js', ''));
-					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
-					loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
-					loadScriptPromises.push(self.loadResourceFile('core.resx'));
-					//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
+
+					if (!Config.options.minimalLoadSharePointInfraestructure) {
+
+						loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
+						loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
+						loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
+						loadScriptPromises.push(self.loadScript('clientforms.js', ''));
+						loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
+						loadScriptPromises.push(self.loadScript('autofill.js', ''));
+						loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
+						loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
+						loadScriptPromises.push(self.loadResourceFile('core.resx'));
+						//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
+					}
 
 					$q.all(loadScriptPromises).then(function() {
 
@@ -85,7 +97,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 					});
 
 
-				}, 'sp.js');
+				});
 			}
 
 			return deferred.promise;
@@ -97,7 +109,13 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 
 			var deferred = $q.defer();
 			var name = resourceFilename.substr(0, resourceFilename.lastIndexOf('.resx'));
-			var url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+			var url;
+
+			if (Config.options.force15LayoutsDirectory) {
+				url = '/_layouts/15/ScriptResx.ashx?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+			} else {
+				url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+			}
 
 			$http.get(url).success(function(data) {
 
@@ -135,7 +153,11 @@ angular.module('ngSharePoint').factory('SPUtils', ['$q', '$http', 'ODataParserPr
 
 			var deferred = $q.defer();
 
-			SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
+			if (Config.options.force15LayoutsDirectory) {
+				SP.SOD.registerSod(scriptFilename, '/_layouts/15/' + scriptFilename);
+			} else {
+				SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
+			}
 
 			EnsureScriptFunc(scriptFilename, functionName, function() {
 				deferred.resolve();
