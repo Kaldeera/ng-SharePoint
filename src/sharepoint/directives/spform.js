@@ -112,8 +112,9 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.fieldValueChanged = function(fieldName, fieldValue) {
 
-					console.log('>>>> spform.fieldValueChanged(' + fieldName + ', ' + fieldValue + ')');
-					console.log('-------------------------------------------------------------------------------');
+					//console.log('>>>> spform.fieldValueChanged(' + fieldName + ', ' + fieldValue + ')');
+					//console.log('-------------------------------------------------------------------------------');
+					
 					$scope.$broadcast(fieldName + '_changed', fieldValue);
 				};
 
