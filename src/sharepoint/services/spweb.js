@@ -151,12 +151,12 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 		// ****************************************************************************		
-		// getList
+		// getLists
 		//
-		// Gets a SPList object (SPList factory)
+		// Gets a SPList collection (SPList factory)
 		//
 		// @listName: String or Guid with the name or GUID of the list.
-		// @returns: SPList instance.
+		// @returns: array of SPList objects.
 		//
 		SPWebObj.prototype.getLists = function() {
 
@@ -226,6 +226,57 @@ angular.module('ngSharePoint').factory('SPWeb',
 			return def.promise;
 
 		};
+
+
+
+		// ****************************************************************************		
+		// getCurrentUser
+		//
+		// Gets a SPUser object (SPUser factory)
+		//
+		// @returns: SPUser instance.
+		//
+		SPWebObj.prototype.getCurrentUser = function() {
+
+			var def = $q.defer();
+
+			if (this.currentUser !== void 0) {
+
+				def.resolve(this.currentUser);
+
+			} else {
+				this.getUserById(_spPageContextInfo.userId).then(function(user) {
+					this.currentUser = user;
+					def.resolve(user);
+				});
+			}
+
+			return def.promise;
+		};
+
+
+
+		// ****************************************************************************		
+		// getUserById
+		//
+		// Gets a SPUser object (SPUser factory)
+		//
+		// @userId: Id of the user to search
+		// @returns: SPUser instance.
+		//
+		SPWebObj.prototype.getUserById = function(userId) {
+
+			var def = $q.defer();
+
+			new SPUser(this, userId).then(function(user) {
+				def.resolve(user);
+			});
+
+			return def.promise;
+		};
+
+
+
 
 
 
