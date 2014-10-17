@@ -40,6 +40,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
+				/*
 				$scope.$watch(function() {
 
 					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
@@ -52,6 +53,88 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						$scope.lookupItem = void 0;
 					}
 
+					refreshData();
+
+				}, true);
+				*/
+
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || controllers[0].getFormMode();
+
+				}, function(newValue, oldValue) {
+
+					if ($scope.currentMode === newValue) return;
+					
+					$scope.currentMode = newValue;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for value (model) changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+
+					$scope.lookupItem = void 0;
+					refreshData();
+
+				});
+
+
+				// ****************************************************************************
+				// Check for dependences.
+				//
+				if ($attrs.dependsOn !== void 0) {
+
+					$scope.$on($attrs.dependsOn + '_changed', function(evt, newValue) {
+
+						$scope.dependency = {
+							fieldName: $attrs.dependsOn,
+							value: newValue
+						};
+
+						// Initialize the items collection to force query the items again.
+						$scope.lookupItems = void 0;
+
+						refreshData();
+
+					});
+
+				}
+
+
+
+				// ****************************************************************************
+				// Controls the 'changed' event in the associated <select> element.
+				//
+				$scope.valueChanged = function() {
+
+					if ($scope.lastValue !== $scope.value) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+
+						$scope.lastValue = $scope.value;
+					}
+				};
+
+
+
+				// ****************************************************************************
+				// Refresh the lookup data and render the field.
+				//
+				function refreshData() {
+					
 					// Show loading animation.
 					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
@@ -71,7 +154,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						}
 					});
 
-				}, true);
+				}
 
 
 
@@ -132,11 +215,20 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						// TODO: Check if the list is in the form's cache to improve performance and reduce XHR calls.
 						// NOTE: Do the same in other fields like SPFieldLookupMulti or SPFieldUser.
 						// NOTE 2: Also we could do the same with the SPWeb object.
-						//
-						//$scope.lookupList = SPCache.getCacheValue(<form_identifier>, $scope.schema.LookupList);
-						//if ($scope.lookupList === void 0) { //-> Not in the cache
-						//	recover the list...
-						//}
+						/*
+						// Try to recover the list from the form's cache.
+						$scope.lookupList = SPCache.getCacheValue(<form_identifier>, $scope.schema.LookupList);
+
+						if ($scope.lookupList === void 0) { //-> Not in the cache
+
+							// Recover the list...
+
+						} else {
+
+							// Returns previously resolved list (Form's cache).
+							def.resolve($scope.lookupList);
+						}
+						*/
 
 						SharePoint.getWeb($scope.schema.LookupWebId).then(function(web) {
 
@@ -150,6 +242,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 										// TODO: Add the list to the form's cache when resolved
 										//SPCache.setCacheValue(<form_identifier>, $scope.schema.LookupList, $scope.lookupList);
+										
 										def.resolve($scope.lookupList);
 
 									}, function(err) {
@@ -273,7 +366,17 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						
 						getLookupList().then(function(list) {
 
-							list.getListItems().then(function(items) {
+							var $query = void 0;
+
+							if ($scope.dependency !== void 0) {
+								$query = {
+									$select: '*, ' + $scope.dependency.fieldName + '/Id',
+									$expand: $scope.dependency.fieldName + '/Id',
+									$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
+								};
+							}
+
+							list.getListItems($query).then(function(items) {
 
 								$scope.lookupItems = items;
 
@@ -282,10 +385,37 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									$scope.lookupItems = [{ Id: 0, Title: STSHtmlEncode(Strings.STS.L_LookupFieldNoneOption) }].concat(items);
 								}
 
-								// Init the initial value when no value is provided
-								if ($scope.value === null) {
-									$scope.value = 0;
+								// Sets the initial value when no value is provided
+								if ($scope.value === null || $scope.value === void 0) {
+									if ($scope.schema.Required) {
+										if ($scope.lookupItems.length > 0) {
+											$scope.value = $scope.lookupItems[0].Id;
+										} else {
+											$scope.value = null;
+										}
+									} else {
+										$scope.value = 0;
+									}
 								}
+
+								// If there is a dependency, checks if the current value exists on the new result set.
+								if ($scope.dependency !== void 0) {
+									
+									var match = $scope.lookupItems.reduce(function(prev, curr) {
+										return ($scope.value === curr.Id) || prev;
+									}, false);
+
+									// If the current value does not exists, select the first value from the new result set.
+									if (!match) {
+										if ($scope.lookupItems.length > 0) {
+											$scope.value = $scope.lookupItems[0].Id;
+										} else {
+											$scope.value = null;
+										}
+									}
+								}
+
+								$scope.valueChanged();
 
 								def.resolve($scope.lookupItems);
 

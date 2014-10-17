@@ -1,1 +1,6 @@
-<div><input type="text" ng-model="value" maxlength="{{schema.MaxLength}}" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-long ms-spellcheck-true" /></div>
+<div ng-form="_fieldForm">
+	<input type="text" ng-model="value" maxlength="{{schema.MaxLength}}" name="{{schema.InternalName}}" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-long ms-spellcheck-true" />
+	<div ng-show="fieldForm.$dirty && fieldForm.$invalid">
+		<span class="ms-formvalidation ms-csrformvalidation" ng-show="fieldForm.$error.required"><span role="alert">{{SPClientRequiredValidatorError}}</span></span>
+	</div>
+</div>

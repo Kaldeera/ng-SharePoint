@@ -45,10 +45,11 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
+				/*
 				$scope.$watch(function() {
 
 					// Adjust the model if no value is provided
-					if ($scope.value === null && $scope.schema.AllowMultipleValues) {
+					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
 						$scope.value = { results: [] };
 					}
 
@@ -84,6 +85,72 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					});
 
 				}, true);
+				*/
+
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || controllers[0].getFormMode();
+
+				}, function(newValue, oldValue) {
+
+					if ($scope.currentMode === newValue) return;
+
+					$scope.currentMode = newValue;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for value (model) changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+
+					// Adjust the model if no value is provided
+					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+						$scope.value = { results: [] };
+					}
+
+					$scope.selectedUserItems = void 0;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Refresh the user data and render the field.
+				//
+				function refreshData() {
+
+					// Adjust the model if no value is provided
+					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+						$scope.value = { results: [] };
+					}
+
+					// Show loading animation.
+					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+
+					// Gets the data for the user (lookup) and then render the field.
+					getUserData().then(function() {
+
+						renderField($scope.currentMode);
+
+					}, function() {
+
+						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
+
+					});
+				}
+
 
 
 
@@ -410,8 +477,14 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
 				    		if ($scope.schema.AllowMultipleValues === true) {
+
 				    			$scope.value.results = [];
+
+				    		} else {
+
+				    			$scope.value = null;
 				    		}
+
 
 
 				    		angular.forEach(entitiesArray, function(entity) {
@@ -427,14 +500,13 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						    			} else {
 
 						    				$scope.value = userId;
-						    				
 						    			}
 
 				    				});
-
 				    			}
-
 				    		});
+
+				    		$scope.$apply();
 				    	};
 				    }
 				}

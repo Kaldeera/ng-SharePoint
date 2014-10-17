@@ -1,5 +1,5 @@
 /*
-	SPFieldText - directive
+	SPFieldUrl - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -11,10 +11,10 @@
 
 
 ///////////////////////////////////////
-//	SPFieldText
+//	SPFieldUrl
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldText', 
+angular.module('ngSharePoint').directive('spfieldUrl', 
 
 	['$compile', '$templateCache', '$http',
 
@@ -34,6 +34,10 @@ angular.module('ngSharePoint').directive('spfieldText',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+				$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
+				$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
+				$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
+				$scope.Description_Text = Strings.STS.L_Description_Text;
 				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 
 				
@@ -59,7 +63,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 				//
 				function renderField(mode) {
 
-					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield-url-' + mode + '.html', { cache: $templateCache }).success(function(html) {
 						var newElement = $compile(html)($scope);
 						$element.replaceWith(newElement);
 						$element = newElement;
@@ -67,7 +71,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 
 				}
 
-			}
+			} // link
 
 		};
 

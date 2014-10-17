@@ -45,9 +45,12 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
+				/*
 				$scope.$watch(function() {
 
 					// Adjust the model if no value is provided
+					// NOTA: Esto no sé si debería estar fuera.
+					//		 No entra en bucle infinito pero no tiene mucho sentido que esté aquí.
 					if ($scope.value === null) {
 						$scope.value = { results: [] };
 					}
@@ -58,10 +61,99 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					$scope.currentMode = newValue.mode;
 
-					if (newValue.value.results !== oldValue.value.results) {
+					//if (newValue.value.results !== oldValue.value.results) {
+					if (newValue.value !== oldValue.value) {
 						$scope.selectedLookupItems = void 0;
 					}
 
+					refreshData();
+
+				}, true);
+				*/
+
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || controllers[0].getFormMode();
+
+				}, function(newValue, oldValue) {
+
+					if ($scope.currentMode === newValue) return;
+
+					$scope.currentMode = newValue;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for value (model) changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+
+					$scope.selectedLookupItems = void 0;
+
+					refreshData();
+				});
+
+
+
+				// ****************************************************************************
+				// Check for dependences.
+				//
+				if ($attrs.dependsOn !== void 0) {
+
+					$scope.$on($attrs.dependsOn + '_changed', function(evt, newValue) {
+
+						$scope.dependency = {
+							fieldName: $attrs.dependsOn,
+							value: newValue
+						};
+
+						// Initialize the items collection to force query the items again.
+						$scope.lookupItems = void 0;
+
+						// Reset the current selected items.
+						$scope.value = null;
+
+						refreshData();
+
+					});
+
+				}
+
+
+
+				// ****************************************************************************
+				// Controls the 'changed' event in the associated <select> element.
+				//
+				/*
+				$scope.valueChanged = function() {
+
+					// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+					controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+				};
+				*/
+
+
+
+				// ****************************************************************************
+				// Refresh the lookup data and render the field.
+				//
+				function refreshData() {
+
+					// Adjust the model if no value is provided
+					if ($scope.value === null) {
+						$scope.value = { results: [] };
+					}
+					
 					// Show loading animation.
 					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
@@ -70,10 +162,18 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 						renderField($scope.currentMode);
 
+					}, function(err) {
+
+						$scope.errorMsg = err.message;
+
+						if ($scope.value === void 0) {
+							setElementHTML('');
+						} else {
+							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+						}
 					});
 
-				}, true);
-
+				}
 
 
 				// ****************************************************************************
@@ -164,7 +264,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				// ****************************************************************************
 				// Gets the items from the lookup list.
 				//
-				function getLookupItems() {
+				function getLookupItems($query) {
 
 					var def = $q.defer();
 
@@ -177,7 +277,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						
 						getLookupList().then(function(list) {
 
-							list.getListItems().then(function(items) {
+							list.getListItems($query).then(function(items) {
 
 								$scope.lookupItems = items;
 								def.resolve($scope.lookupItems);
@@ -212,35 +312,38 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						// Gets the lookup items and populate the selected items array
 						getLookupItems().then(function(items) {
 
-							angular.forEach($scope.value.results, function(selectedItem) {
+							if ($scope.value !== null && $scope.value !== void 0) {
+								
+								angular.forEach($scope.value.results, function(selectedItem) {
 
-								var lookupItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
+									var lookupItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
 
-								if (lookupItem !== void 0) {
+									if (lookupItem !== void 0) {
 
-									var displayValue = lookupItem[$scope.schema.LookupField];
-									var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
+										var displayValue = lookupItem[$scope.schema.LookupField];
+										var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
 
-									if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
-										var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
-										var date = new Date(displayValue);
-										displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+										if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
+											var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+											var date = new Date(displayValue);
+											displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+										}
+
+										// When the field is a Computed field, shows its title.
+										// TODO: Resolve computed fields.
+										if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
+											displayValue = lookupItem.Title;
+										}
+
+										$scope.selectedLookupItems.push({
+											Title: displayValue,
+											url: lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + selectedItem + '&Source=' + encodeURIComponent(window.location)
+										});
+
 									}
 
-									// When the field is a Computed field, shows its title.
-									// TODO: Resolve computed fields.
-									if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
-										displayValue = lookupItem.Title;
-									}
-
-									$scope.selectedLookupItems.push({
-										Title: displayValue,
-										url: lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + selectedItem + '&Source=' + encodeURIComponent(window.location)
-									});
-
-								}
-
-							});
+								});
+							}
 
 							def.resolve($scope.selectedLookupItems);
 
@@ -260,8 +363,17 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				function getLookupDataForEdit() {
 
 					var def = $q.defer();
+					var $query = void 0;
 
-					getLookupItems().then(function(candidateItems) {
+					if ($scope.dependency !== void 0) {
+						$query = {
+							$select: '*, ' + $scope.dependency.fieldName + '/Id',
+							$expand: $scope.dependency.fieldName + '/Id',
+							$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
+						};
+					}
+
+					getLookupItems($query).then(function(candidateItems) {
 
 						$scope.candidateItems = [];
 						$scope.selectedCandidateItems = [];
@@ -286,7 +398,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 								title: displayValue
 							};
 
-							if ($scope.value.results.indexOf(item.Id) != -1) {
+							if ($scope.value && $scope.value.results && $scope.value.results.indexOf(item.Id) != -1) {
 
 								$scope.resultItems.push(bindingItem);
 
@@ -310,6 +422,10 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 
 				function updateModel() {
+
+					if ($scope.value === null || $scope.value === void 0) {
+						$scope.value = {};
+					}
 
 					$scope.value.results = [];
 

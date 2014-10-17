@@ -1,5 +1,5 @@
 /*
-	SPFieldText - directive
+	SPFieldCalculated - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -11,10 +11,10 @@
 
 
 ///////////////////////////////////////
-//	SPFieldText
+//	SPFieldCalculated
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldText', 
+angular.module('ngSharePoint').directive('spfieldCalculated', 
 
 	['$compile', '$templateCache', '$http',
 
@@ -26,17 +26,18 @@ angular.module('ngSharePoint').directive('spfieldText',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
+				//mode: '@',
 				value: '=ngModel'
 			},
+			templateUrl: 'templates/form-templates/spfield-text-display.html'
+			/*
 			template: '<div></div>',
 
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 
-				
+
 
 				// ****************************************************************************
 				// Watch for form mode changes.
@@ -59,7 +60,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 				//
 				function renderField(mode) {
 
-					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield-text-display.html', { cache: $templateCache }).success(function(html) {
 						var newElement = $compile(html)($scope);
 						$element.replaceWith(newElement);
 						$element = newElement;
@@ -68,6 +69,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 				}
 
 			}
+			*/
 
 		};
 

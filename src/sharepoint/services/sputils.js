@@ -108,7 +108,8 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 		loadResourceFile: function(resourceFilename) {
 
 			var deferred = $q.defer();
-			var name = resourceFilename.substr(0, resourceFilename.lastIndexOf('.resx'));
+			var pos = resourceFilename.lastIndexOf('.resx');
+			var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
 			var url;
 
 			if (Config.options.force15LayoutsDirectory) {

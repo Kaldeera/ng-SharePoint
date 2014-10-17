@@ -248,7 +248,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 		// ****************************************************************************		
 		// getFolder
 		//
-		// Gets floder properties of the item and attach it to 'this' object.
+		// Gets folder properties of the item and attach it to 'this' object.
 		// If the item is not a DocumentLibrary item, the REST query returns no results.
 		//
 		// @returns: Promise with the result of the REST query.
@@ -418,7 +418,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 		//
 		// Removes a file attached to the item.
 		//
-		// @file: Object from the DOM element <input type="File" />.
+		// @fileName: The name of the file to remove.
 		// @returns: Promise with the result of the REST query.
 		//
 		SPListItemObj.prototype.removeAttachment = function(fileName) {
@@ -631,6 +631,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 						var d = utils.parseSPResponse(data);
 						angular.extend(self, d);
 
+						// After save, process the attachments.
 						self.processAttachments().then(function() {
 							def.resolve(d);
 						}, function() {

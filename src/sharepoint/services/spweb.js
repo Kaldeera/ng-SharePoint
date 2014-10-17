@@ -26,7 +26,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		// ****************************************************************************
 		// SPWeb constructor
 		//
-		// @url: Url del web que se quiere instanciar.
+		// @url: The url of the web you want to instanciate.
 		//
 		var SPWebObj = function(url) {
 
@@ -42,7 +42,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		// getApiUrl
 		//
 		// @returns: Promise that will be resolved after the initialization of the 
-		//			 SharePoint web API REST url.
+		//			 SharePoint web API REST url endpoint.
 		//
 		SPWebObj.prototype.getApiUrl = function() {
 
@@ -56,7 +56,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			} else {
 
-				// Si no se ha especificado url, obtiene la url del web actual 
+				// If not 'url' parameter provided in the constructor, gets the url of the current web.
 				if (this.url === void 0) {
 
 					this.url = _spPageContextInfo.webServerRelativeUrl;
@@ -102,18 +102,23 @@ angular.module('ngSharePoint').factory('SPWeb',
 		// http://msdn.microsoft.com/es-es/library/office/jj164022(v=office.15).aspx
 		// @returns: Promise with the result of the REST query.
 		//
-		SPWebObj.prototype.getProperties = function() {
+		SPWebObj.prototype.getProperties = function(query) {
 
 			var self = this;
 			var def = $q.defer();
+			var defaultExpandProperties = 'RegionalSettings/TimeZone';
 
 			SPUtils.SharePointReady().then(function() {
 
 				var executor = new SP.RequestExecutor(self.url);
 
-				var query = {
-					$expand: 'RegionalSettings/TimeZone'
-				};
+				if (query) {
+					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+				} else {
+					query = { 
+						$expand: defaultExpandProperties
+					};
+				}
 
 				executor.executeAsync({
 

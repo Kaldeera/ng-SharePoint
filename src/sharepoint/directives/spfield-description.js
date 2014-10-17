@@ -24,7 +24,9 @@ angular.module('ngSharePoint')
 		require: '^spform',
 		replace: true,
 		templateUrl: 'templates/form-templates/spfield-description.html',
-		scope: true,
+		scope: {
+			mode: '@'
+		},
 
 
 		link: function($scope, $element, $attrs, spformController) {

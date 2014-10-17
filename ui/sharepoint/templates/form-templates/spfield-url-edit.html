@@ -1,0 +1,9 @@
+<div ng-form="_fieldForm">
+	<div class="ms-formdescription">{{UrlFieldTypeText}}&nbsp;(<a id="{{schema.InternalName}}_{{schema.Id}}_$UrlControlId" href="javascript:TestURL('{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl')" target="_self">{{UrlFieldClickText}}</a>)</div>
+	<input dir="ltr" type="text" ng-model="value.Url" ng-required="{{schema.Required}}" id="{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl" title="{{schema.Title}}" class="ms-long">
+	<div class="ms-formdescription">{{UrlFieldTypeDescription}}&nbsp;</div>
+	<input type="text" maxlength="255" id="{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription" title="{{Description_Text}}" ng-model="value.Description" class="ms-long">
+	<div ng-show="fieldForm.$dirty && fieldForm.$invalid">
+		<span class="ms-formvalidation ms-csrformvalidation" ng-show="fieldForm.$error.required"><span role="alert">{{SPClientRequiredValidatorError}}</span></span>
+	</div>
+</div>

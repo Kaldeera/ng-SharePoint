@@ -34,7 +34,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 			link: function($scope, $element, $attrs, controllers) {
 
 				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-
+				$scope.choices = $scope.schema.Choices.results;
 
 
 				// ****************************************************************************

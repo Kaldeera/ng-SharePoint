@@ -67,7 +67,8 @@ angular.module('ngSharePoint').directive('spform',
 
 							case 'DateTime':
 								if (fieldSchema.DefaultValue !== null) {
-									$scope.item[fieldName] = new Date();
+									$scope.item[fieldName] = new Date(); //-> [today]
+									// TODO: Hay que controlar el resto de posibles valores por defecto.
 								}
 								break;
 
@@ -109,6 +110,14 @@ angular.module('ngSharePoint').directive('spform',
 				};
 
 
+				this.fieldValueChanged = function(fieldName, fieldValue) {
+
+					console.log('>>>> spform.fieldValueChanged(' + fieldName + ', ' + fieldValue + ')');
+					console.log('-------------------------------------------------------------------------------');
+					$scope.$broadcast(fieldName + '_changed', fieldValue);
+				};
+
+
 				this.getFormMode = function() {
 
 					return $attrs.mode || 'display';
@@ -136,7 +145,7 @@ angular.module('ngSharePoint').directive('spform',
 				};
 
 
-				this.save = function() {
+				this.save = function(redirectUrl) {
 
 					var self = this;
 
@@ -145,70 +154,92 @@ angular.module('ngSharePoint').directive('spform',
 					// Shows the 'Working on it...' dialog.
 					var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
 
-					if ($scope.onPreSave({ item: $scope.item }) !== false) {
-						
-						$scope.item.save().then(function(data) {
+					$q.when($scope.onPreSave({ item: $scope.item })).then(function(result) {
 
-							angular.extend($scope.originalItem, data);
-							$scope.formStatus = this.status.IDLE;
+						if (result !== false) {
 
-							if ($scope.onPostSave({ item: $scope.originalItem }) || true) {
+							$scope.item.save().then(function(data) {
 
-								// Close the 'Working on it...' dialog.
+								//angular.extend($scope.originalItem, data); //-> This launch $scope.originalItem $watch !!!
+								$scope.formStatus = this.status.IDLE;
+
+								$q.when($scope.onPostSave({ item: $scope.originalItem })).then(function(result) {
+
+									if (result !== false) {
+
+										// TODO: Performs the 'post-save' action/s or redirect
+
+										// Default 'post-save' action.
+										self.closeForm(redirectUrl);
+
+									}
+
+									// Close the 'Working on it...' dialog.
+									dlg.close();
+									
+								});
+
+							}, function(err) {
+
+								console.error(err);
+
 								dlg.close();
 
-								// TODO: Performs the 'post-save' action/s or redirect
-
-								// Default 'post-save' action.
-								self.closeForm();
-								
-							}
-
-						}, function(err) {
-
-							console.error(err);
-
-							dlg.close();
-
-							var dom = document.createElement('div');
-							dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
+								var dom = document.createElement('div');
+								dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
 
 
-							SP.UI.ModalDialog.showModalDialog({
-								title: SP.Res.dlgTitleError,
-								html: dom,
-								showClose: true,
-								autoSize: true,
-								dialogReturnValueCallback: function() {
-									$scope.formStatus = self.status.IDLE;
-									$scope.$apply();
-								}
+								SP.UI.ModalDialog.showModalDialog({
+									title: SP.Res.dlgTitleError,
+									html: dom,
+									showClose: true,
+									autoSize: true,
+									dialogReturnValueCallback: function() {
+										$scope.formStatus = self.status.IDLE;
+										$scope.$apply();
+									}
+								});
+
 							});
 
-						});
+						} else {
 
-					}
+							console.log('>>>> Save form was canceled!');
+							dlg.close();
+							$scope.formStatus = this.status.IDLE;
+						}
+						
+					});
+						
 
 				};
 
 
-				this.cancel = function() {
+				this.cancel = function(redirectUrl) {
 
 					$scope.item = angular.copy($scope.originalItem);
 
 					if ($scope.onCancel({ item: $scope.item }) !== false) {
 
 						// Performs the default 'cancel' action.
-						this.closeForm();
+						this.closeForm(redirectUrl);
 
 					}
 				};
 
 
 
-				this.closeForm = function() {
+				this.closeForm = function(redirectUrl) {
 
-					window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+					if (redirectUrl !== void 0) {
+
+						window.location = redirectUrl;
+
+					} else {
+						
+						window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+
+					}
 
 				};
 
@@ -266,7 +297,7 @@ angular.module('ngSharePoint').directive('spform',
 								//		 Also we need to know which is the default ContentType
 								//		 to get the correct schema (I don't know how).
 								//
-								//		 If we don't, field properties like 'Required' will have incorrect data.
+								//		 If the above is not done, field properties like 'Required' will have incorrect data.
 
 								$scope.schema = fields;
 								$scope.loadItemTemplate();
@@ -281,30 +312,8 @@ angular.module('ngSharePoint').directive('spform',
 							
 							$scope.formStatus = spformController.status.PROCESSING;
 
-							var terminalRuleAdded = false;
-
-							var elements = $element.find('*');
-							var transcludeFields = 'transclude-fields';
-							var elementToTransclude;
-
-							angular.forEach(elements, function(element) {
-								if (element.attributes[transcludeFields] !== void 0) {
-									elementToTransclude = angular.element(element);
-								}
-							});
-
-							if (elementToTransclude === void 0) {
-								elementToTransclude = $element;
-							}
-
-							elementToTransclude.empty();
-
-							transclude($scope, function (clone) {
-								parseRules(elementToTransclude, clone, true);
-							});
-
-
-							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper');
+							
+							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
 							if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
 
@@ -312,7 +321,6 @@ angular.module('ngSharePoint').directive('spform',
 
 								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
-									terminalRuleAdded = false;
 									$element.html('');
 									parseRules($element, angular.element(html), false);
 									$compile($element)($scope);
@@ -322,13 +330,33 @@ angular.module('ngSharePoint').directive('spform',
 
 							} else {
 
+								var elements = $element.find('*');
+								var transcludeFields = 'transclude-fields';
+								var elementToTransclude;
+
+								angular.forEach(elements, function(elem) {
+									if (elem.attributes[transcludeFields] !== void 0) {
+										elementToTransclude = angular.element(elem);
+									}
+								});
+
+								if (elementToTransclude === void 0) {
+									elementToTransclude = $element;
+								}
+
+								elementToTransclude.empty();
+
+								transclude($scope, function (clone) {
+									parseRules(elementToTransclude, clone, true);
+								});
+
+
 								// If no template-url attribute was provided generate a default form template
 								if (elementToTransclude[0].children.length === 0) {
 
 									$scope.fields = [];
 
 									angular.forEach($scope.item.list.Fields, function(field) {
-										//if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType' && field.InternalName !== 'Attachments') {
 										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
 											$scope.fields.push(field);
 										}
@@ -353,30 +381,41 @@ angular.module('ngSharePoint').directive('spform',
 
 							var terminalRuleAdded = false;
 
-							angular.forEach(sourceElements, function (e) {
+							// Initialize the 'rulesApplied' array for debug purposes.
+							$scope.rulesApplied = [];
 
-								// if e (element) is a spform-rule, evaluates first the test expression
-								if (e.tagName !== void 0 && e.tagName.toLowerCase() == 'spform-rule' && e.attributes.test !== undefined) {
+							angular.forEach(sourceElements, function (elem) {
 
-									var testExpression = e.attributes.test.value;
+								// Check if 'elem' is a <spform-rule> element.
+								if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
 
+									var testExpression = elem.attributes.test.value;
+
+									// Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
 									if (!terminalRuleAdded && $scope.$eval(testExpression)) {
 
-										targetElement.append(e);
+										targetElement.append(elem);
+										var terminalExpression = false;
 
-										if (e.attributes.terminal !== void 0) {
+										if (elem.attributes.terminal !== void 0) {
 
-											terminalRuleAdded = $scope.$eval(e.attributes.terminal.value);
+											terminalExpression = elem.attributes.terminal.value;
+											terminalRuleAdded = $scope.$eval(terminalExpression);
+
 										}
 
+										// Add the rule applied to the 'rulesApplied' array for debug purposes.
+										$scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+
 									} else if (isTransclude) {
-										e.remove();
-										e = null;
+
+										elem.remove();
+										elem = null;
 									}
 									
 								} else {
 
-									targetElement.append(e);
+									targetElement.append(elem);
 								}
 							});
 

@@ -35,7 +35,12 @@ angular.module('ngSharePoint').directive('spfield',
 						$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
-							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name).replace(/\{\{mode\}\}/g, mode);
+							var dependsOn = ($attrs.dependsOn ? 'depends-on="' + $attrs.dependsOn + '"' : '');
+
+							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name)
+									   .replace(/\{\{mode\}\}/g, mode)
+									   .replace(/\{\{dependsOn\}\}/g, dependsOn);
+
 							
 							var newElement = $compile(html)($scope);
 							$element.replaceWith(newElement);

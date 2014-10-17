@@ -202,14 +202,15 @@ angular.module('ngSharePoint').directive('fileSelect',
 					position: 'absolute',
 					top: '0px',
 					bottom: '0px',
-					left: '0px',
+					//left: '0px',
 					right: '0px',
-					width: '100%',
+					width: '200%',
 					margin: '0px',
 					padding: '0px',
 					opacity: '0',
 					filter: 'alpha(opacity=0)',
-					'z-index': '1000'
+					'z-index': '1000',
+					cursor: 'pointer'
 
 				});
 
@@ -226,6 +227,12 @@ angular.module('ngSharePoint').directive('fileSelect',
 				if ($element.css("position") === '' || $element.css("position") === 'static') {
 					$element.css("position", "relative");
 				}
+
+				$element.css({
+					display: 'inline-block',
+					overflow: 'hidden',
+					cursor: 'pointer'
+				});
 
 				$element = fileElem;
 			}

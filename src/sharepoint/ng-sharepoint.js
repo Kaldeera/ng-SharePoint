@@ -48,7 +48,16 @@ angular.module('ngSharePoint').constant('SPConfig', {
 
 
 
-angular.module('ngSharePoint').config(['SPConfig', function(SPConfig) {
+angular.module('ngSharePoint').config(['$compileProvider', 'SPConfig', function($compileProvider, SPConfig) {
+
+	// Reconfigure the RegExp for aHrefSanitizationWhiteList to accept 'javascript'.
+	$compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
+	// NOTE: The previous statement is for angular versions 1.2.8 and above.
+	//		 For version 1.0.5 or 1.1.3 please use the next statement:
+	//
+	//				$compileProvider.urlSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
+	//
+	// ----------------------------------------------------------------------------
 
 	//SPConfig.CSOM = true;
 
@@ -56,11 +65,9 @@ angular.module('ngSharePoint').config(['SPConfig', function(SPConfig) {
 
 
 
-/*
----------------------------------------------------------------------------------------
-	Module constants
----------------------------------------------------------------------------------------
-*/
+// ****************************************************************************
+// Module constants
+//
 angular.module('ngSharePoint').value('Constants', {
 	errorTemplate: 'templates/error.html',
 	userProfileUrl: '_layouts/userdisp.aspx?ID='

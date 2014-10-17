@@ -1,10 +1,10 @@
 <div ng-switch="schema.EditFormat">
 
-	<select ng-switch-when="0" ng-model="$parent.value" ng-options="option for option in schema.Choices.results" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ></select>
+	<select ng-switch-when="0" ng-model="$parent.value" ng-options="option for option in choices" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ></select>
 
 	<table ng-switch-when="1" cellpadding="0" cellspacing="1">
 		<tbody>
-			<tr ng-repeat="option in schema.Choices.results">
+			<tr ng-repeat="option in choices">
 				<td>
 					<span>
 						<input type="radio" ng-model="$parent.$parent.value" ng-value="option" id="{{schema.InternalName}}_{{$index}}" name="{{schema.InternalName}}_$RadioButtonChoiceField" />

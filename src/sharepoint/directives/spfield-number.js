@@ -41,7 +41,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 				schema.Percentage = percentage.toLowerCase() === 'true';
 				schema.Decimals = parseInt(decimals);
 
-
+				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 				$scope.schema = schema;
 				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 

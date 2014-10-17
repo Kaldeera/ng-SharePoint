@@ -29,13 +29,19 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 
 			link: function($scope, $element, $attrs, spformController) {
-				
+
 				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
 				
 				if ($scope.fieldSchema !== void 0) {
 
 					// Sets the default value for the field
 					spformController.initField($attrs.name);
+
+					// NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize the field with it's default value.
+					if ($attrs.mode == 'hidden') {
+						$element.addClass('ng-hide');
+ 						return;
+					}
 
 					// Gets the field type
 					var fieldType = $scope.fieldSchema.TypeAsString;
@@ -53,9 +59,11 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 					// Gets the field mode
 					var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+					var dependsOn = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
+					var hidden = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
 
 					// Mount the field directive HTML
-					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + '></spfield-' + fieldType + '>';
+					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + dependsOn + hidden + '></spfield-' + fieldType + '>';
 
 					$element.append(fieldControlHTML);
 					$compile($element)($scope);
