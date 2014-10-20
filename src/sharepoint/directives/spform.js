@@ -164,7 +164,7 @@ angular.module('ngSharePoint').directive('spform',
 								//angular.extend($scope.originalItem, data); //-> This launch $scope.originalItem $watch !!!
 								$scope.formStatus = this.status.IDLE;
 
-								$q.when($scope.onPostSave({ item: $scope.originalItem })).then(function(result) {
+								$q.when($scope.onPostSave({ originalItem: $scope.originalItem, item: $scope.item })).then(function(result) {
 
 									if (result !== false) {
 
@@ -177,6 +177,11 @@ angular.module('ngSharePoint').directive('spform',
 
 									// Close the 'Working on it...' dialog.
 									dlg.close();
+									
+								}, function() {
+
+									dlg.close();
+									$scope.formStatus = this.status.IDLE;
 									
 								});
 
@@ -210,6 +215,11 @@ angular.module('ngSharePoint').directive('spform',
 							$scope.formStatus = this.status.IDLE;
 						}
 						
+					}, function() {
+
+						dlg.close();
+						$scope.formStatus = this.status.IDLE;
+
 					});
 						
 
