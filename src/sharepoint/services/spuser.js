@@ -16,102 +16,112 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 'SPUtils', 'SharePoint',
+	['$q', function($q) {
 
-	function($q, SPUtils, SharePoint) {
-
-		var currentUser;
-		var currentWeb;
-
-		function getCurrentWeb() {
-
-			var self = this;
-			var def = $q.defer();
-
-			if (currentWeb !== void 0) {
-				def.resolve(currentWeb);
-			} else {
-				SharePoint.getCurrentWeb().then(function(web) {
-					currentWeb = web;
-					def.resolve(currentWeb);
-				});
-			}
-			return def.promise;
-		}
 
 		// ****************************************************************************
 		// SPUser constructor
 		//
-		// @url: Url del web que se quiere instanciar.
+		// @web: SPWeb instance that contains the user in SharePoint.
+		// @userData: User information. Could be:
+		//				number: user id
+		//				string: login name
+		//				object: user object
 		//
-		var SPUserObj = {
+		var SPUserObj = function(web, userId, userData) {
 
-			getCurrentUser: function() {
+			if (web === void 0) {
+				throw '@web parameter not specified in SPUser constructor.';
+			}
 
-				var self = this;
-				var def = $q.defer();
+			if (userId === void 0) {
+				throw '@userId parameter not specified in SPUser constructor.';
+			}
 
-				if (currentUser !== void 0) {
 
-					def.resolve(currentUser);
+			this.web = web;
 
-				} else {
-					self.getUserById(_spPageContextInfo.userId).then(function(user) {
-						currentUser = user;
-						def.resolve(user);
-					});
-				}
+			if (typeof userId === 'number') {
 
-				return def.promise;
-			},
+				// Instead of attack directly to the WEB api, we can retrieve the user list 
+				// item into the SiteUserInfoList.
+				// With this, we can retrieve all the user information.
 
-			getUserById: function(userId) {
+				this.apiUrl = '/SiteUserInfoList/getItemById(\'' + userId + '\')';
+				// this.apiUrl = '/GetUserById(\'' + userId + '\')';
 
-				if (userId === void 0) {
-					throw 'Invalid arguments in getUserById, @userId can not be null';
-				}
+			} else if (typeof userId === 'string') {
 
-				var self = this;
-				var def = $q.defer();
+				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + userId + '\'';
 
-				getCurrentWeb().then(function(web) {
+			}
 
-					var apiUrl = web.apiUrl + '/GetUserById(' + userId + ')';
+			// Initializes the SharePoint API REST url for the group.
+			this.apiUrl = web.apiUrl + this.apiUrl;
 
-					var executor = new SP.RequestExecutor(apiUrl);
-					executor.executeAsync({
-						url: apiUrl,
-						method: 'GET',
-						headers: {
-							"Accept": "application/json; odata=verbose"
-						},
-
-						success: function(data) {
-							var d = utils.parseSPResponse(data);
-							def.resolve(d);
-						},
-
-						error: function(data, errorCode, errorMessage) {
-							var err = utils.parseError({
-								data: data,
-								errorCode: errorCode,
-								errorMessage: errorMessage
-							});
-
-							def.reject(err);
-						}
-					});
-
-				});
-
-				return def.promise;
+			// Init userProperties (if exists)
+			if (userData !== void 0) {
+				angular.extend(this, userData);
 			}
 		};
 
-// Web/SiteUserInfoList
-// Web/SiteGroups
-// Web/GetUserById(184)
-// Web/GetUserById(nn)/Groups
+
+		// ****************************************************************************
+		// getProperties
+		//
+		// Gets user properties and attach it to 'this' object.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPUserObj.prototype.getProperties = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+			var defaultExpandProperties = '';
+
+			if (query) {
+				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+			} else {
+				query = { 
+					$expand: defaultExpandProperties
+				};
+			}
+
+			executor.executeAsync({
+
+				url: self.apiUrl + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+//					delete d.Fields;
+					
+					angular.extend(self, d);
+
+					def.resolve(self);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getProperties
+
 
 
 

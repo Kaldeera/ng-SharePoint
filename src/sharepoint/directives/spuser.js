@@ -17,7 +17,7 @@
 
 angular.module('ngSharePoint')
 
-.directive('spuser', ['SPUser', function(SPUser) {
+.directive('spuser', ['SharePoint', function(SharePoint) {
 
 	return {
 
@@ -29,30 +29,36 @@ angular.module('ngSharePoint')
 
 		link: function($scope, $element, $attrs) {
 
-			if ($element[0].attributes['user-id'] === void 0) {
-				// current user
-				SPUser.getCurrentUser().then(function(user) {
+			SharePoint.getCurrentWeb().then(function(web) {
 
-					$scope.UserData = user;
-				});
+				$scope.currentWeb = web;
 
-			} else {
+				if ($element[0].attributes['user-id'] === void 0) {
 
-				// Have userId attribute with the specified userId or LoginName
-				$scope.$watch(function() {
-					return $scope.$eval($attrs.userId);
-				}, function(newValue) {
-
-					if (newValue === void 0) return;
-
-					SPuser.getUserById(newValue).then(function(user) {
+					// current user
+					$scope.currentWeb.getCurrentUser().then(function(user) {
 
 						$scope.UserData = user;
 					});
 
-				});
+				} else {
 
-			}
+					// Have userId attribute with the specified userId or LoginName
+					$scope.$watch(function() {
+						return $scope.$eval($attrs.userId);
+					}, function(newValue) {
+
+						if (newValue === void 0) return;
+
+						$scope.currentWeb.getUserById(newValue).then(function(user) {
+
+							$scope.UserData = user;
+						});
+
+					});
+
+				}
+			});
 
 		}
 	};

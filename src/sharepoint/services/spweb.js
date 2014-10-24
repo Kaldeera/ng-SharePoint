@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPUtils', 'SPList',
+	['$q', 'SPUtils', 'SPList', 'SPUser',
 
-	function($q, SPUtils, SPList) {
+	function($q, SPUtils, SPList, SPUser) {
 
 		'use strict';
 
@@ -234,7 +234,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************	
 		// getCurrentUser
 		//
 		// Gets a SPUser object (SPUser factory)
@@ -244,6 +244,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		SPWebObj.prototype.getCurrentUser = function() {
 
 			var def = $q.defer();
+			var self = this;
 
 			if (this.currentUser !== void 0) {
 
@@ -251,7 +252,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			} else {
 				this.getUserById(_spPageContextInfo.userId).then(function(user) {
-					this.currentUser = user;
+					self.currentUser = user;
 					def.resolve(user);
 				});
 			}
@@ -261,7 +262,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************	
 		// getUserById
 		//
 		// Gets a SPUser object (SPUser factory)
@@ -273,14 +274,12 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			var def = $q.defer();
 
-			new SPUser(this, userId).then(function(user) {
+			new SPUser(this, userId).getProperties().then(function(user) {
 				def.resolve(user);
 			});
 
 			return def.promise;
 		};
-
-
 
 
 

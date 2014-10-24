@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPList', 
 
-	['$q', 'SPCache', 'SPListItem', 
+	['$q', 'SPCache', 'SPFolder', 'SPListItem', 
 
-	function($q, SPCache, SPListItem) {
+	function($q, SPCache, SPFolder, SPListItem) {
 
 		'use strict';
 
@@ -149,7 +149,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 					var d = utils.parseSPResponse(data);
 					delete d.Fields;
-					
+
 					angular.extend(self, d);
 
 					def.resolve(d);
@@ -174,20 +174,28 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 		// ****************************************************************************
-		// getFields
+		// getRootFolder
 		//
-		// Gets list fields
+		// Gets root folder
 		//
 		// @returns: Promise with the result of the REST query.
 		//
-		SPListObj.prototype.getFields = function() {
+		SPListObj.prototype.getRootFolder = function() {
 
 			var self = this;
 			var def = $q.defer();
 
-			if (this.Fields !== void 0) {
+			if (this.RootFolder !== void 0) {
 
-				def.resolve(this.Fields);
+				if (this.RootFolder.__deferred !== void 0) {
+					
+					delete this.RootFolder;
+				}
+			}
+
+			if (this.RootFolder !== void 0) {
+
+				def.resolve(this.RootFolder);
 
 			} else {
 
@@ -195,7 +203,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 				executor.executeAsync({
 
-					url: self.apiUrl + '/Fields',
+					url: self.apiUrl + '/RootFolder',
 					method: 'GET', 
 					headers: { 
 						"Accept": "application/json; odata=verbose"
@@ -204,18 +212,9 @@ angular.module('ngSharePoint').factory('SPList',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-						var fields = {};
+						this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
 
-						angular.forEach(d, function(field) {
-
-							fields[field.InternalName] = field;
-
-						});
-
-						self.Fields = fields;
-						SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
-
-						def.resolve(fields);
+						def.resolve(this.RootFolder);
 					}, 
 
 					error: function(data, errorCode, errorMessage) {
