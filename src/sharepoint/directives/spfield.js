@@ -36,9 +36,11 @@ angular.module('ngSharePoint').directive('spfield',
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
 							var dependsOn = ($attrs.dependsOn ? 'depends-on="' + $attrs.dependsOn + '"' : '');
+							var renderAs = ($attrs.renderAs ? 'render-as="' + $attrs.renderAs + '"' : '');
 
 							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name)
 									   .replace(/\{\{mode\}\}/g, mode)
+									   .replace(/\{\{renderAs\}\}/g, renderAs)
 									   .replace(/\{\{dependsOn\}\}/g, dependsOn);
 
 							

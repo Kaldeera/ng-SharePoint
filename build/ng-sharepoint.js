@@ -799,7 +799,7 @@ angular.module('ngSharePoint').value('Constants', {
 });
 
 /*
-	Config - provider
+	ngSharePointConfig - provider
 
 	Configuration settings SharePoint provider.
 	
@@ -813,11 +813,11 @@ angular.module('ngSharePoint').value('Constants', {
 
 
 ///////////////////////////////////////
-//	Config
+//	ngSharePointConfig
 ///////////////////////////////////////
 
 angular.module('ngSharePoint')
-.provider('Config', function() {
+.provider('ngSharePointConfig', function() {
 
 	'use strict';
 
@@ -1568,7 +1568,68 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************
+	// ****************************************************************************
+	// getFields
+	//
+	// Gets list fields
+	//
+	// @returns: Promise with the result of the REST query.
+	//
+	SPListObj.prototype.getFields = function() {
+
+	    var self = this;
+	    var def = $q.defer();
+
+	    if (this.Fields !== void 0) {
+
+	        def.resolve(this.Fields);
+
+	    } else {
+
+	        var executor = new SP.RequestExecutor(self.web.url);
+
+	        executor.executeAsync({
+
+	            url: self.apiUrl + '/Fields',
+	            method: 'GET',
+	            headers: {
+	                "Accept": "application/json; odata=verbose"
+	            },
+
+	            success: function(data) {
+
+	                var d = utils.parseSPResponse(data);
+	                var fields = {};
+
+	                angular.forEach(d, function(field) {
+	                    fields[field.InternalName] = field;
+	                });
+
+	                self.Fields = fields;
+	                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+
+	                def.resolve(fields);
+	            },
+
+	            error: function(data, errorCode, errorMessage) {
+
+	                var err = utils.parseError({
+	                    data: data,
+	                    errorCode: errorCode,
+	                    errorMessage: errorMessage
+	                });
+
+	                def.reject(err);
+	            }
+	        });
+	    }
+	    
+	    return def.promise;
+	}; // getFields
+
+
+
+	// ****************************************************************************
 		// getRootFolder
 		//
 		// Gets root folder
@@ -1627,7 +1688,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 			return def.promise;
 
-		}; // getFields
+		}; // getRootFolder
 
 
 
@@ -2917,7 +2978,7 @@ angular.module('ngSharePoint').factory('SPUser',
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODataParserProvider', function (Config, $q, $http, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', ['ngSharePointConfig', '$q', '$http', 'ODataParserProvider', function (ngSharePointConfig, $q, $http, ODataParserProvider) {
 
 	'use strict';
 
@@ -2972,7 +3033,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 					// Loads additional needed scripts
 					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 
-					if (!Config.options.minimalLoadSharePointInfraestructure) {
+					if (!ngSharePointConfig.options.minimalLoadSharePointInfraestructure) {
 
 						loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
 						loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
@@ -3013,7 +3074,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 			var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
 			var url;
 
-			if (Config.options.force15LayoutsDirectory) {
+			if (ngSharePointConfig.options.force15LayoutsDirectory) {
 				url = '/_layouts/15/ScriptResx.ashx?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
 			} else {
 				url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
@@ -3055,7 +3116,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 
 			var deferred = $q.defer();
 
-			if (Config.options.force15LayoutsDirectory) {
+			if (ngSharePointConfig.options.force15LayoutsDirectory) {
 				SP.SOD.registerSod(scriptFilename, '/_layouts/15/' + scriptFilename);
 			} else {
 				SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));

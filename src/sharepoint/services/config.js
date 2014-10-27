@@ -1,5 +1,5 @@
 /*
-	Config - provider
+	ngSharePointConfig - provider
 
 	Configuration settings SharePoint provider.
 	
@@ -13,11 +13,11 @@
 
 
 ///////////////////////////////////////
-//	Config
+//	ngSharePointConfig
 ///////////////////////////////////////
 
 angular.module('ngSharePoint')
-.provider('Config', function() {
+.provider('ngSharePointConfig', function() {
 
 	'use strict';
 

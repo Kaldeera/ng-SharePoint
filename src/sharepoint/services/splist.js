@@ -173,7 +173,68 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************
+	// ****************************************************************************
+	// getFields
+	//
+	// Gets list fields
+	//
+	// @returns: Promise with the result of the REST query.
+	//
+	SPListObj.prototype.getFields = function() {
+
+	    var self = this;
+	    var def = $q.defer();
+
+	    if (this.Fields !== void 0) {
+
+	        def.resolve(this.Fields);
+
+	    } else {
+
+	        var executor = new SP.RequestExecutor(self.web.url);
+
+	        executor.executeAsync({
+
+	            url: self.apiUrl + '/Fields',
+	            method: 'GET',
+	            headers: {
+	                "Accept": "application/json; odata=verbose"
+	            },
+
+	            success: function(data) {
+
+	                var d = utils.parseSPResponse(data);
+	                var fields = {};
+
+	                angular.forEach(d, function(field) {
+	                    fields[field.InternalName] = field;
+	                });
+
+	                self.Fields = fields;
+	                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+
+	                def.resolve(fields);
+	            },
+
+	            error: function(data, errorCode, errorMessage) {
+
+	                var err = utils.parseError({
+	                    data: data,
+	                    errorCode: errorCode,
+	                    errorMessage: errorMessage
+	                });
+
+	                def.reject(err);
+	            }
+	        });
+	    }
+	    
+	    return def.promise;
+	}; // getFields
+
+
+
+	// ****************************************************************************
 		// getRootFolder
 		//
 		// Gets root folder
@@ -232,7 +293,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 			return def.promise;
 
-		}; // getFields
+		}; // getRootFolder
 
 
 

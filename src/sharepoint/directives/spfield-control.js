@@ -44,7 +44,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					}
 
 					// Gets the field type
-					var fieldType = $scope.fieldSchema.TypeAsString;
+					var fieldType = $attrs.renderAs | $scope.fieldSchema.TypeAsString;
 					if (fieldType === 'UserMulti') fieldType = 'User';
 
 					// Gets the field name
