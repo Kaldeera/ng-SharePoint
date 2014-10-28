@@ -25,9 +25,8 @@ angular.module('ngSharePoint').directive('spformRule',
 			//replace: 'element',
 			//scope: false,
 			transclude: true,
-			priority: 50,
 
-			link: function ($scope, $element, $attrs, ctrl, $transclude) {
+			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
 				if ($element.parent().length > 0) {
 
@@ -43,10 +42,11 @@ angular.module('ngSharePoint').directive('spformRule',
 
 					} else {
 
-						$transclude($scope, function (clone) {
+						transcludeFn($scope, function (clone) {
 
 							for(var i = clone.length - 1; i >= 0; i--) {
 								var e = clone[i];
+								//$animate.enter(element, parentElement, afterElement, [options]);
 								$animate.enter(e, $element.parent(), $element);
 							}
 							
