@@ -25,6 +25,8 @@ angular.module('ngSharePoint').directive('spform',
 			restrict: 'EA',
             transclude: true,
             replace: true,
+            priority: 100,
+            //priority: 100,
             scope: {
                 originalItem: '=item',
                 onPreSave: '&',
@@ -125,6 +127,9 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.fieldValueChanged = function(fieldName, fieldValue) {
 
+					//console.log('>>>> spform.fieldValueChanged(' + fieldName + ', ' + fieldValue + ')');
+					//console.log('-------------------------------------------------------------------------------');
+					
 					$scope.$broadcast(fieldName + '_changed', fieldValue);
 				};
 
@@ -166,9 +171,7 @@ angular.module('ngSharePoint').directive('spform',
                     if (!$scope.ngFormCtrl.$valid) {
 
                         $scope.$broadcast('validate');
-
                         // TODO: Set the focus to the first invalid control (Try ng-focus directive).
-
                         return;
                     }
 
@@ -183,6 +186,7 @@ angular.module('ngSharePoint').directive('spform',
 
 							$scope.item.save().then(function(data) {
 
+								//angular.extend($scope.originalItem, data); //-> This launch $scope.originalItem $watch !!!
 								$scope.formStatus = this.status.IDLE;
 
 								var postSaveData = {
@@ -345,7 +349,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             $scope.item.list.getFields().then(function(fields) {
 
-                                // TODO: We need to get list properties to know if the list has 
+                                // NOTE: We need to get list properties to know if the list has 
                                 //       ContentTypesEnabled and, if so, get the schema from the
                                 //       ContentType instead.
                                 //       Also we need to know which is the default ContentType
@@ -366,27 +370,78 @@ angular.module('ngSharePoint').directive('spform',
                             
                             $scope.formStatus = spformController.status.PROCESSING;
 
-                            // Search for the 'transclusion-container' attribute within the 'spform' template elements.
-                            var elements = $element.find('*');
-                            var transclusionContainer;
-
-                            angular.forEach(elements, function(elem) {
-                                if (elem.attributes['transclusion-container'] !== void 0) {
-                                    transclusionContainer = angular.element(elem);
-                                }
-                            });
-
-                            // Remove the 'loading animation' element
+                            
                             var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
                             if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
 
-                            // Check for 'templateUrl' attribute
                             if ($attrs.templateUrl) {
 
-                                // Apply the 'templateUrl' attribute
                                 $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
 
+                                    $element.html('');
+                                    parseRules($element, angular.element(html), false);
+                                    $compile($element)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+
+                                }).error(function(data, status, headers, config, statusText) {
+
+                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                    $compile($element)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+                                });
+
+                            } else {
+
+                                var elements = $element.find('*');
+                                var transcludeFields = 'transclude-fields';
+                                var elementToTransclude;
+
+                                angular.forEach(elements, function(elem) {
+                                    if (elem.attributes[transcludeFields] !== void 0) {
+                                        elementToTransclude = angular.element(elem);
+                                    }
+                                });
+
+                                if (elementToTransclude === void 0) {
+                                    elementToTransclude = $element;
+                                }
+
+                                elementToTransclude.empty();
+
+                                transcludeFn($scope, function (clone) {
+                                    parseRules(elementToTransclude, clone, true);
+                                });
+
+                            var elements = $element.find('*');
+                            //var transcludeFields = 'transclude-fields';
+                            //var elementToTransclude;
+                            var transclusionContainer;
+
+                            angular.forEach(elements, function(elem) {
+                                if (elem.attributes['transclusion-container'] !== void 0) {
+                                    //elementToTransclude = angular.element(elem);
+                                    transclusionContainer = angular.element(elem);
+                                }
+                            });
+
+                            //if (elementToTransclude === void 0) {
+                            //    elementToTransclude = $element;
+                            //}
+
+                            //elementToTransclude.empty();
+
+                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+
+
+                            if ($attrs.templateUrl) {
+
+                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+
+                                    //$element.html('');
+                                    //parseRules($element, angular.element(html), false);
+                                    //$compile($element)($scope);
                                     parseRules(transclusionContainer, angular.element(html), false);
                                     $compile(transclusionContainer)($scope);
                                     $scope.formStatus = spformController.status.IDLE;
@@ -394,19 +449,119 @@ angular.module('ngSharePoint').directive('spform',
                                 }).error(function(data, status, headers, config, statusText) {
 
                                     $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                    //$compile($element)($scope);
                                     $compile(transclusionContainer)($scope);
                                     $scope.formStatus = spformController.status.IDLE;
                                 });
 
                             } else {
+/*
+                                var elements = $element.find('*');
+                                var transcludeFields = 'transclude-fields';
+                                var elementToTransclude;
 
-                                // Apply transclusion
+                                angular.forEach(elements, function(elem) {
+                                    if (elem.attributes[transcludeFields] !== void 0) {
+                                        elementToTransclude = angular.element(elem);
+                                    }
+                                });
+
+                                if (elementToTransclude === void 0) {
+                                    elementToTransclude = $element;
+                                }
+
+                                elementToTransclude.empty();
+*/
                                 transcludeFn($scope, function (clone) {
+                                    //parseRules(elementToTransclude, clone, true);
                                     parseRules(transclusionContainer, clone, true);
                                 });
 
-
                                 // If no transclude content was detected inside the 'spform' directive, generate a default form template.
+                                if (elementToTransclude[0].children.length === 0) {
+
+                                    $scope.fields = [];
+
+                                    angular.forEach($scope.item.list.Fields, function(field) {
+                                        if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                            $scope.fields.push(field);
+                                        }
+                                    });
+
+                                    $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+
+                                        elementToTransclude.html('').append(html);
+                                        $compile(elementToTransclude)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
+
+                                    });
+
+                                } else {
+
+                                    $scope.formStatus = spformController.status.IDLE;
+                                }
+                                
+                            }
+                            
+                        } // loadItemTemplate
+
+
+                        function parseRules(targetElement, sourceElements, isTransclude) {
+
+                            var terminalRuleAdded = false;
+
+                            // Initialize the 'rulesApplied' array for debug purposes.
+                            $scope.rulesApplied = [];
+
+                            angular.forEach(sourceElements, function (elem) {
+
+                                // Check if 'elem' is a <spform-rule> element.
+                                if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
+
+                                    var testExpression = elem.attributes.test.value;
+
+                                    // Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
+                                    if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+
+                                        targetElement.append(elem);
+                                        var terminalExpression = false;
+
+                                        if (elem.attributes.terminal !== void 0) {
+
+                                            terminalExpression = elem.attributes.terminal.value;
+                                            terminalRuleAdded = $scope.$eval(terminalExpression);
+
+                                        }
+
+                                        // Add the rule applied to the 'rulesApplied' array for debug purposes.
+                                        $scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+
+                                    } else if (isTransclude) {
+
+                                        // NOTE: If the call to this function is from a transclude function, removes the 'spform-rule' elements that returns FALSE when evaluate its expression.
+                                        //       This is because when the transclusion is performed the elements are inside the current 'spform' element and should be removed.
+                                        //       When this function is called from an asynchronous template load ('templete-url' attribute), the elements are not yet in the element.
+                                        elem.remove();
+                                        elem = null;
+                                    }
+                                    
+                                } else {
+
+                                    targetElement.append(elem);
+                                }
+                            });
+
+                        } // parseRules private function
+
+                    } // compile.post-link
+
+                }; // compile function return
+
+            } // compile property
+
+		}; // Directive definition object
+                                // If no transclude content was detected inside the 'spform' directive, generate a default form template.
+                                //if (elementToTransclude[0].children.length === 0) {
                                 if (transclusionContainer[0].children.length === 0) {
 
                                     $scope.fields = [];
@@ -419,6 +574,8 @@ angular.module('ngSharePoint').directive('spform',
 
                                     $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
 
+                                        //elementToTransclude.html('').append(html);
+                                        //$compile(elementToTransclude)($scope);
                                         transclusionContainer.append(html);
                                         $compile(transclusionContainer)($scope);
                                         $scope.formStatus = spformController.status.IDLE;

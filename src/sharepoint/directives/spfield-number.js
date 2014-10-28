@@ -83,13 +83,13 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 //	SPNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spPercentage', 
+angular.module('ngSharePoint').directive('spNumber', 
 
 	[
 
-	function spPercentage_DirectiveFactory() {
+	function spNumber_DirectiveFactory() {
 
-		var spPercentageDirectiveDefinitionObject = {
+		var spNumberDirectiveDefinitionObject = {
 
 			restrict: 'A',
 			require: 'ngModel',
@@ -122,7 +122,7 @@ angular.module('ngSharePoint').directive('spPercentage',
 		}; // Directive definition object
 
 
-		return spPercentageDirectiveDefinitionObject;
+		return spNumberDirectiveDefinitionObject;
 
 	} // Directive factory
 

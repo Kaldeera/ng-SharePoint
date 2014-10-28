@@ -52,6 +52,32 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || formCtrl.getFormMode();
+
+				}, function(newValue) {
+
+					$scope.currentMode = newValue;
+
+					getData().then(function() {
+						renderField(newValue);
+					});
+
+				});
+*/
+
+
 				function getData() {
 
 					var def = $q.defer();
@@ -267,6 +293,21 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					}
 				}
 
+
+/*
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
+				function renderField(mode) {
+
+					$http.get('templates/form-templates/spfield-datetime-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+						var newElement = $compile(html)($scope);
+						$element.replaceWith(newElement);
+						$element = newElement;
+					});
+
+				}
+*/
 
 
 				// ****************************************************************************

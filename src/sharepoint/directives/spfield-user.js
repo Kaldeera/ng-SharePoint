@@ -48,13 +48,70 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					parserFn: function(modelValue, viewValue) {
 
 						if ($scope.schema.AllowMultipleValues) {
+							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						}
+
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						// Adjust the model if no value is provided
+						if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+							$scope.value = { results: [] };
+						}
+
+						$scope.selectedUserItems = void 0;
+						refreshData();
+					},
+
+					postRenderFn: function(html) {
+
+						if ($scope.currentMode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+*/
+
+					init: function() {
+
+						$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+					},
+					
+					parserFn: function(modelValue, viewValue) {
+
+						if ($scope.schema.AllowMultipleValues) {
 
 							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
 						} else {
 
 							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
-							// NOTE: Required validator is implicitly applied when no multiple values.
+							// NOTE: Required validator is implicit applied when no multiple values.
 
 							// Unique validity (Only one value is allowed)
 							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
@@ -96,7 +153,51 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
 
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+
+
+/*
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || formCtrl.getFormMode();
+
+				}, function(newValue, oldValue) {
+
+					if ($scope.currentMode === newValue) return;
+
+					$scope.currentMode = newValue;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for value (model) changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+
+					// Adjust the model if no value is provided
+					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+						$scope.value = { results: [] };
+					}
+
+					$scope.selectedUserItems = void 0;
+					refreshData();
+
+				});
+*/
 
 
 				// ****************************************************************************
@@ -123,7 +224,43 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 					});
 				}
+/*
 
+
+
+				// ****************************************************************************
+				// Replaces the directive element HTML.
+				//
+				function setElementHTML(html) {
+
+					var newElement = $compile(html)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
+					
+				}
+
+
+
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
+				function renderField(mode) {
+
+					$http.get('templates/form-templates/spfield-user-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+
+						setElementHTML(html);
+
+						if (mode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+					});
+
+				}
+*/
 
 
 				// ****************************************************************************
@@ -194,7 +331,6 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				}
 
 
-
 				// ****************************************************************************
 				// Gets the user data for display mode.
 				//
@@ -241,7 +377,6 @@ angular.module('ngSharePoint').directive('spfieldUser',
 									url: '',
 									data: null
 								};
-
 
 								if ($scope.value === null || $scope.value === 0) {
 

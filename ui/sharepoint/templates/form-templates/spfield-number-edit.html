@@ -1,3 +1,3 @@
-<input type="text" ng-model="value" sp-percentage="{{schema.Percentage}}" ng-required="{{schema.Required}}" min="{{schema.MinimumValue}}" max="{{schema.MaximumValue}}" size="11" title="{{schema.Title}}" class="ms-input" style="ime-mode: inactive" /><span ng-if="schema.Percentage">{{cultureInfo.numberFormat.PercentSymbol}}</span>
+<input type="text" ng-model="value" sp-number="true" ng-required="{{schema.Required}}" min="{{schema.MinimumValue}}" max="{{schema.MaximumValue}}" size="11" title="{{schema.Title}}" class="ms-input" style="ime-mode: inactive" /><span ng-if="schema.Percentage">{{cultureInfo.numberFormat.PercentSymbol}}</span>
 <br/>
 <spfield-validation-messages></spfield-validation-messages>

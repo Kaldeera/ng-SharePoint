@@ -60,6 +60,95 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+*/
+
+				/*
+				// Adjust the model if no value is provided
+				if ($scope.value === null) {
+					$scope.value = { results: [] };
+				}
+
+				$scope.choices = $scope.value.results;
+				sortChoices();
+				*/
+
+				/*
+				var parseFn = function(modelValue, viewValue) {
+
+					$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+					return $scope.value;
+				};
+
+				$scope.modelCtrl.$parsers.push(parseFn);
+				*/
+
+/*
+				$scope.$watch('value', function(newValue, oldValue) {
+
+                    if (newValue === oldValue) return;
+                    fieldScope.modelCtrl.$setViewValue(newValue);
+                        
+                }, true);
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || formCtrl.getFormMode();
+
+				}, function(newValue) {
+
+					$scope.currentMode = newValue;
+					renderField(newValue);
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for field value changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+					modelCtrl.$setViewValue(newValue);
+
+				}, true);
+
+
+
+				// ****************************************************************************
+				// Validate the field.
+				//
+				var unregisterValidateFn = $scope.$on('validate', function() {
+
+					// Update the $viewValue to change its state to $dirty and force to run 
+					// $parsers, which include validators.
+					modelCtrl.$setViewValue(modelCtrl.$viewValue);
+				});
+
+
+
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
+				function renderField(mode) {
+
+					$http.get('templates/form-templates/spfield-multichoice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+
+						$element.html(html);
+						$compile($element)($scope);
+					});
+
+				}
+*/
+
 
 				// ****************************************************************************
 				// Updates the model (array of choices) when a checkbox is toggled.

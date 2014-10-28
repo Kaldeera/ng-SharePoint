@@ -57,7 +57,43 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || formCtrl.getFormMode();
+
+				}, function(newValue, oldValue) {
+
+					if ($scope.currentMode === newValue) return;
+					
+					$scope.currentMode = newValue;
+					refreshData();
+
+				});
+
+
+
+				// ****************************************************************************
+				// Watch for value (model) changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+
+					$scope.lookupItem = void 0;
+					refreshData();
+
+				});
+*/
 
 				// ****************************************************************************
 				// Check for dependences.
@@ -124,6 +160,33 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 				}
 
+
+/*
+				// ****************************************************************************
+				// Replaces the directive element HTML.
+				//
+				function setElementHTML(html) {
+
+					var newElement = $compile(html)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
+
+				}
+
+
+
+				// ****************************************************************************
+				// Renders the field with the correct layout based on the form mode.
+				//
+				function renderField(mode) {
+
+					$http.get('templates/form-templates/spfield-lookup-' + mode + '.html', { cache: $templateCache }).success(function(html) {
+
+						$scope.setElementHTML(html);
+					});
+
+				}
+*/
 
 
 				// ****************************************************************************
