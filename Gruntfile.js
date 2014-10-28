@@ -120,8 +120,7 @@ module.exports = function(grunt) {
               expand: true,
               src: '**',
               //dest: 'R:\\app\\kld-testforms\\js'
-              //dest: 'X:\\app\\ngSharepoint'
-              dest: 'V:\\app\\js\\ngSharepoint'
+              dest: 'X:\\app\\ngSharepoint'
             }
           ]
         }      
@@ -143,7 +142,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat:ngSharePoint', 'html2js:sharepoint', 'copy:toServer']);
+  grunt.registerTask('default', ['jshint:all', 'uglify', 'concat:ngSharePoint', 'html2js:sharepoint']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
 
