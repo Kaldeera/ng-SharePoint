@@ -48,8 +48,6 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-<<<<<<< HEAD
-=======
 					},
 
 					parserFn: function(modelValue, viewValue) {
@@ -60,7 +58,6 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
 						
 						return $scope.value;
->>>>>>> PCASME
 					}
 				};
 
@@ -113,21 +110,12 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 				}
 */
 			} // link
-<<<<<<< HEAD
 
 		}; // Directive definition object
 
 
 		return spfieldNumber_DirectiveDefinitionObject;
 
-=======
-
-		}; // Directive definition object
-
-
-		return spfieldNumber_DirectiveDefinitionObject;
-
->>>>>>> PCASME
 	} // Directive factory
 
 ]);

@@ -38,7 +38,6 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				var directive = {
 					fieldTypeName: 'user',
 					replaceAll: false,
-<<<<<<< HEAD
 
 					init: function() {
 
@@ -96,8 +95,6 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
 				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 */
-=======
->>>>>>> PCASME
 
 					init: function() {
 
@@ -111,11 +108,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
-<<<<<<< HEAD
-					return { mode: $scope.mode || formCtrl.getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
-=======
 						} else {
->>>>>>> PCASME
 
 							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
 							// NOTE: Required validator is implicit applied when no multiple values.

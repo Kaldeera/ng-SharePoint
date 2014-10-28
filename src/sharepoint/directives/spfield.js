@@ -23,13 +23,7 @@ angular.module('ngSharePoint').directive('spfield',
 		var spfield_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
-<<<<<<< HEAD
-			template: '<tr></tr>',
-=======
-			//template: '<tr></tr>',
 			template: '<div></div>',
->>>>>>> PCASME
-
 
 			link: function($scope, $element, $attrs) {
 
@@ -49,11 +43,7 @@ angular.module('ngSharePoint').directive('spfield',
 							// Removes AngularJS classes (ng-*)
 							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
-<<<<<<< HEAD
-							// If there are no classes after the remove, don't inserts the 'class' attribute
-=======
 							// If there aren't classes after the removal, skips the 'class' attribute.
->>>>>>> PCASME
 							if (valueAttr === '') continue;
 						}
 
