@@ -24,7 +24,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
         // Private functions
         //
         function defaultOnValidateFn() {
-            // NOTE: Executed in the directive $scope context.
+            // NOTE: Executed in the directive's '$scope' context (i.e.: this === $scope).
 
             // Update the model property '$viewValue' to change the model state to $dirty and
             // force to run $parsers, which include validators.
@@ -52,8 +52,10 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          * baseLinkFn
          * ----------------------------------------------------------------------------
          *
-         * The 'this' word in this function is the directive object passed to the 
-         * function when applied from the 'spfield-xxx' directive (e.g., 'spfield-text').
+         * Serves as the base 'link' function to all 'spfield-xxx' directives.
+         *
+         * The 'this' word in this function is the directive object defined in the
+         * 'spfield-xxx' directive. See the definition of the 'directive object' below.
          * 
          * Example of use in a directive 'post-link' function:
          *
@@ -72,7 +74,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *
          *      // Apply the directive definition object to the 'baseLinkFn'.
          *      // Pass 'post-link' function arguments as arguments to the 'baseLinkFn'.
-         *      // The 'directive' object becomes the execution context of the 'baseLinkFn'.
+         *      // The 'directive object' becomes the execution context of the 'baseLinkFn'.
          *      // (Becomes the 'this' word within the 'baseLinkFn' function).
          *
          *      SPFieldDirective.baseLinkFn.apply(directiveObj, arguments);
@@ -131,15 +133,15 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
             // Apply the directive initializacion if specified.
-            if (directive.init) directive.init();
+            if (angular.isFunction(directive.init)) directive.init();
 
 
             // Apply the directive parser function if specified.
-            if (directive.parserFn) $scope.modelCtrl.$parsers.unshift(directive.parserFn);
+            if (angular.isFunction(directive.parserFn)) $scope.modelCtrl.$parsers.unshift(directive.parserFn);
 
 
             // Apply the directive formatter function if specified.
-            if (directive.formatterFn) $scope.modelCtrl.$formatters.unshift(directive.formatterFn);
+            if (angular.isFunction(directive.formatterFn)) $scope.modelCtrl.$formatters.unshift(directive.formatterFn);
 
 
 

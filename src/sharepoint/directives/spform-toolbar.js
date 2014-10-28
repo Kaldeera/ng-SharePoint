@@ -20,7 +20,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
 
-		return {
+		var spformToolbarDirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: '^spform',
@@ -59,12 +59,16 @@ angular.module('ngSharePoint').directive('spformToolbar',
 				});
 
 
+
+				// ****************************************************************************
+				// Public methods
+				//
+
 				$scope.saveForm = function() {
 
 					spformController.save();
 
 				};
-
 
 
 				$scope.cancelForm = function() {
@@ -73,10 +77,13 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 				};
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spformToolbarDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

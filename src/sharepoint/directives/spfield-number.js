@@ -48,57 +48,22 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
 					}
 				};
 
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
-/*				
-				var formCtrl = controllers[0], modelCtrl = controllers[1];
-				$scope.modelCtrl = modelCtrl;
 
-				var schema = formCtrl.getFieldSchema($attrs.name);
-				var xml = SPUtils.parseXmlString(schema.SchemaXml);
-				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-				var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
-				schema.Percentage = percentage.toLowerCase() === 'true';
-				schema.Decimals = parseInt(decimals);
-
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
-				$scope.schema = schema;
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || formCtrl.getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-number-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-*/
 			} // link
 
 		}; // Directive definition object
@@ -118,13 +83,13 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 //	SPNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spNumber', 
+angular.module('ngSharePoint').directive('spPercentage', 
 
 	[
 
-	function spNumber_DirectiveFactory() {
+	function spPercentage_DirectiveFactory() {
 
-		var spNumberDirectiveDefinitionObject = {
+		var spPercentageDirectiveDefinitionObject = {
 
 			restrict: 'A',
 			require: 'ngModel',
@@ -157,7 +122,7 @@ angular.module('ngSharePoint').directive('spNumber',
 		}; // Directive definition object
 
 
-		return spNumberDirectiveDefinitionObject;
+		return spPercentageDirectiveDefinitionObject;
 
 	} // Directive factory
 

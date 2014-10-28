@@ -267,6 +267,7 @@ angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$temp
     "	<input dir=\"ltr\" type=\"text\" ng-model=\"value.Url\" ng-required=\"{{schema.Required}}\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl\" title=\"{{schema.Title}}\" class=\"ms-long\">\n" +
     "	<div class=\"ms-formdescription\">{{UrlFieldTypeDescription}}&nbsp;</div>\n" +
     "	<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" ng-model=\"value.Description\" class=\"ms-long\">\n" +
+    "	<input type=\"text\" ng-model=\"value.Description\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" class=\"ms-long\">\n" +
     "</div>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
@@ -330,6 +331,16 @@ angular.module("templates/form-templates/spfield-validation-messages.html", []).
 
 angular.module("templates/form-templates/spfield.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield.html",
+    "<div class=\"spfield-wrapper\">\n" +
+    "    <div class=\"ms-formlabel spfield-label\" style=\"float:left; display: inline-block; vertical-align: top; width: 113px;\">\n" +
+    "        <spfield-label {{attributes}}></spfield-label>\n" +
+    "    </div>\n" +
+    "    <div class=\"ms-formbody spfield-body\" style=\"float:left; display: inline-block; vertical-align: top; width: 350px;\">\n" +
+    "        <spfield-control {{attributes}}></spfield-control>\n" +
+    "        <spfield-description {{attributes}}></spfield-description>\n" +
+    "    </div>\n" +
+    "</div>\n" +
+    "<!--\n" +
     "<tr>\n" +
     "	<td nowrap=\"true\" valign=\"top\" width=\"113px\" class=\"ms-formlabel\">\n" +
     "        <spfield-label {{attributes}}></spfield-label>\n" +
@@ -338,12 +349,16 @@ angular.module("templates/form-templates/spfield.html", []).run(["$templateCache
     "        <spfield-control {{attributes}}></spfield-control>\n" +
     "        <spfield-description {{attributes}}></spfield-description>\n" +
     "	</td>\n" +
-    "</tr>");
+    "</tr>\n" +
+    "-->\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spform-default.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-default.html",
-    "<tr ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></tr>");
+    "<div ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></div>\n" +
+    "<spform-toolbar></spform-toolbar>\n" +
+    "<!--<tr ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></tr>-->");
 }]);
 
 angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templateCache", function($templateCache) {
@@ -569,6 +584,17 @@ angular.module("templates/form-templates/spform.html", []).run(["$templateCache"
     "    </table>\n" +
     "\n" +
     "    <spform-toolbar></spform-toolbar>\n" +
+    "\n" +
+    "    <div transclusion-container=\"\"></div>\n" +
+    "\n" +
+    "<!--\n" +
+    "    <table class=\"ms-formtable\" style=\"margin-top: 8px;\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" +
+    "        <tbody transclude-fields>\n" +
+    "        </tbody>\n" +
+    "    </table>\n" +
+    "\n" +
+    "    <spform-toolbar></spform-toolbar>\n" +
+    "-->\n" +
     "</form>\n" +
     "");
 }]);

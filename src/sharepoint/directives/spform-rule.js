@@ -20,10 +20,10 @@ angular.module('ngSharePoint').directive('spformRule',
 
 	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
-		return {
+		var spformruleDirectiveDefinitionObject = {
+			
 			restrict: 'E',
 			transclude: true,
-			priority: 50,
 
 			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
@@ -45,6 +45,7 @@ angular.module('ngSharePoint').directive('spformRule',
 
 							for(var i = clone.length - 1; i >= 0; i--) {
 								var e = clone[i];
+								//$animate.enter(element, parentElement, afterElement, [options]);
 								$animate.enter(e, $element.parent(), $element);
 							}
 							
@@ -54,9 +55,14 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element = null;
 					}
 				}
-			}
-		};
+				
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spformruleDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
