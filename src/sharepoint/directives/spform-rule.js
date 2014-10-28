@@ -22,8 +22,6 @@ angular.module('ngSharePoint').directive('spformRule',
 
 		return {
 			restrict: 'E',
-			//replace: 'element',
-			//scope: false,
 			transclude: true,
 
 			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
