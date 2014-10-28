@@ -20,7 +20,7 @@ angular.module('ngSharePoint').directive('spformRule',
 
 	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
-		return {
+		var spformruleDirectiveDefinitionObject = {
 			restrict: 'E',
 			transclude: true,
 
@@ -54,9 +54,14 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element = null;
 					}
 				}
-			}
-		};
+				
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spformruleDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
