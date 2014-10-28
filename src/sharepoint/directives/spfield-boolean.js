@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldBoolean', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldBoolean_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldBoolean_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,28 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'boolean',
+					replaceAll: false,
+					watchValueFn: function(newValue) {
+						$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 
 
 
@@ -52,7 +69,7 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -75,10 +92,14 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 					});
 
 				}
-			}
+*/				
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldBoolean_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

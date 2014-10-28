@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldLookup', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
 
-		return {
+		var spfieldLookup_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,34 +29,38 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
+				var directive = {
+					
+					fieldTypeName: 'lookup',
+					replaceAll: false,
 
+					watchModeFn: function(newValue) {
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
+						refreshData();
+					},
 
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
+					watchValueFn: function(newValue, oldValue) {
 
-				}, function(newValue, oldValue) {
+						if (newValue === oldValue) return;
 
-					$scope.currentMode = newValue.mode;
-
-					if (newValue.value !== oldValue.value) {
 						$scope.lookupItem = void 0;
+						refreshData();						
 					}
+				};
 
-					refreshData();
 
-				}, true);
-				*/
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 
 
 
@@ -65,7 +69,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue, oldValue) {
 
@@ -89,7 +93,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					refreshData();
 
 				});
-
+*/
 
 				// ****************************************************************************
 				// Check for dependences.
@@ -122,7 +126,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					if ($scope.lastValue !== $scope.value) {
 
 						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-						controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
 
 						$scope.lastValue = $scope.value;
 					}
@@ -136,28 +140,28 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				function refreshData() {
 					
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
 					getLookupData($scope.currentMode).then(function(){
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function(err) {
 
 						$scope.errorMsg = err.message;
 
 						if ($scope.value === void 0) {
-							setElementHTML('');
+							directive.setElementHTML('');
 						} else {
-							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
 						}
 					});
 
 				}
 
 
-
+/*
 				// ****************************************************************************
 				// Replaces the directive element HTML.
 				//
@@ -178,11 +182,11 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					$http.get('templates/form-templates/spfield-lookup-' + mode + '.html', { cache: $templateCache }).success(function(html) {
 
-						setElementHTML(html);
+						$scope.setElementHTML(html);
 					});
 
 				}
-
+*/
 
 
 				// ****************************************************************************
@@ -435,10 +439,13 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldLookup_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPList', 
 
-	['$q', 'SPCache', 'SPListItem', 
+	['$q', 'SPCache', 'SPFolder', 'SPListItem', 
 
-	function($q, SPCache, SPListItem) {
+	function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
 
 		'use strict';
 
@@ -149,7 +149,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 					var d = utils.parseSPResponse(data);
 					delete d.Fields;
-					
+
 					angular.extend(self, d);
 
 					def.resolve(d);
@@ -182,12 +182,83 @@ angular.module('ngSharePoint').factory('SPList',
 		//
 		SPListObj.prototype.getFields = function() {
 
+		    var self = this;
+		    var def = $q.defer();
+
+		    if (this.Fields !== void 0) {
+
+		        def.resolve(this.Fields);
+
+		    } else {
+
+		        var executor = new SP.RequestExecutor(self.web.url);
+
+		        executor.executeAsync({
+
+		            url: self.apiUrl + '/Fields',
+		            method: 'GET',
+		            headers: {
+		                "Accept": "application/json; odata=verbose"
+		            },
+
+		            success: function(data) {
+
+		                var d = utils.parseSPResponse(data);
+		                var fields = {};
+
+		                angular.forEach(d, function(field) {
+		                    fields[field.InternalName] = field;
+		                });
+
+		                self.Fields = fields;
+		                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+
+		                def.resolve(fields);
+		            },
+
+		            error: function(data, errorCode, errorMessage) {
+
+		                var err = utils.parseError({
+		                    data: data,
+		                    errorCode: errorCode,
+		                    errorMessage: errorMessage
+		                });
+
+		                def.reject(err);
+		            }
+		        });
+		    }
+		    
+		    return def.promise;
+
+		}; // getFields
+
+
+
+		// ****************************************************************************
+		// getRootFolder
+		//
+		// Gets root folder
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListObj.prototype.getRootFolder = function() {
+
 			var self = this;
 			var def = $q.defer();
 
-			if (this.Fields !== void 0) {
+			if (this.RootFolder !== void 0) {
 
-				def.resolve(this.Fields);
+				if (this.RootFolder.__deferred !== void 0) {
+					
+					delete this.RootFolder;
+				}
+			}
+
+
+			if (this.RootFolder !== void 0) {
+
+				def.resolve(this.RootFolder);
 
 			} else {
 
@@ -195,7 +266,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 				executor.executeAsync({
 
-					url: self.apiUrl + '/Fields',
+					url: self.apiUrl + '/RootFolder',
 					method: 'GET', 
 					headers: { 
 						"Accept": "application/json; odata=verbose"
@@ -204,18 +275,9 @@ angular.module('ngSharePoint').factory('SPList',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-						var fields = {};
+						this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
 
-						angular.forEach(d, function(field) {
-
-							fields[field.InternalName] = field;
-
-						});
-
-						self.Fields = fields;
-						SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
-
-						def.resolve(fields);
+						def.resolve(this.RootFolder);
 					}, 
 
 					error: function(data, errorCode, errorMessage) {
@@ -233,7 +295,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 			return def.promise;
 
-		}; // getFields
+		}; // getRootFolder
 
 
 

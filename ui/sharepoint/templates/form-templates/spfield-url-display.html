@@ -1,4 +1,4 @@
 <div>
 	<a ng-href="{{value.Url}}" ng-bind="value.Description" target="_blank" ng-if="schema.DisplayFormat == 0"></a>
-	<img src="{{value.Url}}" alt="{{value.Description}}" ng-if="schema.DisplayFormat == 1"/>
+	<img ng-src="{{value.Url}}" alt="{{value.Description}}" ng-if="schema.DisplayFormat == 1"/>
 </div>

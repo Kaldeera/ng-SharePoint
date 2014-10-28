@@ -16,17 +16,17 @@
 
 angular.module('ngSharePoint')
 
-.directive('spfieldDescription', function() {
+.directive('spfieldDescription', function spfieldDescription_DirectiveFactory() {
 
-	return {
+	var spfieldDescription_DirectiveDefinitionObject = {
 
 		restrict: 'EA',
 		require: '^spform',
 		replace: true,
-		templateUrl: 'templates/form-templates/spfield-description.html',
 		scope: {
 			mode: '@'
 		},
+		templateUrl: 'templates/form-templates/spfield-description.html',
 
 
 		link: function($scope, $element, $attrs, spformController) {
@@ -47,7 +47,12 @@ angular.module('ngSharePoint')
 				$scope.currentMode = newValue;
 
 			});
-		}
-	};
+
+		} // link
+
+	}; // Directive definition object
+
+
+	return spfieldDescription_DirectiveDefinitionObject;
 	
-});
+}); // Directive factory

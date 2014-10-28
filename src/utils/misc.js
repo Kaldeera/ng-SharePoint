@@ -145,6 +145,8 @@ var utils = {
 	//
 	parseQuery: function(query) {
 
+		if (query === void 0) return '';
+		
 		var strQuery = '';
 
 		angular.forEach(query, function(value, key) {

@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldAttachments', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldAttachments_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldAttachments_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,13 +29,54 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+
+					fieldTypeName: 'attachments',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
+						$scope.AttachFileText = Resources.core.cui_ButAttachFile;
+						$scope.L_Menu_LCID = L_Menu_LCID;
+					},
+
+					watchValueFn: function(newValue) {
+
+						// Show loading animation.
+						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+
+						// Gets the files attached to the item
+						$scope.$parent.item.getAttachments().then(function(attachmentFiles){
+
+							$scope.attachmentFiles = attachmentFiles;
+							directive.renderField();
+
+						}, function(err) {
+
+							$scope.errorMsg = err.message;
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+						});
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*				
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
 				$scope.AttachFileText = Resources.core.cui_ButAttachFile;
+				$scope.L_Menu_LCID = L_Menu_LCID;
 
 
 				// ****************************************************************************
@@ -43,7 +84,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -65,7 +106,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					});
 
 				}, true);
-
+*/
 
 
 				// ****************************************************************************
@@ -108,7 +149,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 
 				// ****************************************************************************
-				// Removes existing attachment, local o server side.
+				// Removes existing attachment, local or server side.
 				// NOTE: Attachments will be effective when save the item.
 				//
 				$scope.removeAttachment = function(index, local) {
@@ -141,7 +182,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				};
 
 
-
+/*
 				// ****************************************************************************
 				// Replaces the directive element HTML.
 				//
@@ -166,12 +207,15 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					});
 
 				}
+*/
+			} // link
 
-			}
+		}; // Directive definition object
 
-		};
 
-	}
+		return spfieldAttachments_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -182,13 +226,13 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 	['$parse', '$timeout', 
 
-	function($parse, $timeout) {
+	function fileSelect_DirectiveFactory($parse, $timeout) {
 
-		return function($scope, $element, $attrs) {
+		var fileSelect_DirectiveDefinitionObject = function($scope, $element, $attrs) {
 
 			var fn = $parse($attrs.fileSelect);
 
-			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase()) !== 'file') {
+			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase() !== 'file')) {
 
 				var fileElem = angular.element('<input type="file">');
 
@@ -258,8 +302,11 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 			});
 
-		};
+		}; // Directive definition object/function
 
-	}
+
+		return fileSelect_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

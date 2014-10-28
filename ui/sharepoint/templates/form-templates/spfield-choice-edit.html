@@ -7,7 +7,7 @@
 			<tr ng-repeat="option in choices">
 				<td>
 					<span>
-						<input type="radio" ng-model="$parent.$parent.value" ng-value="option" id="{{schema.InternalName}}_{{$index}}" name="{{schema.InternalName}}_$RadioButtonChoiceField" />
+						<input type="radio" ng-model="$parent.$parent.value" ng-value="option" id="{{schema.InternalName}}_{{$index}}" />
 						<label for="{{schema.InternalName}}_{{$index}}" ng-bind="option"></label>
 					</span>
 				</td>
@@ -16,3 +16,4 @@
 	</table>
 
 </div>
+<spfield-validation-messages></spfield-validation-messages>

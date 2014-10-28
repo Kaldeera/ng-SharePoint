@@ -18,29 +18,43 @@ angular.module('ngSharePoint').directive('spform',
 
 	['SPUtils', '$compile', '$templateCache', '$http', '$q',
 
-	function(SPUtils, $compile, $templateCache, $http, $q) {
+	function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q) {
 
-		return {
+		var spform_DirectiveDefinitionObject = {
+
 			restrict: 'EA',
+            transclude: true,
+            replace: true,
+            priority: 100,
+            scope: {
+                originalItem: '=item',
+                onPreSave: '&',
+                onPostSave: '&',
+                onCancel: '&'
+            },
 			templateUrl: 'templates/form-templates/spform.html',
-			transclude: true,
-			replace: true,
-			priority: 100,
-			scope: {
-				originalItem: '=item',
-				onPreSave: '&',
-				onPostSave: '&',
-				onCancel: '&'
-			},
-
 
 
 			controller: ['$scope', '$attrs', function spformController($scope, $attrs) {
 
-				this.status = {
-					IDLE: 0,
-					PROCESSING: 1
-				};
+
+                this.status = {
+                    IDLE: 0,
+                    PROCESSING: 1
+                };
+
+                
+                this.getItem = function() {
+
+                    return $scope.item;
+                };
+
+
+                this.getFormCtrl = function() {
+
+                    // Returns the 'ng-form' directive controller
+                    return $scope.ngFormCtrl;
+                };
 
 
 				this.isNew = function() {
@@ -142,6 +156,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
 				this.getFormStatus = function() {
+
 					return $scope.formStatus;
 				};
 
@@ -149,6 +164,15 @@ angular.module('ngSharePoint').directive('spform',
 				this.save = function(redirectUrl) {
 
 					var self = this;
+
+                    $scope.ngFormCtrl.$setDirty();
+
+                    if (!$scope.ngFormCtrl.$valid) {
+
+                        $scope.$broadcast('validate');
+                        // TODO: Set the focus to the first invalid control (Try ng-focus directive).
+                        return;
+                    }
 
 					$scope.formStatus = this.status.PROCESSING;
 
@@ -164,7 +188,12 @@ angular.module('ngSharePoint').directive('spform',
 								//angular.extend($scope.originalItem, data); //-> This launch $scope.originalItem $watch !!!
 								$scope.formStatus = this.status.IDLE;
 
-								$q.when($scope.onPostSave({ originalItem: $scope.originalItem, item: $scope.item })).then(function(result) {
+								var postSaveData = {
+									originalItem: $scope.originalItem,
+									item: $scope.item
+								};
+
+								$q.when($scope.onPostSave(postSaveData)).then(function(result) {
 
 									if (result !== false) {
 
@@ -254,191 +283,222 @@ angular.module('ngSharePoint').directive('spform',
 
 				};
 
-			}],
+			}], // controller property
 
 
 
-			compile: function(element, attrs, transclude) {
+            compile: function compile(element, attrs/*, transcludeFn (DEPRECATED)*/) {
 
-				return {
+                return {
 
-					pre: function($scope, $element, $attrs, spformController) {
+                    pre: function prelink($scope, $element, $attrs, spformController, transcludeFn) {
+                    
+                        // Sets the form 'name' attribute if user don't provide it.
+                        // This way has always available the 'ng-form' directive controller for form validations.
+                        if (!$attrs.name) {
+                            $attrs.$set('name', 'spform');
+                        }
 
-						$scope.isInDesignMode = SPUtils.inDesignMode();
-						
-						if ($scope.isInDesignMode) return;
+                    },
 
 
-						// Watch for form mode changes
-						$scope.$watch(function() {
 
-							return spformController.getFormMode();
+                    post: function postLink($scope, $element, $attrs, spformController, transcludeFn) {
 
-						}, function(newMode) {
+                        // Makes an internal reference to the 'ng-form' directive controller for form validations.
+                        // (See pre-linking function above).
+                        $scope.ngFormCtrl = $scope[$attrs.name];
 
-							$scope.mode = newMode;
 
-							if ($scope.item !== void 0) {
+                        // Checks if the page is in design mode.
+                        $scope.isInDesignMode = SPUtils.inDesignMode();
+                        if ($scope.isInDesignMode) return;
 
-								$scope.item.list.getFields().then(function(fields) {
 
-									$scope.schema = fields;
-									$scope.loadItemTemplate();
+                        // Watch for form mode changes
+                        $scope.$watch(function() {
 
-								});
+                            return spformController.getFormMode();
 
-							}
-						});
+                        }, function(newMode) {
 
+                            $scope.mode = newMode;
 
-						// Watch for item changes
-						$scope.$watch('originalItem', function(newValue) {
+                            if ($scope.item !== void 0) {
 
-							// Checks if the item has a value
-							if (newValue === void 0) return;
+                                $scope.item.list.getFields().then(function(fields) {
 
-							$scope.item = angular.copy(newValue);
-							$scope.item.clean();
+                                    $scope.schema = fields;
+                                    loadItemTemplate();
 
-							$scope.item.list.getFields().then(function(fields) {
+                                });
 
-								// NOTE: We need to get list properties to know if the list has 
-								//		 ContentTypesEnabled and, if so, get the schema from the
-								//		 ContentType instead.
-								//		 Also we need to know which is the default ContentType
-								//		 to get the correct schema (I don't know how).
-								//
-								//		 If the above is not done, field properties like 'Required' will have incorrect data.
+                            }
+                        });
 
-								$scope.schema = fields;
-								$scope.loadItemTemplate();
 
-							});
+                        // Watch for item changes
+                        $scope.$watch('originalItem', function(newValue) {
 
-						}, true);
+                            // Checks if the item has a value
+                            if (newValue === void 0) return;
 
+                            $scope.item = angular.copy(newValue);
+                            $scope.item.clean();
 
+                            $scope.item.list.getFields().then(function(fields) {
 
-						$scope.loadItemTemplate = function() {
-							
-							$scope.formStatus = spformController.status.PROCESSING;
+                                // NOTE: We need to get list properties to know if the list has 
+                                //       ContentTypesEnabled and, if so, get the schema from the
+                                //       ContentType instead.
+                                //       Also we need to know which is the default ContentType
+                                //       to get the correct schema (I don't know how).
+                                //
+                                //       If the above is not done, field properties like 'Required' will have incorrect data.
 
-							
-							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
-							if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                $scope.schema = fields;
+                                loadItemTemplate();
 
+                            });
 
-							if ($attrs.templateUrl) {
+                        }, true);
 
-								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
-									$element.html('');
-									parseRules($element, angular.element(html), false);
-									$compile($element)($scope);
-									$scope.formStatus = spformController.status.IDLE;
 
-								});
+                        function loadItemTemplate() {
+                            
+                            $scope.formStatus = spformController.status.PROCESSING;
 
-							} else {
+                            
+                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
-								var elements = $element.find('*');
-								var transcludeFields = 'transclude-fields';
-								var elementToTransclude;
 
-								angular.forEach(elements, function(elem) {
-									if (elem.attributes[transcludeFields] !== void 0) {
-										elementToTransclude = angular.element(elem);
-									}
-								});
+                            if ($attrs.templateUrl) {
 
-								if (elementToTransclude === void 0) {
-									elementToTransclude = $element;
-								}
+                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
 
-								elementToTransclude.empty();
+                                    $element.html('');
+                                    parseRules($element, angular.element(html), false);
+                                    $compile($element)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
 
-								transclude($scope, function (clone) {
-									parseRules(elementToTransclude, clone, true);
-								});
+                                }).error(function(data, status, headers, config, statusText) {
 
+                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                    $compile($element)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+                                });
 
-								// If no template-url attribute was provided generate a default form template
-								if (elementToTransclude[0].children.length === 0) {
+                            } else {
 
-									$scope.fields = [];
+                                var elements = $element.find('*');
+                                var transcludeFields = 'transclude-fields';
+                                var elementToTransclude;
 
-									angular.forEach($scope.item.list.Fields, function(field) {
-										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-											$scope.fields.push(field);
-										}
-									});
+                                angular.forEach(elements, function(elem) {
+                                    if (elem.attributes[transcludeFields] !== void 0) {
+                                        elementToTransclude = angular.element(elem);
+                                    }
+                                });
 
-									$http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                if (elementToTransclude === void 0) {
+                                    elementToTransclude = $element;
+                                }
 
-										elementToTransclude.html('').append(html);
-										$compile(elementToTransclude)($scope);
-										$scope.formStatus = spformController.status.IDLE;
+                                elementToTransclude.empty();
 
-									});
+                                transcludeFn($scope, function (clone) {
+                                    parseRules(elementToTransclude, clone, true);
+                                });
 
-								}
-								
-							}
-							
-						};
 
+                                // If no transclude content was detected inside the 'spform' directive, generate a default form template.
+                                if (elementToTransclude[0].children.length === 0) {
 
-						function parseRules(targetElement, sourceElements, isTransclude) {
+                                    $scope.fields = [];
 
-							var terminalRuleAdded = false;
+                                    angular.forEach($scope.item.list.Fields, function(field) {
+                                        if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                            $scope.fields.push(field);
+                                        }
+                                    });
 
-							// Initialize the 'rulesApplied' array for debug purposes.
-							$scope.rulesApplied = [];
+                                    $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
 
-							angular.forEach(sourceElements, function (elem) {
+                                        elementToTransclude.html('').append(html);
+                                        $compile(elementToTransclude)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
 
-								// Check if 'elem' is a <spform-rule> element.
-								if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
+                                    });
 
-									var testExpression = elem.attributes.test.value;
+                                } else {
 
-									// Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
-									if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+                                    $scope.formStatus = spformController.status.IDLE;
+                                }
+                                
+                            }
+                            
+                        } // loadItemTemplate
 
-										targetElement.append(elem);
-										var terminalExpression = false;
 
-										if (elem.attributes.terminal !== void 0) {
+                        function parseRules(targetElement, sourceElements, isTransclude) {
 
-											terminalExpression = elem.attributes.terminal.value;
-											terminalRuleAdded = $scope.$eval(terminalExpression);
+                            var terminalRuleAdded = false;
 
-										}
+                            // Initialize the 'rulesApplied' array for debug purposes.
+                            $scope.rulesApplied = [];
 
-										// Add the rule applied to the 'rulesApplied' array for debug purposes.
-										$scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+                            angular.forEach(sourceElements, function (elem) {
 
-									} else if (isTransclude) {
+                                // Check if 'elem' is a <spform-rule> element.
+                                if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
 
-										elem.remove();
-										elem = null;
-									}
-									
-								} else {
+                                    var testExpression = elem.attributes.test.value;
 
-									targetElement.append(elem);
-								}
-							});
+                                    // Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
+                                    if (!terminalRuleAdded && $scope.$eval(testExpression)) {
 
-						}
+                                        targetElement.append(elem);
+                                        var terminalExpression = false;
 
-					}
-					
-				};
+                                        if (elem.attributes.terminal !== void 0) {
 
-			}
+                                            terminalExpression = elem.attributes.terminal.value;
+                                            terminalRuleAdded = $scope.$eval(terminalExpression);
 
-		};
-	}
+                                        }
+
+                                        // Add the rule applied to the 'rulesApplied' array for debug purposes.
+                                        $scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+
+                                    } else if (isTransclude) {
+
+                                        // NOTE: If the call to this function is from a transclude function, removes the 'spform-rule' elements that returns FALSE when evaluate its expression.
+                                        //       This is because when the transclusion is performed the elements are inside the current 'spform' element and should be removed.
+                                        //       When this function is called from an asynchronous template load ('templete-url' attribute), the elements are not yet in the element.
+                                        elem.remove();
+                                        elem = null;
+                                    }
+                                    
+                                } else {
+
+                                    targetElement.append(elem);
+                                }
+                            });
+
+                        } // parseRules private function
+
+                    } // compile.post-link
+
+                }; // compile function return
+
+            } // compile property
+
+		}; // Directive definition object
+
+        return spform_DirectiveDefinitionObject;
+
+	} // Directive factory function
 
 ]);

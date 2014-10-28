@@ -18,7 +18,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 	['$compile', '$templateCache', '$http', 'SPUtils',
 
-	function($compile, $templateCache, $http, SPUtils) {
+	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
 
 		return {
 

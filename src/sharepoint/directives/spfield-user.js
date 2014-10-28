@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldUser', 
 
-	['$compile', '$templateCache', '$http', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils',
+	['SPFieldDirective', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils',
 
-	function($compile, $templateCache, $http, $q, $timeout, $filter, SharePoint, SPUtils) {
+	function spfieldUser_DirectiveFactory(SPFieldDirective, $q, $timeout, $filter, SharePoint, SPUtils) {
 
-		return {
+		var spfieldUserDirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,14 +29,72 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'user',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+					},
+					
+					parserFn: function(modelValue, viewValue) {
+
+						if ($scope.schema.AllowMultipleValues) {
+							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						}
+
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						// Adjust the model if no value is provided
+						if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+							$scope.value = { results: [] };
+						}
+
+						$scope.selectedUserItems = void 0;
+						refreshData();
+					},
+
+					postRenderFn: function(html) {
+
+						if ($scope.currentMode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
 				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
-
+*/
 
 				// $scope.schema.SelectionGroup (0 | [GroupId])	-> UserSelectionScope (XML) (0 (All Users) | [GroupId])
 				// $scope.schema.SelectionMode  (0 | 1)			-> UserSelectionMode (XML) ("PeopleOnly" | "PeopleAndGroups")
@@ -53,7 +111,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.value = { results: [] };
 					}
 
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
+					return { mode: $scope.mode || formCtrl.getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
 
 				}, function(newValue, oldValue) {
 
@@ -88,13 +146,13 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				*/
 
 
-
+/*
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue, oldValue) {
 
@@ -123,7 +181,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					refreshData();
 
 				});
-
+*/
 
 
 				// ****************************************************************************
@@ -137,20 +195,20 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					}
 
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the user (lookup) and then render the field.
 					getUserData().then(function() {
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function() {
 
-						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
+						directive.setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
 
 					});
 				}
-
+/*
 
 
 
@@ -186,7 +244,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					});
 
 				}
-
+*/
 
 
 				// ****************************************************************************
@@ -538,10 +596,13 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    console.log(keys);
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldUserDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

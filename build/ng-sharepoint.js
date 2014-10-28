@@ -145,6 +145,8 @@ var utils = {
 	//
 	parseQuery: function(query) {
 
+		if (query === void 0) return '';
+		
 		var strQuery = '';
 
 		angular.forEach(query, function(value, key) {
@@ -797,7 +799,7 @@ angular.module('ngSharePoint').value('Constants', {
 });
 
 /*
-	Config - provider
+	ngSharePointConfig - provider
 
 	Configuration settings SharePoint provider.
 	
@@ -811,11 +813,11 @@ angular.module('ngSharePoint').value('Constants', {
 
 
 ///////////////////////////////////////
-//	Config
+//	ngSharePointConfig
 ///////////////////////////////////////
 
 angular.module('ngSharePoint')
-.provider('Config', function() {
+.provider('ngSharePointConfig', function() {
 
 	'use strict';
 
@@ -975,6 +977,414 @@ angular.module('ngSharePoint').factory('SPCache',
 ]);
 
 /*
+	SPFolder - factory
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPFolder
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPFolder', 
+
+	['$q', function($q) {
+
+		'use strict';
+
+
+		// ****************************************************************************
+		// SPFolder constructor
+		//
+		// @web: SPWeb instance that contains the folder in SharePoint.
+		// @path: Name the folder you want to instantiate.
+		//
+		var SPFolderObj = function(web, path, folderProperties) {
+
+			if (web === void 0) {
+				throw '@web parameter not specified in SPFolder constructor.';
+			}
+
+			if (path === void 0) {
+				throw '@path parameter not specified in SPFolder constructor.';
+			}
+
+
+			this.web = web;
+
+			this.apiUrl = '/GetFolderByServerRelativeUrl(\'' + path + '\')';
+
+
+			// Initializes the SharePoint API REST url for the folder.
+			this.apiUrl = web.apiUrl + this.apiUrl;
+
+			// Init folderProperties (if exists)
+			if (folderProperties !== void 0) {
+				angular.extend(this, folderProperties);
+			}
+		};
+
+
+
+		// ****************************************************************************
+		// getProperties
+		//
+		// Gets folder properties and attach it to 'this' object.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPFolderObj.prototype.getProperties = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					
+					angular.extend(self, d);
+
+					def.resolve(self);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getProperties
+
+
+		// ****************************************************************************
+		// getFiles
+		//
+		// Gets folder files
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPFolderObj.prototype.getFiles = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + '/Files' + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					var files = [];
+
+					angular.forEach(d, function(file) {
+
+						files.push(file);
+
+					});
+
+					def.resolve(files);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getFiles
+
+
+		// ****************************************************************************
+		// getFolders
+		//
+		// Gets folder files
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPFolderObj.prototype.getFolders = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + '/Folders' + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					var folders = [];
+
+					angular.forEach(d, function(folder) {
+
+						folders.push(new SPFolderObj(self.web, folder.ServerRelativeUrl, folder));
+
+					});
+
+					def.resolve(folders);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getFolders
+
+
+ 		// Returns the SPFolderObj class
+		return SPFolderObj;
+
+	}
+]);
+
+/*
+	SPGroup - factory
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPGroup
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPGroup', 
+
+	['$q', 'SPCache', 'SPUser', 
+
+	function($q, SPCache, SPUser) {
+
+		'use strict';
+
+
+		// ****************************************************************************
+		// SPGroup constructor
+		//
+		// @web: SPWeb instance that contains the group in SharePoint.
+		// @groupName: Name or id of the group you want to instantiate.
+		//
+		var SPGroupObj = function(web, groupName, groupProperties) {
+
+			if (web === void 0) {
+				throw '@web parameter not specified in SPGroup constructor.';
+			}
+
+			if (groupName === void 0) {
+				throw '@groupName parameter not specified in SPGroup constructor.';
+			}
+
+
+			this.web = web;
+
+			if (typeof groupName === 'number') {
+
+				this.apiUrl = '/sitegroups/GetById(\'' + groupName + '\')';
+
+			} else {
+
+				this.apiUrl = '/sitegroups/GetByName(\'' + groupName + '\')';
+
+			}
+
+
+			// Initializes the SharePoint API REST url for the group.
+			this.apiUrl = web.apiUrl + this.apiUrl;
+
+			// Init groupProperties (if exists)
+			if (groupProperties !== void 0) {
+				angular.extend(this, groupProperties);
+			}
+		};
+
+
+
+		// ****************************************************************************
+		// getProperties
+		//
+		// Gets group properties and attach it to 'this' object.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPGroupObj.prototype.getProperties = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+			var defaultExpandProperties = 'Owner';
+
+			if (query) {
+				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+			} else {
+				query = { 
+					$expand: defaultExpandProperties
+				};
+			}
+
+			executor.executeAsync({
+
+				url: self.apiUrl + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					delete d.Users;
+					
+					angular.extend(self, d);
+
+					def.resolve(self);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getProperties
+
+
+
+		// ****************************************************************************
+		// getUsers
+		//
+		// Gets group users
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPGroupObj.prototype.getUsers = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+			if (this.Users !== void 0) {
+
+				def.resolve(this.Users);
+
+			} else {
+
+				var executor = new SP.RequestExecutor(self.web.url);
+
+				executor.executeAsync({
+
+					url: self.apiUrl + '/Users',
+					method: 'GET', 
+					headers: { 
+						"Accept": "application/json; odata=verbose"
+					}, 
+
+					success: function(data) {
+
+						var d = utils.parseSPResponse(data);
+						var users = [];
+
+						angular.forEach(d, function(user) {
+
+							users.push(new SPUser(self.web, user.Id, user));
+
+						});
+
+						self.Users = users;
+
+						def.resolve(users);
+					}, 
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+			}
+
+			return def.promise;
+
+		}; // getUsers
+
+
+
+ 		// Returns the SPGroupObj class
+		return SPGroupObj;
+
+	}
+]);
+
+/*
 	SPList - factory
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -992,9 +1402,9 @@ angular.module('ngSharePoint').factory('SPCache',
 
 angular.module('ngSharePoint').factory('SPList', 
 
-	['$q', 'SPCache', 'SPListItem', 
+	['$q', 'SPCache', 'SPFolder', 'SPListItem', 
 
-	function($q, SPCache, SPListItem) {
+	function($q, SPCache, SPFolder, SPListItem) {
 
 		'use strict';
 
@@ -1125,7 +1535,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 					var d = utils.parseSPResponse(data);
 					delete d.Fields;
-					
+
 					angular.extend(self, d);
 
 					def.resolve(d);
@@ -1149,21 +1559,90 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-		// ****************************************************************************
-		// getFields
+	// ****************************************************************************
+	// getFields
+	//
+	// Gets list fields
+	//
+	// @returns: Promise with the result of the REST query.
+	//
+	SPListObj.prototype.getFields = function() {
+
+	    var self = this;
+	    var def = $q.defer();
+
+	    if (this.Fields !== void 0) {
+
+	        def.resolve(this.Fields);
+
+	    } else {
+
+	        var executor = new SP.RequestExecutor(self.web.url);
+
+	        executor.executeAsync({
+
+	            url: self.apiUrl + '/Fields',
+	            method: 'GET',
+	            headers: {
+	                "Accept": "application/json; odata=verbose"
+	            },
+
+	            success: function(data) {
+
+	                var d = utils.parseSPResponse(data);
+	                var fields = {};
+
+	                angular.forEach(d, function(field) {
+	                    fields[field.InternalName] = field;
+	                });
+
+	                self.Fields = fields;
+	                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+
+	                def.resolve(fields);
+	            },
+
+	            error: function(data, errorCode, errorMessage) {
+
+	                var err = utils.parseError({
+	                    data: data,
+	                    errorCode: errorCode,
+	                    errorMessage: errorMessage
+	                });
+
+	                def.reject(err);
+	            }
+	        });
+	    }
+	    
+	    return def.promise;
+	}; // getFields
+
+
+
+	// ****************************************************************************
+		// getRootFolder
 		//
-		// Gets list fields
+		// Gets root folder
 		//
 		// @returns: Promise with the result of the REST query.
 		//
-		SPListObj.prototype.getFields = function() {
+		SPListObj.prototype.getRootFolder = function() {
 
 			var self = this;
 			var def = $q.defer();
 
-			if (this.Fields !== void 0) {
+			if (this.RootFolder !== void 0) {
 
-				def.resolve(this.Fields);
+				if (this.RootFolder.__deferred !== void 0) {
+					
+					delete this.RootFolder;
+				}
+			}
+
+			if (this.RootFolder !== void 0) {
+
+				def.resolve(this.RootFolder);
 
 			} else {
 
@@ -1171,7 +1650,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 				executor.executeAsync({
 
-					url: self.apiUrl + '/Fields',
+					url: self.apiUrl + '/RootFolder',
 					method: 'GET', 
 					headers: { 
 						"Accept": "application/json; odata=verbose"
@@ -1180,18 +1659,9 @@ angular.module('ngSharePoint').factory('SPList',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
-						var fields = {};
+						this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
 
-						angular.forEach(d, function(field) {
-
-							fields[field.InternalName] = field;
-
-						});
-
-						self.Fields = fields;
-						SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
-
-						def.resolve(fields);
+						def.resolve(this.RootFolder);
 					}, 
 
 					error: function(data, errorCode, errorMessage) {
@@ -1209,7 +1679,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 			return def.promise;
 
-		}; // getFields
+		}; // getRootFolder
 
 
 
@@ -2366,102 +2836,103 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 'SPUtils', 'SharePoint',
+	['$q', function($q) {
 
-	function($q, SPUtils, SharePoint) {
-
-		var currentUser;
-		var currentWeb;
-
-		function getCurrentWeb() {
-
-			var self = this;
-			var def = $q.defer();
-
-			if (currentWeb !== void 0) {
-				def.resolve(currentWeb);
-			} else {
-				SharePoint.getCurrentWeb().then(function(web) {
-					currentWeb = web;
-					def.resolve(currentWeb);
-				});
-			}
-			return def.promise;
-		}
 
 		// ****************************************************************************
 		// SPUser constructor
 		//
-		// @url: Url del web que se quiere instanciar.
+		// @web: SPWeb instance that contains the user in SharePoint.
+		// @userData: User information. Could be:
+		//				number: user id
+		//				string: login name
+		//				object: user object
 		//
-		var SPUserObj = {
+		var SPUserObj = function(web, userId, userData) {
 
-			getCurrentUser: function() {
+			if (web === void 0) {
+				throw '@web parameter not specified in SPUser constructor.';
+			}
 
-				var self = this;
-				var def = $q.defer();
+			if (userId === void 0) {
+				throw '@userId parameter not specified in SPUser constructor.';
+			}
 
-				if (currentUser !== void 0) {
 
-					def.resolve(currentUser);
+			this.web = web;
 
-				} else {
-					self.getUserById(_spPageContextInfo.userId).then(function(user) {
-						currentUser = user;
-						def.resolve(user);
-					});
-				}
+			if (typeof userId === 'number') {
 
-				return def.promise;
-			},
+				// Instead of attack directly to the WEB api, we can retrieve the user list 
+				// item into the SiteUserInfoList.
+				// With this, we can retrieve all the user information.
 
-			getUserById: function(userId) {
+				this.apiUrl = '/SiteUserInfoList/getItemById(\'' + userId + '\')';
+				// this.apiUrl = '/GetUserById(\'' + userId + '\')';
 
-				if (userId === void 0) {
-					throw 'Invalid arguments in getUserById, @userId can not be null';
-				}
+			} else if (typeof userId === 'string') {
 
-				var self = this;
-				var def = $q.defer();
+				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + userId + '\'';
 
-				getCurrentWeb().then(function(web) {
+			}
 
-					var apiUrl = web.apiUrl + '/GetUserById(' + userId + ')';
+			// Initializes the SharePoint API REST url for the group.
+			this.apiUrl = web.apiUrl + this.apiUrl;
 
-					var executor = new SP.RequestExecutor(apiUrl);
-					executor.executeAsync({
-						url: apiUrl,
-						method: 'GET',
-						headers: {
-							"Accept": "application/json; odata=verbose"
-						},
-
-						success: function(data) {
-							var d = utils.parseSPResponse(data);
-							def.resolve(d);
-						},
-
-						error: function(data, errorCode, errorMessage) {
-							var err = utils.parseError({
-								data: data,
-								errorCode: errorCode,
-								errorMessage: errorMessage
-							});
-
-							def.reject(err);
-						}
-					});
-
-				});
-
-				return def.promise;
+			// Init userProperties (if exists)
+			if (userData !== void 0) {
+				angular.extend(this, userData);
 			}
 		};
 
-// Web/SiteUserInfoList
-// Web/SiteGroups
-// Web/GetUserById(184)
-// Web/GetUserById(nn)/Groups
+
+		// ****************************************************************************
+		// getProperties
+		//
+		// Gets user properties and attach it to 'this' object.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPUserObj.prototype.getProperties = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+//					delete d.Fields;
+					
+					angular.extend(self, d);
+
+					def.resolve(self);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getProperties
+
 
 
 
@@ -2489,7 +2960,7 @@ angular.module('ngSharePoint').factory('SPUser',
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODataParserProvider', function (Config, $q, $http, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', ['ngSharePointConfig', '$q', '$http', 'ODataParserProvider', function (ngSharePointConfig, $q, $http, ODataParserProvider) {
 
 	'use strict';
 
@@ -2544,7 +3015,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 					// Loads additional needed scripts
 					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 
-					if (!Config.options.minimalLoadSharePointInfraestructure) {
+					if (!ngSharePointConfig.options.minimalLoadSharePointInfraestructure) {
 
 						loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
 						loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
@@ -2585,7 +3056,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 			var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
 			var url;
 
-			if (Config.options.force15LayoutsDirectory) {
+			if (ngSharePointConfig.options.force15LayoutsDirectory) {
 				url = '/_layouts/15/ScriptResx.ashx?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
 			} else {
 				url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
@@ -2627,7 +3098,7 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 
 			var deferred = $q.defer();
 
-			if (Config.options.force15LayoutsDirectory) {
+			if (ngSharePointConfig.options.force15LayoutsDirectory) {
 				SP.SOD.registerSod(scriptFilename, '/_layouts/15/' + scriptFilename);
 			} else {
 				SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
@@ -2970,9 +3441,9 @@ angular.module('ngSharePoint').factory('SPUtils', ['Config', '$q', '$http', 'ODa
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPUtils', 'SPList',
+	['$q', 'SPUtils', 'SPList', 'SPUser',
 
-	function($q, SPUtils, SPList) {
+	function($q, SPUtils, SPList, SPUser) {
 
 		'use strict';
 
@@ -3188,7 +3659,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************	
 		// getCurrentUser
 		//
 		// Gets a SPUser object (SPUser factory)
@@ -3198,6 +3669,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		SPWebObj.prototype.getCurrentUser = function() {
 
 			var def = $q.defer();
+			var self = this;
 
 			if (this.currentUser !== void 0) {
 
@@ -3205,7 +3677,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			} else {
 				this.getUserById(_spPageContextInfo.userId).then(function(user) {
-					this.currentUser = user;
+					self.currentUser = user;
 					def.resolve(user);
 				});
 			}
@@ -3215,7 +3687,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************		
+		// ****************************************************************************	
 		// getUserById
 		//
 		// Gets a SPUser object (SPUser factory)
@@ -3227,14 +3699,12 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			var def = $q.defer();
 
-			new SPUser(this, userId).then(function(user) {
+			new SPUser(this, userId).getProperties().then(function(user) {
 				def.resolve(user);
 			});
 
 			return def.promise;
 		};
-
-
 
 
 
@@ -3810,7 +4280,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					}
 
 					// Gets the field type
-					var fieldType = $scope.fieldSchema.TypeAsString;
+					var fieldType = $attrs.renderAs | $scope.fieldSchema.TypeAsString;
 					if (fieldType === 'UserMulti') fieldType = 'User';
 
 					// Gets the field name
@@ -6347,9 +6817,11 @@ angular.module('ngSharePoint').directive('spfield',
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
 							var dependsOn = ($attrs.dependsOn ? 'depends-on="' + $attrs.dependsOn + '"' : '');
+							var renderAs = ($attrs.renderAs ? 'render-as="' + $attrs.renderAs + '"' : '');
 
 							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name)
 									   .replace(/\{\{mode\}\}/g, mode)
+									   .replace(/\{\{renderAs\}\}/g, renderAs)
 									   .replace(/\{\{dependsOn\}\}/g, dependsOn);
 
 							
@@ -6982,7 +7454,7 @@ angular.module('ngSharePoint').directive('spform',
 
 angular.module('ngSharePoint')
 
-.directive('spuser', ['SPUser', function(SPUser) {
+.directive('spuser', ['SharePoint', function(SharePoint) {
 
 	return {
 
@@ -6994,30 +7466,36 @@ angular.module('ngSharePoint')
 
 		link: function($scope, $element, $attrs) {
 
-			if ($element[0].attributes['user-id'] === void 0) {
-				// current user
-				SPUser.getCurrentUser().then(function(user) {
+			SharePoint.getCurrentWeb().then(function(web) {
 
-					$scope.UserData = user;
-				});
+				$scope.currentWeb = web;
 
-			} else {
+				if ($element[0].attributes['user-id'] === void 0) {
 
-				// Have userId attribute with the specified userId or LoginName
-				$scope.$watch(function() {
-					return $scope.$eval($attrs.userId);
-				}, function(newValue) {
-
-					if (newValue === void 0) return;
-
-					SPuser.getUserById(newValue).then(function(user) {
+					// current user
+					$scope.currentWeb.getCurrentUser().then(function(user) {
 
 						$scope.UserData = user;
 					});
 
-				});
+				} else {
 
-			}
+					// Have userId attribute with the specified userId or LoginName
+					$scope.$watch(function() {
+						return $scope.$eval($attrs.userId);
+					}, function(newValue) {
+
+						if (newValue === void 0) return;
+
+						$scope.currentWeb.getUserById(newValue).then(function(user) {
+
+							$scope.UserData = user;
+						});
+
+					});
+
+				}
+			});
 
 		}
 	};

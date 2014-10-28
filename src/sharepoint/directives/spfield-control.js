@@ -18,9 +18,9 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 	['$compile', '$templateCache', '$http',
 
-	function($compile, $templateCache, $http) {
+	function spfieldControl_DirectiveFactory($compile, $templateCache, $http) {
 
-		return {
+		var spfieldControl_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: '^spform',
@@ -30,12 +30,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 			link: function($scope, $element, $attrs, spformController) {
 
-				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
+				var name = ($attrs.name || $attrs.spfieldControl);
+				var schema = spformController.getFieldSchema(name);
 				
-				if ($scope.fieldSchema !== void 0) {
+				if (schema !== void 0) {
 
 					// Sets the default value for the field
-					spformController.initField($attrs.name);
+					spformController.initField(name);
 
 					// NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize the field with it's default value.
 					if ($attrs.mode == 'hidden') {
@@ -44,38 +45,65 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					}
 
 					// Gets the field type
-					var fieldType = $scope.fieldSchema.TypeAsString;
+					var fieldType = schema.TypeAsString;
 					if (fieldType === 'UserMulti') fieldType = 'User';
 
 					// Gets the field name
-					var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
-					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && $scope.fieldSchema.PrimaryFieldId !== null) {
-						var primaryFieldSchema = spformController.getFieldSchema($scope.fieldSchema.PrimaryFieldId);
+					var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+
+					// Adjust the field name if necessary.
+					// This is for additional read-only fields attached to Lookup and LookupMulti field types.
+					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
+
+						var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
 
 						if (primaryFieldSchema !== void 0) {
 							fieldName = primaryFieldSchema.InternalName + 'Id';
 						}
 					}
 
-					// Gets the field mode
-					var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-					var dependsOn = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
-					var hidden = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
+					// Mount field attributes
+					var ngModelAttr = ' ng-model="item.' + fieldName + '"';
+					var nameAttr = ' name="' + name + '"';
+					var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+					var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
+					var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
+					var validationAttributes = ' ng-required="' + schema.Required + '"';
+					
+					// Specific field type validation attributes
+					switch(schema.TypeAsString) {
+
+						case 'Text':
+							validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
+							break;
+					}
+
+
+					// Check for 'render-as' attribute
+					if ($attrs.renderAs) {
+						fieldType = $attrs.renderAs;
+					}
+					
 
 					// Mount the field directive HTML
-					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + dependsOn + hidden + '></spfield-' + fieldType + '>';
+					var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
+					var newElement = $compile(fieldControlHTML)($scope);
 
-					$element.append(fieldControlHTML);
-					$compile($element)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
 
 				} else {
 
 					console.error('Unknown field ' + $attrs.name);
 				}
-			}
 
-		};
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spfieldControl_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

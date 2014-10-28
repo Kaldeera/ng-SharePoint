@@ -320,7 +320,7 @@ angular.module("templates/form-templates/spfield.html", []).run(["$templateCache
     "		<spfield-label name=\"{{name}}\" {{mode}}></spfield-label>\n" +
     "	</td>\n" +
     "	<td valign=\"top\" width=\"350px\" class=\"ms-formbody\">\n" +
-    "		<spfield-control name=\"{{name}}\" {{mode}} {{dependsOn}}></spfield-control>\n" +
+    "		<spfield-control name=\"{{name}}\" {{mode}} {{dependsOn}} {{renderAs}}></spfield-control>\n" +
     "		<spfield-description name=\"{{name}}\" {{mode}}></spfield-description>\n" +
     "	</td>\n" +
     "</tr>");

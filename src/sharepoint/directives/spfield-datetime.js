@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
-	['$compile', '$templateCache', '$http', '$filter', '$timeout', '$q', 'SPUtils',
+	['SPFieldDirective', '$filter', '$timeout', '$q', 'SPUtils',
 
-	function($compile, $templateCache, $http, $filter, $timeout, $q, SPUtils) {
+	function spfieldDatetime_DirectiveFactory(SPFieldDirective, $filter, $timeout, $q, SPUtils) {
 
-		return {
+		var spfieldDatetime_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,34 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					
+					fieldTypeName: 'datetime',
+					replaceAll: false,
+
+					watchModeFn: function(newValue) {
+
+						getData().then(function() {
+							directive.renderField(newValue);
+						});
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 
 
 				// ****************************************************************************
@@ -41,7 +64,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -52,7 +75,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					});
 
 				});
-
+*/
 
 
 				function getData() {
@@ -60,7 +83,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var def = $q.defer();
 
 					// Gets web regional settings
-					controllers[0].getWebRegionalSettings().then(function(webRegionalSettings) {
+					$scope.formCtrl.getWebRegionalSettings().then(function(webRegionalSettings) {
 
 						$scope.webRegionalSettings = webRegionalSettings;
 
@@ -169,7 +192,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 					return def.promise;
 
-				}
+				} // getData
 
 
 
@@ -242,28 +265,36 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 					if (newValue === oldValue || $scope.dateOnlyModel === void 0 || $scope.dateOnlyModel === null) return;
 
-					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+					try {
 
-					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-					var dateComponents = {};
-					
-					for(var i = 0; i < dateParts.length; i++) {
-						dateComponents[dateParts[i]] = dateValues[i];
+						// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+
+						var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+						var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+						var dateComponents = {};
+						
+						for(var i = 0; i < dateParts.length; i++) {
+							dateComponents[dateParts[i]] = dateValues[i];
+						}
+
+						var hours = $scope.hoursModel;
+						if (hours !== null) {
+							hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+						}
+						var minutes = $scope.minutesModel;
+						var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
+
+						$scope.value = date.toISOString();
+
+					} catch(e) {
+
+						$scope.value = null;
+						// TODO: Create a 'DateTimeValidator' and assigns it in 'SPFieldControl' directive when field type is 'DateTime'.
 					}
-
-					var hours = $scope.hoursModel;
-					if (hours !== null) {
-						hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
-					}
-					var minutes = $scope.minutesModel;
-					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
-
-					$scope.value = date.toISOString();
 				}
 
 
-
+/*
 				// ****************************************************************************
 				// Renders the field with the correct layout based on the form mode.
 				//
@@ -276,7 +307,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					});
 
 				}
-
+*/
 
 
 				// ****************************************************************************
@@ -296,10 +327,13 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 			        return datePickerPath;
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldDatetime_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldLookupmulti', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldLookupmulti_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
 
-		return {
+		var spfieldLookupmulti_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,60 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					
+					fieldTypeName: 'lookupmulti',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+						$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
+						$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
+						$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
+						$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
+
+						// Adjust the model if no value is provided
+						if ($scope.value === null || $scope.value === void 0) {
+							$scope.value = { results: [] };
+						}
+						
+					},
+					
+					parserFn: function(modelValue, viewValue) {
+
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						$scope.selectedLookupItems = void 0;
+						refreshData();						
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 				$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
 				$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
@@ -45,40 +94,9 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
-				/*
 				$scope.$watch(function() {
 
-					// Adjust the model if no value is provided
-					// NOTA: Esto no sé si debería estar fuera.
-					//		 No entra en bucle infinito pero no tiene mucho sentido que esté aquí.
-					if ($scope.value === null) {
-						$scope.value = { results: [] };
-					}
-					
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
-
-				}, function(newValue, oldValue) {
-
-					$scope.currentMode = newValue.mode;
-
-					//if (newValue.value.results !== oldValue.value.results) {
-					if (newValue.value !== oldValue.value) {
-						$scope.selectedLookupItems = void 0;
-					}
-
-					refreshData();
-
-				}, true);
-				*/
-
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue, oldValue) {
 
@@ -102,7 +120,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					refreshData();
 				});
-
+*/
 
 
 				// ****************************************************************************
@@ -138,7 +156,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				$scope.valueChanged = function() {
 
 					// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-					controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+					formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
 				};
 				*/
 
@@ -150,32 +168,33 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				function refreshData() {
 
 					// Adjust the model if no value is provided
-					if ($scope.value === null) {
+					if ($scope.value === null || $scope.value === void 0) {
 						$scope.value = { results: [] };
 					}
 					
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData($scope.currentMode).then(function(){
+					getLookupData($scope.currentMode).then(function() {
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function(err) {
 
 						$scope.errorMsg = err.message;
 
 						if ($scope.value === void 0) {
-							setElementHTML('');
+							directive.setElementHTML('');
 						} else {
-							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
 						}
 					});
 
 				}
 
 
+/*
 				// ****************************************************************************
 				// Replaces the directive element HTML.
 				//
@@ -199,7 +218,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					});
 
 				}
-
+*/
 
 
 				// ****************************************************************************
@@ -491,10 +510,13 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					updateModel();
 				};
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldLookupmulti_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
