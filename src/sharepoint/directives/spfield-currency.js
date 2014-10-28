@@ -44,6 +44,16 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
 						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
 					}
 				};
 				
