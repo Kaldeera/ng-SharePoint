@@ -18,7 +18,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 	['$q', 'SPCache', 'SPUser', 
 
-	function($q, SPCache, SPUser) {
+	function SPGroup_Factory($q, SPCache, SPUser) {
 
 		'use strict';
 

@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldMultichoice', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldMultichoice_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldMultichoice_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,12 +29,44 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
+				var directive = {
+					fieldTypeName: 'multichoice',
+					replaceAll: false,
+
+					init: function() {
+
+						// Adjust the model if no value is provided
+						if ($scope.value === null || $scope.value === void 0) {
+							$scope.value = { results: [] };
+						}
+
+						$scope.choices = $scope.value.results;
+						sortChoices();
+					},
+
+					parserFn: function(modelValue, viewValue) {
+
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+						return $scope.value;
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+*/
+
+				/*
 				// Adjust the model if no value is provided
 				if ($scope.value === null) {
 					$scope.value = { results: [] };
@@ -42,7 +74,25 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 				$scope.choices = $scope.value.results;
 				sortChoices();
+				*/
 
+				/*
+				var parseFn = function(modelValue, viewValue) {
+
+					$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+					return $scope.value;
+				};
+
+				$scope.modelCtrl.$parsers.push(parseFn);
+				*/
+
+/*
+				$scope.$watch('value', function(newValue, oldValue) {
+
+                    if (newValue === oldValue) return;
+                    fieldScope.modelCtrl.$setViewValue(newValue);
+                        
+                }, true);
 
 
 				// ****************************************************************************
@@ -50,7 +100,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -62,18 +112,42 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 
 				// ****************************************************************************
+				// Watch for field value changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+					modelCtrl.$setViewValue(newValue);
+
+				}, true);
+
+
+
+				// ****************************************************************************
+				// Validate the field.
+				//
+				var unregisterValidateFn = $scope.$on('validate', function() {
+
+					// Update the $viewValue to change its state to $dirty and force to run 
+					// $parsers, which include validators.
+					modelCtrl.$setViewValue(modelCtrl.$viewValue);
+				});
+
+
+
+				// ****************************************************************************
 				// Renders the field with the correct layout based on the form mode.
 				//
 				function renderField(mode) {
 
 					$http.get('templates/form-templates/spfield-multichoice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
+
+						$element.html(html);
+						$compile($element)($scope);
 					});
 
 				}
-
+*/
 
 
 				// ****************************************************************************
@@ -114,8 +188,11 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 			}
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldMultichoice_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

@@ -16,7 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', function($q) {
+	['$q', 
+
+	function SPUser_Factory($q) {
 
 
 		// ****************************************************************************

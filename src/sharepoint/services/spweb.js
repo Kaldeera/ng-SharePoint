@@ -18,7 +18,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 	['$q', 'SPUtils', 'SPList', 'SPUser',
 
-	function($q, SPUtils, SPList, SPUser) {
+	function SPWeb_Factory($q, SPUtils, SPList, SPUser) {
 
 		'use strict';
 

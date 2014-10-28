@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldText', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldText_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldText_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,27 +29,61 @@ angular.module('ngSharePoint').directive('spfieldText',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 
-				
+				var directive = {
+					fieldTypeName: 'text',
+					replaceAll: false
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+
+
 
 				// ****************************************************************************
 				// Watch for form mode changes.
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
 					$scope.currentMode = newValue;
 					renderField(newValue);
+				});
 
+
+
+				// ****************************************************************************
+				// Watch for field value changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+					modelCtrl.$setViewValue(newValue);
+				});
+
+
+
+				// ****************************************************************************
+				// Validate the field.
+				//
+				var unregisterValidateFn = $scope.$on('validate', function() {
+
+					// Update the $viewValue to change its state to $dirty and force to run 
+					// $parsers, which include validators.
+					modelCtrl.$setViewValue(modelCtrl.$viewValue);
 				});
 
 
@@ -60,17 +94,25 @@ angular.module('ngSharePoint').directive('spfieldText',
 				function renderField(mode) {
 
 					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
+
+						//var newElement = $compile(html)($scope);
+						//$element.replaceWith(newElement);
+						//$element = newElement;
+						
+						$element.html(html);
+						$compile($element)($scope);
 					});
 
 				}
+*/
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldText_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

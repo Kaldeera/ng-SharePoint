@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldCurrency', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldCurrency_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldCurrency_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,33 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'currency',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
+						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
+						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+					}
+				};
+				
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
 				// NOTA: El valor de 'CultureInfo' debería de ser el que se indica en el 'schema' del campo en este caso.
@@ -46,7 +68,7 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -69,11 +91,14 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 					});
 
 				}
+*/
+			} // link
 
-			}
+		}; // Directive definition object
 
-		};
 
-	}
+		return spfieldCurrency_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

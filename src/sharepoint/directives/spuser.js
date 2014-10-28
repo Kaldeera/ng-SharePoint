@@ -15,52 +15,55 @@
 //	This directive adds specific user information to then current context
 /////////////////////////////////////////////////////////////////////////////
 
-angular.module('ngSharePoint')
+angular.module('ngSharePoint').directive('spuser', 
 
-.directive('spuser', ['SharePoint', function(SharePoint) {
+	['SharePoint', 
 
-	return {
+	function spuser_DirectiveFactory(SharePoint) {
 
-		restrict: 'A',
-		replace: false,
-		scope: {
-			UserData: '=spuser'
-		},
+		return {
 
-		link: function($scope, $element, $attrs) {
+			restrict: 'A',
+			replace: false,
+			scope: {
+				UserData: '=spuser'
+			},
 
-			SharePoint.getCurrentWeb().then(function(web) {
+			link: function($scope, $element, $attrs) {
 
-				$scope.currentWeb = web;
+				SharePoint.getCurrentWeb().then(function(web) {
 
-				if ($element[0].attributes['user-id'] === void 0) {
+					$scope.currentWeb = web;
 
-					// current user
-					$scope.currentWeb.getCurrentUser().then(function(user) {
+					if ($element[0].attributes['user-id'] === void 0) {
 
-						$scope.UserData = user;
-					});
-
-				} else {
-
-					// Have userId attribute with the specified userId or LoginName
-					$scope.$watch(function() {
-						return $scope.$eval($attrs.userId);
-					}, function(newValue) {
-
-						if (newValue === void 0) return;
-
-						$scope.currentWeb.getUserById(newValue).then(function(user) {
+						// current user
+						$scope.currentWeb.getCurrentUser().then(function(user) {
 
 							$scope.UserData = user;
 						});
 
-					});
+					} else {
 
-				}
-			});
+						// Have userId attribute with the specified userId or LoginName
+						$scope.$watch(function() {
+							return $scope.$eval($attrs.userId);
+						}, function(newValue) {
 
-		}
-	};
-	
-}]);
+							if (newValue === void 0) return;
+
+							$scope.currentWeb.getUserById(newValue).then(function(user) {
+
+								$scope.UserData = user;
+							});
+
+						});
+
+					}
+				});
+
+			}
+		};
+		
+	}
+]);

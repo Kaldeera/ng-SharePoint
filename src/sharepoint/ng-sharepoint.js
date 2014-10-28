@@ -37,31 +37,19 @@ angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
 
 
 
-
-angular.module('ngSharePoint').constant('SPConfig', {
-
-	CSOM: false
-
-});
-
-
-
-
-
-angular.module('ngSharePoint').config(['$compileProvider', 'SPConfig', function($compileProvider, SPConfig) {
+angular.module('ngSharePoint').config(['$compileProvider', function($compileProvider) {
 
 	// Reconfigure the RegExp for aHrefSanitizationWhiteList to accept 'javascript'.
 	$compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
-	// NOTE: The previous statement is for angular versions 1.2.8 and above.
-	//		 For version 1.0.5 or 1.1.3 please use the next statement:
-	//
-	//				$compileProvider.urlSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
-	//
-	// ----------------------------------------------------------------------------
-
-	//SPConfig.CSOM = true;
+	/* NOTE: The previous statement is for angular versions 1.2.8 and above.
+	 *		 For version 1.0.5 or 1.1.3 please use the next statement:
+	 *
+	 *				$compileProvider.urlSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
+	 *
+	 */
 
 }]);
+
 
 
 

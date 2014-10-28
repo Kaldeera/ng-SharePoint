@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldChoice', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldChoice_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldChoice_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,29 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'choice',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.choices = $scope.schema.Choices.results;
+					}
+				};
+				
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*				
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.choices = $scope.schema.Choices.results;
 
 
@@ -42,13 +60,35 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
 					$scope.currentMode = newValue;
 					renderField(newValue);
+				});
 
+
+
+				// ****************************************************************************
+				// Watch for field value changes.
+				//
+				$scope.$watch('value', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+					modelCtrl.$setViewValue(newValue);
+				});
+
+
+
+				// ****************************************************************************
+				// Validate the field.
+				//
+				var unregisterValidateFn = $scope.$on('validate', function() {
+
+					// Update the $viewValue to change its state to $dirty and force to run 
+					// $parsers, which include validators.
+					modelCtrl.$setViewValue(modelCtrl.$viewValue);
 				});
 
 
@@ -59,17 +99,20 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 				function renderField(mode) {
 
 					$http.get('templates/form-templates/spfield-choice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
+
+						$element.html(html);
+						$compile($element)($scope);
 					});
 
 				}
+*/
+			} // link
 
-			}
+		}; // Directive definition object
 
-		};
 
-	}
+		return spfieldChoice_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

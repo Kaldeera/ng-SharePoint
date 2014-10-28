@@ -16,11 +16,11 @@
 
 angular.module('ngSharePoint').directive('spfieldUrl', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldUrl_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldUrl_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -29,11 +29,32 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'url',
+					replaceAll: false,
+
+					init: function() {
+						$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
+						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
+						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
+						$scope.Description_Text = Strings.STS.L_Description_Text;
+					}
+				};
+
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
+
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
 				$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
 				$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
 				$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
@@ -47,7 +68,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 				//
 				$scope.$watch(function() {
 
-					return $scope.mode || controllers[0].getFormMode();
+					return $scope.mode || formCtrl.getFormMode();
 
 				}, function(newValue) {
 
@@ -70,11 +91,14 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 					});
 
 				}
-
+*/
 			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldUrl_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);

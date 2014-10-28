@@ -16,7 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
-	['$q', function($q) {
+	['$q', 
+
+	function SPFolder_Factory($q) {
 
 		'use strict';
 

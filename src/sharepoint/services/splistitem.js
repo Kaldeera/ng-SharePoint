@@ -18,7 +18,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 	['$q', 'SPUtils', 
 
-	function($q, SPUtils) {
+	function SPListItem_Factory($q, SPUtils) {
 
 		'use strict';
 

@@ -18,11 +18,11 @@ angular.module('ngSharePoint').directive('spformRule',
 
 	['$compile', '$templateCache', '$http', '$animate',
 
-	function($compile, $templateCache, $http, $animate) {
+	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
 		return {
 			restrict: 'E',
-			replace: 'element',
+			//replace: 'element',
 			//scope: false,
 			transclude: true,
 			priority: 50,

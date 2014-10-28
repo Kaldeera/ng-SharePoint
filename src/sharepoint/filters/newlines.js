@@ -8,13 +8,22 @@
 	Licensed under the MIT License
 */
 
-angular.module('ngSharePoint')
 
-.filter('newlines', ['$sce', function ($sce) {
 
-    return function(text) {
+///////////////////////////////////////
+//  newlines
+///////////////////////////////////////
 
-        return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
-    };
+angular.module('ngSharePoint').filter('newlines', 
 
-}]);
+    ['$sce', 
+
+    function newlines_Filter($sce) {
+
+        return function(text) {
+
+            return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
+        };
+        
+    }
+]);

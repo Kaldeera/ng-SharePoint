@@ -18,7 +18,7 @@ angular.module('ngSharePoint').factory('SPCache',
 
 	['$q', '$cacheFactory', 
 
-	function($q, $cacheFactory) {
+	function SPCache_Factory($q, $cacheFactory) {
 
 		'use strict';
 
