@@ -44,6 +44,8 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
 						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
 						$scope.Description_Text = Strings.STS.L_Description_Text;
+<<<<<<< HEAD
+=======
 					},
 
 					parserFn: function(modelValue, viewValue) {
@@ -58,6 +60,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
 
 						return $scope.value;
+>>>>>>> PCASME
 					}
 				};
 

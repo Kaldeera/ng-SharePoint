@@ -96,54 +96,71 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 */
 
-				// $scope.schema.SelectionGroup (0 | [GroupId])	-> UserSelectionScope (XML) (0 (All Users) | [GroupId])
-				// $scope.schema.SelectionMode  (0 | 1)			-> UserSelectionMode (XML) ("PeopleOnly" | "PeopleAndGroups")
+					init: function() {
 
+						$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+					},
+					
+					parserFn: function(modelValue, viewValue) {
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
+						if ($scope.schema.AllowMultipleValues) {
 
-					// Adjust the model if no value is provided
-					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
-						$scope.value = { results: [] };
-					}
+							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
 					return { mode: $scope.mode || formCtrl.getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
+						} else {
 
-				}, function(newValue, oldValue) {
+							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
+							// NOTE: Required validator is implicit applied when no multiple values.
 
-					$scope.currentMode = newValue.mode;
-
-					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
-
-					// Initialize the 'selectedUserItems' array if the value was changed.
-					if ($scope.schema.AllowMultipleValues) {
-						if (newValue.value.join(',') !== oldValue.value.join(',')) {
-							$scope.selectedUserItems = void 0;
+							// Unique validity (Only one value is allowed)
+							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
 						}
-					} else {
-						if (newValue.value !== oldValue.value) {
-							$scope.selectedUserItems = void 0;
+
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						// Adjust the model if no value is provided
+						if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+							$scope.value = { results: [] };
 						}
+
+						$scope.selectedUserItems = void 0;
+						refreshData();
+					},
+
+					postRenderFn: function(html) {
+
+						if ($scope.currentMode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+
 					}
+				};
 
-					// Gets the data for the user (lookup) and then render the field.
-					getUserData().then(function() {
 
-						renderField($scope.currentMode);
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
 
-					}, function() {
-
-						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
-
-					});
-
-				}, true);
-				*/
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 
 
 /*
@@ -518,6 +535,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    // Get the people picker object from the page.
 				    var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
+				    $scope.peoplePicker = peoplePicker;
+
 				    if (peoplePicker !== void 0 && peoplePicker !== null) {
 
 				    	// Get information about all users.
@@ -534,45 +553,81 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
-				    		if ($scope.schema.AllowMultipleValues === true) {
-
-				    			$scope.value.results = [];
-
-				    		} else {
-
-				    			$scope.value = null;
-				    		}
-
-
+							var resolvedValues = [];
+							var promises = [];
 
 				    		angular.forEach(entitiesArray, function(entity) {
 
 				    			if (entity.IsResolved) {
 
-				    				SPUtils.getUserId(entity.Key).then(function(userId) {
+				    				if ($scope.schema.AllowMultipleValues || promises.length === 0) {
 
-						    			if ($scope.schema.AllowMultipleValues === true) {
+					    				var entityPromise;
 
-					    					$scope.value.results.push(userId);
+					    				if (entity.EntityType === 'User') {
+
+					    					// Get the user ID
+						    				entityPromise = SPUtils.getUserId(entity.Key).then(function(userId) {
+
+						    					resolvedValues.push(userId);
+						    					return resolvedValues;
+						    				});
 
 						    			} else {
 
-						    				$scope.value = userId;
+						    				// Get the group ID
+						    				entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
 						    			}
 
-				    				});
+					    				promises.push(entityPromise);
+
+					    			} else {
+
+					    				// Force to commit the value through the model controller $parsers and $validators pipelines.
+					    				// This way the validators will be launched and the view will be updated.
+					    				$scope.modelCtrl.$setViewValue($scope.modelCtrl.$viewValue);
+					    			}
 				    			}
 				    		});
 
-				    		$scope.$apply();
+
+							if (promises.length > 0) {
+					    		
+					    		$q.all(promises).then(function() {
+
+					    			updateModel(resolvedValues);
+
+					    		});
+
+					    	} else {
+
+					    		updateModel(resolvedValues);
+					    	}
 				    	};
 				    }
+				}
+
+
+
+				function updateModel(resolvedValues) {
+
+					if ($scope.schema.AllowMultipleValues === true) {
+
+						$scope.value.results = resolvedValues;
+
+					} else {
+
+						$scope.value = resolvedValues[0] || null;
+					}
+
+					$scope.modelCtrl.$setViewValue($scope.value);
 				}
 				
 
 
 				// ****************************************************************************
 				// Query the picker for user information.
+				// NOTE: This function is actually not used.
 				//
 				function getUserInfo(peoplePickerId) {
 				 

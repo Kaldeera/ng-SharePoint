@@ -24,6 +24,8 @@ angular.module('ngSharePoint').directive('spfield',
 
 			restrict: 'EA',
 			template: '<tr></tr>',
+			//template: '<tr></tr>',
+			template: '<div></div>',
 
 
 			link: function($scope, $element, $attrs) {
@@ -45,6 +47,7 @@ angular.module('ngSharePoint').directive('spfield',
 							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
 							// If there are no classes after the remove, don't inserts the 'class' attribute
+							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
 						}
 
