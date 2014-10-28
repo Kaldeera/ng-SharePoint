@@ -762,31 +762,19 @@ angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
 
 
 
-
-angular.module('ngSharePoint').constant('SPConfig', {
-
-	CSOM: false
-
-});
-
-
-
-
-
-angular.module('ngSharePoint').config(['$compileProvider', 'SPConfig', function($compileProvider, SPConfig) {
+angular.module('ngSharePoint').config(['$compileProvider', function($compileProvider) {
 
 	// Reconfigure the RegExp for aHrefSanitizationWhiteList to accept 'javascript'.
 	$compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
-	// NOTE: The previous statement is for angular versions 1.2.8 and above.
-	//		 For version 1.0.5 or 1.1.3 please use the next statement:
-	//
-	//				$compileProvider.urlSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
-	//
-	// ----------------------------------------------------------------------------
-
-	//SPConfig.CSOM = true;
+	/* NOTE: The previous statement is for angular versions 1.2.8 and above.
+	 *		 For version 1.0.5 or 1.1.3 please use the next statement:
+	 *
+	 *				$compileProvider.urlSanitizationWhitelist(/^\s*(https?|ftp|mailto|file|javascript):/);
+	 *
+	 */
 
 }]);
+
 
 
 
@@ -799,51 +787,7 @@ angular.module('ngSharePoint').value('Constants', {
 });
 
 /*
-	ngSharePointConfig - provider
-
-	Configuration settings SharePoint provider.
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	ngSharePointConfig
-///////////////////////////////////////
-
-angular.module('ngSharePoint')
-.provider('ngSharePointConfig', function() {
-
-	'use strict';
-
-	var self = this;
-	
-	self.options = {
-		force15LayoutsDirectory: false,
-		minimalLoadSharePointInfraestructure: true
-	};
-	
-	self.$get = function() {
-
-		var Settings = function() {
-		};
-
-		Settings.options = self.options;
-		
-		return Settings;
-	};
-
-});
-
-/*
 	SharePoint - provider
-
-	Main SharePoint provider.
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -858,60 +802,64 @@ angular.module('ngSharePoint')
 //	SharePoint
 ///////////////////////////////////////
 
-angular.module('ngSharePoint')
-.provider('SharePoint', function() {
+angular.module('ngSharePoint').provider('SharePoint', 
 
-	'use strict';
+	[
 
-	var SharePoint = function($cacheFactory, $q, SPUtils, SPWeb) {
+	function SharePoint_Provider() {
 
+		'use strict';
 
-		// ****************************************************************************		
-		// getCurrentWeb
-		//
-		// Gets the current web.
-		//
-		// @returns: Promise with a new SPWeb (factory) object that allow access to 
-		//			 web methods and properties.
-		//
-		this.getCurrentWeb = function() {
-			return this.getWeb();
-		};
+		var SharePoint = function($cacheFactory, $q, SPUtils, SPWeb) {
 
 
+			// ****************************************************************************		
+			// getCurrentWeb
+			//
+			// Gets the current web.
+			//
+			// @returns: Promise with a new SPWeb (factory) object that allow access to 
+			//			 web methods and properties.
+			//
+			this.getCurrentWeb = function() {
+				return this.getWeb();
+			};
 
-		// ****************************************************************************		
-		// getWeb
-		//
-		// Gets the current web.
-		//
-		// @url: The url of the web you want to retrieve.
-		// @returns: Promise with a new SPWeb (factory) object that allow access to 
-		//			 web methods and properties.
-		//
-		this.getWeb = function(url) {
-			var def = $q.defer();
 
-			SPUtils.SharePointReady().then(function() {
 
-				new SPWeb(url).then(function(web) {
-					def.resolve(web);
+			// ****************************************************************************		
+			// getWeb
+			//
+			// Gets the current web.
+			//
+			// @url: The url of the web you want to retrieve.
+			// @returns: Promise with a new SPWeb (factory) object that allow access to 
+			//			 web methods and properties.
+			//
+			this.getWeb = function(url) {
+				var def = $q.defer();
+
+				SPUtils.SharePointReady().then(function() {
+
+					new SPWeb(url).then(function(web) {
+						def.resolve(web);
+					});
+
 				});
 
-			});
+				return def.promise;
+			};
 
-			return def.promise;
 		};
 
-	};
 
+		
+		this.$get = function($cacheFactory, $q, SPUtils, SPWeb) {
+			return new SharePoint($cacheFactory, $q, SPUtils, SPWeb);
+		};
 
-	
-	this.$get = function($cacheFactory, $q, SPUtils, SPWeb) {
-		return new SharePoint($cacheFactory, $q, SPUtils, SPWeb);
-	};
-
-});
+	}
+]);
 
 /*
 	SPCache - factory
@@ -933,7 +881,7 @@ angular.module('ngSharePoint').factory('SPCache',
 
 	['$q', '$cacheFactory', 
 
-	function($q, $cacheFactory) {
+	function SPCache_Factory($q, $cacheFactory) {
 
 		'use strict';
 
@@ -977,6 +925,284 @@ angular.module('ngSharePoint').factory('SPCache',
 ]);
 
 /*
+	SPConfig - provider
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPConfig
+///////////////////////////////////////
+
+angular.module('ngSharePoint').provider('SPConfig', 
+
+	[
+	
+	function SPConfig_Provider() {
+
+		'use strict';
+
+		var self = this;
+		
+		self.options = {
+			force15LayoutsDirectory: false,
+			loadMinimalSharePointInfraestructure: true
+		};
+		
+		self.$get = function() {
+
+			var Settings = function() {
+			};
+
+			Settings.options = self.options;
+			
+			return Settings;
+		};
+
+	}
+]);
+
+/*
+    SPFieldDirective - Service
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPFieldDirective
+///////////////////////////////////////
+
+angular.module('ngSharePoint').service('SPFieldDirective', 
+
+    ['$compile', '$http', '$templateCache',
+
+    function SPFieldDirective_Factory($compile, $http, $templateCache) {
+
+        // ****************************************************************************
+        // Private functions
+        //
+        function defaultOnValidateFn() {
+            // NOTE: Executed in the directive's '$scope' context (i.e.: this === $scope).
+
+            // Update the model property '$viewValue' to change the model state to $dirty and
+            // force to run $parsers, which include validators.
+            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue);
+        }
+
+
+        function defaultWatchValueFn(newValue, oldValue) {
+            // NOTE: Executed in the directive $scope context.
+
+            if (newValue === oldValue) return;
+
+            // Update the model property '$viewValue' when the model value changes.
+            this.modelCtrl.$setViewValue(newValue);
+        }
+
+
+
+
+        // ****************************************************************************
+        // Public API
+        //
+
+        /*
+         * baseLinkFn
+         * ----------------------------------------------------------------------------
+         *
+         * Serves as the base 'link' function to all 'spfield-xxx' directives.
+         *
+         * The 'this' word in this function is the directive object defined in the
+         * 'spfield-xxx' directive. See the definition of the 'directive object' below.
+         * 
+         * Example of use in a directive 'post-link' function:
+         *
+         *      // Define the 'directive' object
+         *
+         *      var directiveObj = {
+         *          fieldTypeName: 'text',
+         *          replaceAll: false,
+         *          init: function() {
+         *              $scope.SomeText = 'My directive';
+         *          
+         *              // Call some private function
+         *              MyPrivateFunction();
+         *          }
+         *      };
+         *
+         *      // Apply the directive definition object to the 'baseLinkFn'.
+         *      // Pass 'post-link' function arguments as arguments to the 'baseLinkFn'.
+         *      // The 'directive object' becomes the execution context of the 'baseLinkFn'.
+         *      // (Becomes the 'this' word within the 'baseLinkFn' function).
+         *
+         *      SPFieldDirective.baseLinkFn.apply(directiveObj, arguments);
+         *      
+         *
+         * 'directiveObj' definition:
+         *
+         *        Required properties:
+         *        --------------------
+         *
+         *              fieldTypeName: The type name of the directive to load the 
+         *                             correct directive template.
+         *
+         *              
+         *        Optional properties/functions:
+         *        ------------------------------
+         *
+         *              replaceAll: If set to true, the 'renderField' function will replace 
+         *                          the entire element instead its contents.
+         *
+         *              init (function): An initialization function for the directive.
+         *
+         *              parserFn (function): If defined, add this parser function to the 
+         *              (model to view)      model controller '$parsers' array.
+         *                                   This could be usefull if the directive requires
+         *                                   custom or special validations.
+         *                                   Working examples are in the 'spfieldMultichoice' 
+         *                                   or 'spfieldMultiLookup' directives.
+         *
+         *              formatterFn (function): If defined, add this formatter function to the 
+         *              (view to model)         model controller '$formatters' array.
+         *
+         *              watchModeFn (function): If defined, replace the default behavior in the 
+         *                                      'Watch for form mode changes' function.
+         *                                      The default behavior is to call the 'renderField' 
+         *                                      function.
+         *                          
+         *              watchValueFn (function): If defined, applies it after the default behavior 
+         *                                       in the 'Watch for field value changes' function.
+         *
+         *              onValidateFn (function): If defined, applies it after the default behavior 
+         *                                       in the '$scope.$on('validate', ...)' function.
+         *
+         *              postRenderFn (function): If defined, will be executed after the default
+         *                                       render action (setElementHtml).
+         */
+        this.baseLinkFn = function($scope, $element, $attrs, controllers) {
+
+            var directive = this;
+
+            // Initialize some $scope properties.
+            $scope.formCtrl = controllers[0];
+            $scope.modelCtrl = controllers[1];
+            $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
+            $scope.item = $scope.formCtrl.getItem(); // Needed?
+
+
+            // Apply the directive initializacion if specified.
+            if (angular.isFunction(directive.init)) directive.init();
+
+
+            // Apply the directive parser function if specified.
+            if (angular.isFunction(directive.parserFn)) $scope.modelCtrl.$parsers.unshift(directive.parserFn);
+
+
+            // Apply the directive formatter function if specified.
+            if (angular.isFunction(directive.formatterFn)) $scope.modelCtrl.$formatters.unshift(directive.formatterFn);
+
+
+
+            // ****************************************************************************
+            // Replaces the directive element HTML.
+            //
+            directive.setElementHTML = function(html) {
+
+                if (directive.replaceAll === true) {
+
+                    var newElement = $compile(html)($scope);
+                    $element.replaceWith(newElement);
+                    $element = newElement;
+
+                } else {
+
+                    $element.html(html);
+                    $compile($element)($scope);
+                }
+
+            };
+
+
+
+            // ****************************************************************************
+            // Renders the field with the correct layout based on the field/form mode.
+            //
+            directive.renderField = function() {
+
+                $http.get('templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html', { cache: $templateCache }).success(function(html) {
+
+                    directive.setElementHTML(html);
+                    if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
+                });
+            };
+
+
+
+            // ****************************************************************************
+            // Watch for form mode changes.
+            //
+            $scope.$watch(function() {
+
+                return $scope.mode || $scope.formCtrl.getFormMode();
+
+            }, function(newValue, oldValue) {
+
+                // Sets field current mode
+                $scope.currentMode = newValue;
+                
+                // Renders the field or apply the specific field type function
+                if (angular.isFunction(directive.watchModeFn)) {
+
+                    directive.watchModeFn.apply(directive, arguments);
+
+                } else {
+
+                    directive.renderField();
+                }
+            });
+
+
+
+            // ****************************************************************************
+            // Watch for field value changes.
+            //
+            $scope.$watch('value', function(newValue, oldValue) {
+
+                defaultWatchValueFn.apply($scope, arguments);
+                if (angular.isFunction(directive.watchValueFn)) directive.watchValueFn.apply(directive, arguments);
+
+            }, true);
+
+
+
+            // ****************************************************************************
+            // Validate the field.
+            //
+            $scope.unregisterValidateFn = $scope.$on('validate', function() {
+
+                defaultOnValidateFn.apply($scope, arguments);
+                if (angular.isFunction(directive.onValidateFn)) directive.onValidateFn.apply(directive, arguments);
+            });
+
+
+        }; // baseLinkFn
+
+    } // SPFieldDirectiveFactory
+
+]);
+/*
 	SPFolder - factory
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -994,7 +1220,9 @@ angular.module('ngSharePoint').factory('SPCache',
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
-	['$q', function($q) {
+	['$q', 
+
+	function SPFolder_Factory($q) {
 
 		'use strict';
 
@@ -1211,7 +1439,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 	['$q', 'SPCache', 'SPUser', 
 
-	function($q, SPCache, SPUser) {
+	function SPGroup_Factory($q, SPCache, SPUser) {
 
 		'use strict';
 
@@ -1404,7 +1632,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 	['$q', 'SPCache', 'SPFolder', 'SPListItem', 
 
-	function($q, SPCache, SPFolder, SPListItem) {
+	function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
 
 		'use strict';
 
@@ -1559,68 +1787,69 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-	// ****************************************************************************
-	// getFields
-	//
-	// Gets list fields
-	//
-	// @returns: Promise with the result of the REST query.
-	//
-	SPListObj.prototype.getFields = function() {
+		// ****************************************************************************
+		// getFields
+		//
+		// Gets list fields
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListObj.prototype.getFields = function() {
 
-	    var self = this;
-	    var def = $q.defer();
+		    var self = this;
+		    var def = $q.defer();
 
-	    if (this.Fields !== void 0) {
+		    if (this.Fields !== void 0) {
 
-	        def.resolve(this.Fields);
+		        def.resolve(this.Fields);
 
-	    } else {
+		    } else {
 
-	        var executor = new SP.RequestExecutor(self.web.url);
+		        var executor = new SP.RequestExecutor(self.web.url);
 
-	        executor.executeAsync({
+		        executor.executeAsync({
 
-	            url: self.apiUrl + '/Fields',
-	            method: 'GET',
-	            headers: {
-	                "Accept": "application/json; odata=verbose"
-	            },
+		            url: self.apiUrl + '/Fields',
+		            method: 'GET',
+		            headers: {
+		                "Accept": "application/json; odata=verbose"
+		            },
 
-	            success: function(data) {
+		            success: function(data) {
 
-	                var d = utils.parseSPResponse(data);
-	                var fields = {};
+		                var d = utils.parseSPResponse(data);
+		                var fields = {};
 
-	                angular.forEach(d, function(field) {
-	                    fields[field.InternalName] = field;
-	                });
+		                angular.forEach(d, function(field) {
+		                    fields[field.InternalName] = field;
+		                });
 
-	                self.Fields = fields;
-	                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+		                self.Fields = fields;
+		                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
 
-	                def.resolve(fields);
-	            },
+		                def.resolve(fields);
+		            },
 
-	            error: function(data, errorCode, errorMessage) {
+		            error: function(data, errorCode, errorMessage) {
 
-	                var err = utils.parseError({
-	                    data: data,
-	                    errorCode: errorCode,
-	                    errorMessage: errorMessage
-	                });
+		                var err = utils.parseError({
+		                    data: data,
+		                    errorCode: errorCode,
+		                    errorMessage: errorMessage
+		                });
 
-	                def.reject(err);
-	            }
-	        });
-	    }
-	    
-	    return def.promise;
-	}; // getFields
+		                def.reject(err);
+		            }
+		        });
+		    }
+		    
+		    return def.promise;
+
+		}; // getFields
 
 
 
-	// ****************************************************************************
+		// ****************************************************************************
 		// getRootFolder
 		//
 		// Gets root folder
@@ -1639,6 +1868,7 @@ angular.module('ngSharePoint').factory('SPList',
 					delete this.RootFolder;
 				}
 			}
+
 
 			if (this.RootFolder !== void 0) {
 
@@ -2107,7 +2337,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 	['$q', 'SPUtils', 
 
-	function($q, SPUtils) {
+	function SPListItem_Factory($q, SPUtils) {
 
 		'use strict';
 
@@ -2836,7 +3066,9 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', function($q) {
+	['$q', 
+
+	function SPUser_Factory($q) {
 
 
 		// ****************************************************************************
@@ -2945,8 +3177,6 @@ angular.module('ngSharePoint').factory('SPUser',
 /*
 	SPUtils - factory
 
-	SharePoint utility functions.
-
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -2960,468 +3190,477 @@ angular.module('ngSharePoint').factory('SPUser',
 //	SPUtils
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').factory('SPUtils', ['ngSharePointConfig', '$q', '$http', 'ODataParserProvider', function (ngSharePointConfig, $q, $http, ODataParserProvider) {
+angular.module('ngSharePoint').factory('SPUtils', 
 
-	'use strict';
+	['SPConfig', '$q', '$http', 'ODataParserProvider', 
 
+	function SPUtils_Factory(SPConfig, $q, $http, ODataParserProvider) {
 
-	var isSharePointReady = false;
-
-	return {
-
+		'use strict';
 
 
-		inDesignMode: function () {
-			var publishingEdit = window.g_disableCheckoutInEditMode;
-			var form = document.forms[MSOWebPartPageFormName];
-			var input = form.MSOLayout_InDesignMode || form._wikiPageMode;
+		var isSharePointReady = false;
 
-			return !!(publishingEdit || (input && input.value));
-		},
+		return {
 
 
 
-		SharePointReady: function () {
+			inDesignMode: function () {
+				var publishingEdit = window.g_disableCheckoutInEditMode;
+				var form = document.forms[MSOWebPartPageFormName];
+				var input = form.MSOLayout_InDesignMode || form._wikiPageMode;
 
-			var deferred = $q.defer();
-			var self = this;
+				return !!(publishingEdit || (input && input.value));
+			},
 
-			if (isSharePointReady) {
 
-				deferred.resolve();
 
-			} else {
-/*
-				// Max 2.5 sec. to load all needed scripts
-				setTimeout(function() {
-					isSharePointReady = true;
+			SharePointReady: function () {
+
+				var deferred = $q.defer();
+				var self = this;
+
+				if (isSharePointReady) {
+
 					deferred.resolve();
-				}, 2500);
-*/
+
+				} else {
+
+					// http://mahmoudfarhat.net/post/2013/03/23/SharePoint-2013-ExecuteOrDelayUntilScriptLoaded-not-executing-after-page-publish.aspx
+					// Load sp.js
+					SP.SOD.executeFunc('sp.js', 'SP.ClientContext', function () {
+
+						var loadScriptPromises = [],
+							loadResourcePromises = [];
+
+						// Loads additional needed scripts
+						loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
+
+						// Shows current SPconfig settings.
+//						console.info(SPConfig.options);
 
 
-				// SP.SOD.executeOrDelayUntilScriptLoaded(function () {
-				// 	isSharePointReady = true;
-				// 	deferred.resolve();
-				// }, "sp.js");
+						if (!SPConfig.options.loadMinimalSharePointInfraestructure) {
+
+							loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
+							loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
+							loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
+							loadScriptPromises.push(self.loadScript('clientforms.js', ''));
+							loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
+							loadScriptPromises.push(self.loadScript('autofill.js', ''));
+							loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
+							loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
+						}
+
+						$q.all(loadScriptPromises).then(function() {
+
+							if (!SPConfig.options.loadMinimalSharePointInfraestructure) {
+
+								loadResourcePromises.push(self.loadResourceFile('core.resx'));
+								//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
+
+								$q.all(loadResourcePromises).then(function() {
+
+									isSharePointReady = true;
+									deferred.resolve();
+
+								}, function(err) {
+
+									console.error('Error loading SharePoint script dependences', err);
+									deferred.reject(err);
+								});
+							}
+
+						}, function(err) {
+
+							console.error('Error loading SharePoint script dependences', err);
+							deferred.reject(err);
+						});
+
+					});
+				}
+
+				return deferred.promise;
+			},
 
 
-				// http://mahmoudfarhat.net/post/2013/03/23/SharePoint-2013-ExecuteOrDelayUntilScriptLoaded-not-executing-after-page-publish.aspx
-				// Load sp.js
-				SP.SOD.executeFunc('sp.js', 'SP.ClientContext', function () {
 
-					var loadScriptPromises = [];
+			loadResourceFile: function(resourceFilename) {
 
-					// Loads additional needed scripts
-					loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
+				var deferred = $q.defer();
+				var pos = resourceFilename.lastIndexOf('.resx');
+				var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
+				var url;
+				var params = '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
+				//var params = '?name=' + name + '&culture=' + _spPageContextInfo.currentUICultureName;
 
-					if (!ngSharePointConfig.options.minimalLoadSharePointInfraestructure) {
+				if (SPConfig.options.force15LayoutsDirectory) {
+					url = '/_layouts/15/ScriptResx.ashx' + params;
+				} else {
+					url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + params;
+				}
 
-						loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
-						loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
-						loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
-						loadScriptPromises.push(self.loadScript('clientforms.js', ''));
-						loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
-						loadScriptPromises.push(self.loadScript('autofill.js', ''));
-						loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
-						loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
-						loadScriptPromises.push(self.loadResourceFile('core.resx'));
-						//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
+				$http.get(url).success(function(data) {
+
+					window.Resources = window.Resources || {};
+
+					// Fix bad transformation in core.resx
+					data = data.replace(/align - right|align-right/g, 'align_right');
+					data = data.replace(/e - mail|e-mail/g, 'email');
+					data = data.replace(/e - Mail|e-Mail/g, 'email');
+					data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
+					
+					try {
+						var _eval = eval; // Fix jshint warning: eval can be harmful.
+						_eval(data);
+
+						window.Res = window.Res || void 0;
+
+						if (window.Res !== void 0) {
+							window.Resources[name] = window.Res;
+						}
+
+					} catch(ex) {
+						console.error(ex);
 					}
 
-					$q.all(loadScriptPromises).then(function() {
+					deferred.resolve();
+				});
 
-						isSharePointReady = true;
-						deferred.resolve();
+				return deferred.promise;
+			},
 
-					}, function(error) {
 
-						console.error('Error loading SharePoint script dependences', error);
-						deferred.reject(error);
+
+			loadScript: function(scriptFilename, functionName) {
+
+				var deferred = $q.defer();
+
+				if (SPConfig.options.force15LayoutsDirectory) {
+					SP.SOD.registerSod(scriptFilename, '/_layouts/15/' + scriptFilename);
+				} else {
+					SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
+				}
+
+				EnsureScriptFunc(scriptFilename, functionName, function() {
+					deferred.resolve();
+				});
+
+				return deferred.promise;
+			},
+
+
+
+			generateCamlQuery: function (queryInfo, listSchema) {
+				/*
+					Formato del objeto de filtro:
+					{
+						filter: 'Country eq ' + $routeParams.country + ' and Modified eq [Today]',
+						orderBy: 'Title asc, Modified desc',
+						select: 'Title, Country',
+						top: 10,
+						pagingInfo: 'Paged=TRUE&p_ID=nnn[&PagedPrev=TRUE]'
+					}
+				*/
+				var camlQueryXml = "";
+				var camlQuery;
+
+				if (queryInfo === undefined) {
+					camlQuery = SP.CamlQuery.createAllItemsQuery();
+				} else {
+					// El formato del parametro puede ser un objeto, que hay que procesar, o un string directo de CamlQuery
+					if (typeof queryInfo === 'string') {
+						camlQueryXml = queryInfo;
+					} else if (typeof queryInfo === 'object') {
+						var odata = ODataParserProvider.ODataParser(listSchema);
+						odata.parseExpression(queryInfo);
+						camlQueryXml = odata.getCAMLQuery();
+					}
+
+					if (camlQueryXml) {
+						camlQuery = new SP.CamlQuery();
+						camlQuery.set_viewXml(camlQueryXml);
+					}
+
+					if (queryInfo.pagingInfo) {
+						var position = new SP.ListItemCollectionPosition(); 
+		        		position.set_pagingInfo(queryInfo.pagingInfo);
+						camlQuery.set_listItemCollectionPosition(position);
+					}
+				}
+				return camlQuery;
+			},
+
+
+
+			parseQuery: function(query) {
+
+				var strQuery = '';
+
+				angular.forEach(query, function(value, key) {
+					strQuery += (strQuery !== '' ? '&' : '?') + key + '=' + value;
+				});
+
+				return strQuery;
+			},
+
+
+
+			parseError: function(errorData) {
+
+				var errorObject = {
+					code: errorData.errorCode,
+					message: errorData.errorMessage
+				};
+
+				try {
+
+					var body = angular.fromJson(data.body);
+
+					errorObject.code = body.error.code;
+					errorObject.message = body.error.message.value;
+
+				} catch(ex) {}
+
+				console.error(errorObject.message);
+				return errorObject;
+			},
+
+
+
+			getRegionalSettings: function() {
+
+				var self = this;
+				var deferred = $q.defer();
+
+				this.SharePointReady().then(function() {
+					var ctx = new SP.ClientContext.get_current();
+					var web = ctx.get_web();
+					var regionalSettings = web.get_regionalSettings();
+					var timeZone = regionalSettings.get_timeZone();
+
+					ctx.load(regionalSettings);
+					ctx.load(timeZone);
+
+					ctx.executeQueryAsync(function() {
+
+						regionalSettings.TimeZone = timeZone;
+						deferred.resolve(regionalSettings);
+
+					}, function(sender, args) {
+
+						deferred.reject({ sender: sender, args: args });
+					});
+				});
+
+				return deferred.promise;
+			},
+
+
+			// TODA ESTA FUNCIONALIDAD DEBE ESTAR DENTRO DE UN SERVICIO SPUser (o algo asi)
+			// O en todo caso, la llamada a getCurrentUser debe ser del SPWeb!!!
+			getCurrentUser: function() {
+
+				var self = this;
+				var deferred = $q.defer();
+
+				this.SharePointReady().then(function() {
+					var ctx = new SP.ClientContext.get_current();
+					var web = ctx.get_web();
+					var user = web.get_currentUser();
+
+					ctx.load(user);
+
+					ctx.executeQueryAsync(function() {
+
+						deferred.resolve(user);
+
+					}, function(sender, args) {
+
+						deferred.reject({ sender: sender, args: args });
+					});
+				});
+
+				return deferred.promise;
+			},
+
+
+			getUserId: function(loginName) {
+
+				var self = this;
+				var deferred = $q.defer();
+
+				var ctx = new SP.ClientContext.get_current();
+				var user = ctx.get_web().ensureUser(loginName);
+				ctx.load(user);
+				ctx.executeQueryAsync(function() {
+
+					deferred.resolve(user.get_id());
+
+				}, function(sender, args) {
+
+					deferred.reject({ sender: sender, args: args });
+				});
+
+				return deferred.promise;
+			},
+
+
+			getUserRegionalSettings: function(loginName) {
+
+				var self = this;
+				var deferred = $q.defer();
+
+				this.SharePointReady().then(function() {
+					var ctx = new SP.ClientContext.get_current();
+					var peopleManager = new SP.UserProfiles.PeopleManager(ctx);
+					//var userRegionalSettings = peopleManager.getUserProfilePropertyFor(loginName, 'RegionalSettings');
+					//var userProperties = peopleManager.getPropertiesFor(loginName);
+					var userProperties = peopleManager.getMyProperties();
+
+					ctx.load(userProperties);
+
+					ctx.executeQueryAsync(function() {
+
+						deferred.resolve(userProperties);
+
+					}, function(sender, args) {
+
+						deferred.reject({ sender: sender, args: args });
+					});
+				});
+
+				return deferred.promise;			
+			},
+
+
+			parseXmlString: function(xmlDocStr) {
+
+		        var xmlDoc;
+
+		        if (window.DOMParser) {
+
+		            var parser = new window.DOMParser();          
+		            xmlDoc = parser.parseFromString(xmlDocStr, "text/xml");
+
+		        } else {
+		        
+		            // IE :(
+		            if(xmlDocStr.indexOf("<?") === 0) {
+		                xmlDocStr = xmlDocStr.substr(xmlDocStr.indexOf("?>") + 2);
+		            }
+		        
+		            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+		            xmlDoc.async = "false";
+		            xmlDoc.loadXML(xmlDocStr);
+
+		        }
+
+		        return xmlDoc;
+		    },
+
+
+		    getCurrentUserLCID: function() {
+
+		    	var self = this;
+		    	var deferred = $q.defer();
+
+				var url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx?Type=User";
+
+				$http.get(url).success(function(data) {
+
+					var html = angular.element(data);
+					var form, lcid;
+
+					angular.forEach(html, function(element) {
+						if (element.tagName && element.tagName.toLowerCase() === 'form') {
+							form = element;
+						}
 					});
 
+					if (form !== void 0) {
+						var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
+						var selectedOption = regionalSettingsSelect.querySelector('[selected]');
+						lcid = selectedOption.value;
+					}
+
+
+					deferred.resolve(lcid);
 
 				});
-			}
 
-			return deferred.promise;
-		},
-
+				return deferred.promise;
+		    },
 
 
-		loadResourceFile: function(resourceFilename) {
 
-			var deferred = $q.defer();
-			var pos = resourceFilename.lastIndexOf('.resx');
-			var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
-			var url;
-
-			if (ngSharePointConfig.options.force15LayoutsDirectory) {
-				url = '/_layouts/15/ScriptResx.ashx?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
-			} else {
-				url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
-			}
-
-			$http.get(url).success(function(data) {
-
-				window.Resources = window.Resources || {};
-
-				// Fix bad transformation in core.resx
-				data = data.replace(/align - right|align-right/g, 'align_right');
-				data = data.replace(/e - mail|e-mail/g, 'email');
-				data = data.replace(/e - Mail|e-Mail/g, 'email');
-				data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
+			getWebById: function(webId) {
 				
-				try {
-					var _eval = eval; // Fix jshint warning: eval can be harmful.
-					_eval(data);
+				var self = this;
+				var deferred = $q.defer();
 
-					window.Res = window.Res || void 0;
+				this.SharePointReady().then(function() {
+					var ctx = new SP.ClientContext();
+					var site = ctx.get_site();
+					var web = site.openWebById(webId.ltrim('{').rtrim('}'));
 
-					if (window.Res !== void 0) {
-						window.Resources[name] = window.Res;
+					ctx.load(web, 'ServerRelativeUrl');
+
+					ctx.executeQueryAsync(function() {
+
+						deferred.resolve(web);
+
+					}, function(sender, args) {
+
+						deferred.reject({ sender: sender, args: args });
+					});
+				});
+
+				return deferred.promise;
+			},
+
+
+
+
+			// ****************************************************************************		
+			// getFileBinary
+			//
+			// Converts a file object to binary data string.
+			//
+			// @file: A file object from the files property of the DOM element <input type="File" ... />.
+			// @returns: Promise with the binary data.
+			//
+			getFileBinary: function(file) {
+
+				var self = this;
+				var deferred = $q.defer();
+				var reader = new FileReader();
+
+				reader.onload = function(e) {
+					var buffer = e.target.result;
+					var bytes = new Uint8Array(buffer);
+					var binaryData = '';
+
+					for (var i = 0; i < bytes.length; i++) {
+						binaryData += String.fromCharCode(bytes[i]);
 					}
 
-				} catch(ex) {
-					console.error(ex);
-				}
+					deferred.resolve(binaryData);
+				};
 
-				deferred.resolve();
-			});
+				reader.onerror = function(e) {
+					deferred.reject(e.target.error);
+				};
 
-			return deferred.promise;
-		},
+				reader.readAsArrayBuffer(file);
 
-
-
-		loadScript: function(scriptFilename, functionName) {
-
-			var deferred = $q.defer();
-
-			if (ngSharePointConfig.options.force15LayoutsDirectory) {
-				SP.SOD.registerSod(scriptFilename, '/_layouts/15/' + scriptFilename);
-			} else {
-				SP.SOD.registerSod(scriptFilename, SP.Utilities.Utility.getLayoutsPageUrl(scriptFilename));
+				return deferred.promise;
 			}
 
-			EnsureScriptFunc(scriptFilename, functionName, function() {
-				deferred.resolve();
-			});
+		};
 
-			return deferred.promise;
-		},
-
-
-
-		generateCamlQuery: function (queryInfo, listSchema) {
-			/*
-				Formato del objeto de filtro:
-				{
-					filter: 'Country eq ' + $routeParams.country + ' and Modified eq [Today]',
-					orderBy: 'Title asc, Modified desc',
-					select: 'Title, Country',
-					top: 10,
-					pagingInfo: 'Paged=TRUE&p_ID=nnn[&PagedPrev=TRUE]'
-				}
-			*/
-			var camlQueryXml = "";
-			var camlQuery;
-
-			if (queryInfo === undefined) {
-				camlQuery = SP.CamlQuery.createAllItemsQuery();
-			} else {
-				// El formato del parametro puede ser un objeto, que hay que procesar, o un string directo de CamlQuery
-				if (typeof queryInfo === 'string') {
-					camlQueryXml = queryInfo;
-				} else if (typeof queryInfo === 'object') {
-					var odata = ODataParserProvider.ODataParser(listSchema);
-					odata.parseExpression(queryInfo);
-					camlQueryXml = odata.getCAMLQuery();
-				}
-
-				if (camlQueryXml) {
-					camlQuery = new SP.CamlQuery();
-					camlQuery.set_viewXml(camlQueryXml);
-				}
-
-				if (queryInfo.pagingInfo) {
-					var position = new SP.ListItemCollectionPosition(); 
-	        		position.set_pagingInfo(queryInfo.pagingInfo);
-					camlQuery.set_listItemCollectionPosition(position);
-				}
-			}
-			return camlQuery;
-		},
-
-
-
-		parseQuery: function(query) {
-
-			var strQuery = '';
-
-			angular.forEach(query, function(value, key) {
-				strQuery += (strQuery !== '' ? '&' : '?') + key + '=' + value;
-			});
-
-			return strQuery;
-		},
-
-
-
-		parseError: function(errorData) {
-
-			var errorObject = {
-				code: errorData.errorCode,
-				message: errorData.errorMessage
-			};
-
-			try {
-
-				var body = angular.fromJson(data.body);
-
-				errorObject.code = body.error.code;
-				errorObject.message = body.error.message.value;
-
-			} catch(ex) {}
-
-			console.error(errorObject.message);
-			return errorObject;
-		},
-
-
-
-		getRegionalSettings: function() {
-
-			var self = this;
-			var deferred = $q.defer();
-
-			this.SharePointReady().then(function() {
-				var ctx = new SP.ClientContext.get_current();
-				var web = ctx.get_web();
-				var regionalSettings = web.get_regionalSettings();
-				var timeZone = regionalSettings.get_timeZone();
-
-				ctx.load(regionalSettings);
-				ctx.load(timeZone);
-
-				ctx.executeQueryAsync(function() {
-
-					regionalSettings.TimeZone = timeZone;
-					deferred.resolve(regionalSettings);
-
-				}, function(sender, args) {
-
-					deferred.reject({ sender: sender, args: args });
-				});
-			});
-
-			return deferred.promise;
-		},
-
-
-		// TODA ESTA FUNCIONALIDAD DEBE ESTAR DENTRO DE UN SERVICIO SPUser (o algo asi)
-		// O en todo caso, la llamada a getCurrentUser debe ser del SPWeb!!!
-		getCurrentUser: function() {
-
-			var self = this;
-			var deferred = $q.defer();
-
-			this.SharePointReady().then(function() {
-				var ctx = new SP.ClientContext.get_current();
-				var web = ctx.get_web();
-				var user = web.get_currentUser();
-
-				ctx.load(user);
-
-				ctx.executeQueryAsync(function() {
-
-					deferred.resolve(user);
-
-				}, function(sender, args) {
-
-					deferred.reject({ sender: sender, args: args });
-				});
-			});
-
-			return deferred.promise;
-		},
-
-
-		getUserId: function(loginName) {
-
-			var self = this;
-			var deferred = $q.defer();
-
-			var ctx = new SP.ClientContext.get_current();
-			var user = ctx.get_web().ensureUser(loginName);
-			ctx.load(user);
-			ctx.executeQueryAsync(function() {
-
-				deferred.resolve(user.get_id());
-
-			}, function(sender, args) {
-
-				deferred.reject({ sender: sender, args: args });
-			});
-
-			return deferred.promise;
-		},
-
-
-		getUserRegionalSettings: function(loginName) {
-
-			var self = this;
-			var deferred = $q.defer();
-
-			this.SharePointReady().then(function() {
-				var ctx = new SP.ClientContext.get_current();
-				var peopleManager = new SP.UserProfiles.PeopleManager(ctx);
-				//var userRegionalSettings = peopleManager.getUserProfilePropertyFor(loginName, 'RegionalSettings');
-				//var userProperties = peopleManager.getPropertiesFor(loginName);
-				var userProperties = peopleManager.getMyProperties();
-
-				ctx.load(userProperties);
-
-				ctx.executeQueryAsync(function() {
-
-					deferred.resolve(userProperties);
-
-				}, function(sender, args) {
-
-					deferred.reject({ sender: sender, args: args });
-				});
-			});
-
-			return deferred.promise;			
-		},
-
-
-		parseXmlString: function(xmlDocStr) {
-
-	        var xmlDoc;
-
-	        if (window.DOMParser) {
-
-	            var parser = new window.DOMParser();          
-	            xmlDoc = parser.parseFromString(xmlDocStr, "text/xml");
-
-	        } else {
-	        
-	            // IE :(
-	            if(xmlDocStr.indexOf("<?") === 0) {
-	                xmlDocStr = xmlDocStr.substr(xmlDocStr.indexOf("?>") + 2);
-	            }
-	        
-	            xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-	            xmlDoc.async = "false";
-	            xmlDoc.loadXML(xmlDocStr);
-
-	        }
-
-	        return xmlDoc;
-	    },
-
-
-	    getCurrentUserLCID: function() {
-
-	    	var self = this;
-	    	var deferred = $q.defer();
-
-			var url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx?Type=User";
-
-			$http.get(url).success(function(data) {
-
-				var html = angular.element(data);
-				var form, lcid;
-
-				angular.forEach(html, function(element) {
-					if (element.tagName && element.tagName.toLowerCase() === 'form') {
-						form = element;
-					}
-				});
-
-				if (form !== void 0) {
-					var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
-					var selectedOption = regionalSettingsSelect.querySelector('[selected]');
-					lcid = selectedOption.value;
-				}
-
-
-				deferred.resolve(lcid);
-
-			});
-
-			return deferred.promise;
-	    },
-
-
-
-		getWebById: function(webId) {
-			
-			var self = this;
-			var deferred = $q.defer();
-
-			this.SharePointReady().then(function() {
-				var ctx = new SP.ClientContext();
-				var site = ctx.get_site();
-				var web = site.openWebById(webId.ltrim('{').rtrim('}'));
-
-				ctx.load(web, 'ServerRelativeUrl');
-
-				ctx.executeQueryAsync(function() {
-
-					deferred.resolve(web);
-
-				}, function(sender, args) {
-
-					deferred.reject({ sender: sender, args: args });
-				});
-			});
-
-			return deferred.promise;
-		},
-
-
-
-
-		// ****************************************************************************		
-		// getFileBinary
-		//
-		// Converts a file object to binary data string.
-		//
-		// @file: A file object from the files property of the DOM element <input type="File" ... />.
-		// @returns: Promise with the binary data.
-		//
-		getFileBinary: function(file) {
-
-			var self = this;
-			var deferred = $q.defer();
-			var reader = new FileReader();
-
-			reader.onload = function(e) {
-				var buffer = e.target.result;
-				var bytes = new Uint8Array(buffer);
-				var binaryData = '';
-
-				for (var i = 0; i < bytes.length; i++) {
-					binaryData += String.fromCharCode(bytes[i]);
-				}
-
-				deferred.resolve(binaryData);
-			};
-
-			reader.onerror = function(e) {
-				deferred.reject(e.target.error);
-			};
-
-			reader.readAsArrayBuffer(file);
-
-			return deferred.promise;
-		}
-
-	};
-
-}]);
+	}
+]);
 
 /*
 	SPWeb - factory
@@ -3443,7 +3682,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 	['$q', 'SPUtils', 'SPList', 'SPUser',
 
-	function($q, SPUtils, SPList, SPUser) {
+	function SPWeb_Factory($q, SPUtils, SPList, SPUser) {
 
 		'use strict';
 
@@ -3749,11 +3988,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 angular.module('ngSharePoint').directive('spfieldAttachments', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldAttachments_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldAttachments_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -3762,43 +4001,45 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
-				$scope.AttachFileText = Resources.core.cui_ButAttachFile;
+
+				var directive = {
+
+					fieldTypeName: 'attachments',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
+						$scope.AttachFileText = Resources.core.cui_ButAttachFile;
+						$scope.L_Menu_LCID = L_Menu_LCID;
+					},
+
+					watchValueFn: function(newValue) {
+
+						// Show loading animation.
+						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+
+						// Gets the files attached to the item
+						$scope.$parent.item.getAttachments().then(function(attachmentFiles){
+
+							$scope.attachmentFiles = attachmentFiles;
+							directive.renderField();
+
+						}, function(err) {
+
+							$scope.errorMsg = err.message;
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+						});
+					}
+				};
 
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-
-					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
-
-					// Gets the files attached to the item
-					$scope.$parent.item.getAttachments().then(function(attachmentFiles){
-
-						$scope.attachmentFiles = attachmentFiles;
-						renderField($scope.currentMode);
-
-					}, function(err) {
-
-						$scope.errorMsg = err.message;
-						setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
-					});
-
-				}, true);
-
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
 				// ****************************************************************************
@@ -3841,7 +4082,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 
 				// ****************************************************************************
-				// Removes existing attachment, local o server side.
+				// Removes existing attachment, local or server side.
 				// NOTE: Attachments will be effective when save the item.
 				//
 				$scope.removeAttachment = function(index, local) {
@@ -3873,38 +4114,14 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					}
 				};
 
+			} // link
+
+		}; // Directive definition object
 
 
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
+		return spfieldAttachments_DirectiveDefinitionObject;
 
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-attachments-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
-					});
-
-				}
-
-			}
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 
@@ -3915,13 +4132,13 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 	['$parse', '$timeout', 
 
-	function($parse, $timeout) {
+	function fileSelect_DirectiveFactory($parse, $timeout) {
 
-		return function($scope, $element, $attrs) {
+		var fileSelect_DirectiveDefinitionObject = function($scope, $element, $attrs) {
 
 			var fn = $parse($attrs.fileSelect);
 
-			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase()) !== 'file') {
+			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase() !== 'file')) {
 
 				var fileElem = angular.element('<input type="file">');
 
@@ -3991,9 +4208,12 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 			});
 
-		};
+		}; // Directive definition object/function
 
-	}
+
+		return fileSelect_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -4015,11 +4235,11 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 angular.module('ngSharePoint').directive('spfieldBoolean', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldBoolean_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldBoolean_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -4028,57 +4248,31 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'boolean',
+					replaceAll: false,
+					watchValueFn: function(newValue) {
+						$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+					}
+				};
 
 
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-				// ****************************************************************************
-				// Watch for model value changes to parse the display value.
-				//
-				$scope.$watch('value', function(newValue) {
+			} // link
 
-					$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
-				});
+		}; // Directive definition object
 
 
+		return spfieldBoolean_DirectiveDefinitionObject;
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-boolean-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-			}
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -4099,64 +4293,26 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 
 angular.module('ngSharePoint').directive('spfieldCalculated', 
 
-	['$compile', '$templateCache', '$http',
+	[
 
-	function($compile, $templateCache, $http) {
+	function spfieldCalculated_DirectiveFactory() {
 
-		return {
+		var spfieldCalculated_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				//mode: '@',
 				value: '=ngModel'
 			},
 			templateUrl: 'templates/form-templates/spfield-text-display.html'
-			/*
-			template: '<div></div>',
 
-			link: function($scope, $element, $attrs, controllers) {
-
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+		}; // Directive definition object
 
 
+		return spfieldCalculated_DirectiveDefinitionObject;
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-text-display.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-
-			}
-			*/
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -4177,11 +4333,11 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 
 angular.module('ngSharePoint').directive('spfieldChoice', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldChoice_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldChoice_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -4190,48 +4346,33 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.choices = $scope.schema.Choices.results;
+
+				var directive = {
+					fieldTypeName: 'choice',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.choices = $scope.schema.Choices.results;
+					}
+				};
+				
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+			} // link
+
+		}; // Directive definition object
 
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+		return spfieldChoice_DirectiveDefinitionObject;
 
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-choice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-
-			}
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -4254,9 +4395,9 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 	['$compile', '$templateCache', '$http',
 
-	function($compile, $templateCache, $http) {
+	function spfieldControl_DirectiveFactory($compile, $templateCache, $http) {
 
-		return {
+		var spfieldControl_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: '^spform',
@@ -4266,12 +4407,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 			link: function($scope, $element, $attrs, spformController) {
 
-				$scope.fieldSchema = spformController.getFieldSchema($attrs.name);
+				var name = ($attrs.name || $attrs.spfieldControl);
+				var schema = spformController.getFieldSchema(name);
 				
-				if ($scope.fieldSchema !== void 0) {
+				if (schema !== void 0) {
 
 					// Sets the default value for the field
-					spformController.initField($attrs.name);
+					spformController.initField(name);
 
 					// NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize the field with it's default value.
 					if ($attrs.mode == 'hidden') {
@@ -4280,39 +4422,66 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					}
 
 					// Gets the field type
-					var fieldType = $attrs.renderAs | $scope.fieldSchema.TypeAsString;
+					var fieldType = schema.TypeAsString;
 					if (fieldType === 'UserMulti') fieldType = 'User';
 
 					// Gets the field name
-					var fieldName = $attrs.name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
-					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && $scope.fieldSchema.PrimaryFieldId !== null) {
-						var primaryFieldSchema = spformController.getFieldSchema($scope.fieldSchema.PrimaryFieldId);
+					var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+
+					// Adjust the field name if necessary.
+					// This is for additional read-only fields attached to Lookup and LookupMulti field types.
+					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
+
+						var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
 
 						if (primaryFieldSchema !== void 0) {
 							fieldName = primaryFieldSchema.InternalName + 'Id';
 						}
 					}
 
-					// Gets the field mode
-					var mode = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-					var dependsOn = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
-					var hidden = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
+					// Mount field attributes
+					var ngModelAttr = ' ng-model="item.' + fieldName + '"';
+					var nameAttr = ' name="' + name + '"';
+					var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+					var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
+					var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
+					var validationAttributes = ' ng-required="' + schema.Required + '"';
+					
+					// Specific field type validation attributes
+					switch(schema.TypeAsString) {
+
+						case 'Text':
+							validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
+							break;
+					}
+
+
+					// Check for 'render-as' attribute
+					if ($attrs.renderAs) {
+						fieldType = $attrs.renderAs;
+					}
+					
 
 					// Mount the field directive HTML
-					var fieldControlHTML = '<spfield-' + fieldType + ' ng-model="item.' + fieldName + '" name="' + $attrs.name + '"' + mode + dependsOn + hidden + '></spfield-' + fieldType + '>';
+					var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
+					var newElement = $compile(fieldControlHTML)($scope);
 
-					$element.append(fieldControlHTML);
-					$compile($element)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
 
 				} else {
 
 					console.error('Unknown field ' + $attrs.name);
 				}
-			}
 
-		};
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spfieldControl_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -4334,11 +4503,11 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 angular.module('ngSharePoint').directive('spfieldCurrency', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldCurrency_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldCurrency_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -4347,52 +4516,46 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
-				// NOTA: El valor de 'CultureInfo' debería de ser el que se indica en el 'schema' del campo en este caso.
-				//		 Se debería crear un nuevo objeto 'CultureInfo' (no se cómo) con el valor (LCID) indicado en
-				//		 la propiedad 'CurrencyLocaleId' del esquema.
+				var directive = {
+					fieldTypeName: 'currency',
+					replaceAll: false,
+
+					init: function() {
+
+						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
+						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
+						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
+					}
+				};
+				
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+			} // link
+
+		}; // Directive definition object
 
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+		return spfieldCurrency_DirectiveDefinitionObject;
 
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-currency-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-
-			}
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -4413,11 +4576,11 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
-	['$compile', '$templateCache', '$http', '$filter', '$timeout', '$q', 'SPUtils',
+	['SPFieldDirective', '$filter', '$timeout', '$q', 'SPUtils',
 
-	function($compile, $templateCache, $http, $filter, $timeout, $q, SPUtils) {
+	function spfieldDatetime_DirectiveFactory(SPFieldDirective, $filter, $timeout, $q, SPUtils) {
 
-		return {
+		var spfieldDatetime_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -4426,30 +4589,27 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					
+					fieldTypeName: 'datetime',
+					replaceAll: false,
+
+					watchModeFn: function(newValue) {
+
+						getData().then(function() {
+							directive.renderField(newValue);
+						});
+					}
+				};
 
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-
-					getData().then(function() {
-						renderField(newValue);
-					});
-
-				});
-
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
 				function getData() {
@@ -4457,7 +4617,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 					var def = $q.defer();
 
 					// Gets web regional settings
-					controllers[0].getWebRegionalSettings().then(function(webRegionalSettings) {
+					$scope.formCtrl.getWebRegionalSettings().then(function(webRegionalSettings) {
 
 						$scope.webRegionalSettings = webRegionalSettings;
 
@@ -4566,7 +4726,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 					return def.promise;
 
-				}
+				} // getData
 
 
 
@@ -4639,39 +4799,32 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 					if (newValue === oldValue || $scope.dateOnlyModel === void 0 || $scope.dateOnlyModel === null) return;
 
-					// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+					try {
 
-					var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-					var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-					var dateComponents = {};
-					
-					for(var i = 0; i < dateParts.length; i++) {
-						dateComponents[dateParts[i]] = dateValues[i];
+						// TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+
+						var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+						var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+						var dateComponents = {};
+						
+						for(var i = 0; i < dateParts.length; i++) {
+							dateComponents[dateParts[i]] = dateValues[i];
+						}
+
+						var hours = $scope.hoursModel;
+						if (hours !== null) {
+							hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+						}
+						var minutes = $scope.minutesModel;
+						var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
+
+						$scope.value = date.toISOString();
+
+					} catch(e) {
+
+						$scope.value = null;
+						// TODO: Create a 'DateTimeValidator' and assigns it in 'SPFieldControl' directive when field type is 'DateTime'.
 					}
-
-					var hours = $scope.hoursModel;
-					if (hours !== null) {
-						hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
-					}
-					var minutes = $scope.minutesModel;
-					var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
-
-					$scope.value = date.toISOString();
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-datetime-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
 				}
 
 
@@ -4693,11 +4846,14 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 			        return datePickerPath;
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldDatetime_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 /*
@@ -4718,17 +4874,17 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 angular.module('ngSharePoint')
 
-.directive('spfieldDescription', function() {
+.directive('spfieldDescription', function spfieldDescription_DirectiveFactory() {
 
-	return {
+	var spfieldDescription_DirectiveDefinitionObject = {
 
 		restrict: 'EA',
 		require: '^spform',
 		replace: true,
-		templateUrl: 'templates/form-templates/spfield-description.html',
 		scope: {
 			mode: '@'
 		},
+		templateUrl: 'templates/form-templates/spfield-description.html',
 
 
 		link: function($scope, $element, $attrs, spformController) {
@@ -4749,10 +4905,15 @@ angular.module('ngSharePoint')
 				$scope.currentMode = newValue;
 
 			});
-		}
-	};
+
+		} // link
+
+	}; // Directive definition object
+
+
+	return spfieldDescription_DirectiveDefinitionObject;
 	
-});
+}); // Directive factory
 /*
 	SPFieldLabel - directive
 	
@@ -4771,17 +4932,17 @@ angular.module('ngSharePoint')
 
 angular.module('ngSharePoint')
 
-.directive('spfieldLabel', function() {
+.directive('spfieldLabel', function spfieldLabel_DirectiveFactory() {
 
-	return {
+	var spfieldLabel_DirectiveDefinitionObject = {
 
 		restrict: 'EA',
 		require: '^spform',
 		replace: true,
-		templateUrl: 'templates/form-templates/spfield-label.html',
 		scope: {
 			mode: '@'
 		},
+		templateUrl: 'templates/form-templates/spfield-label.html',
 
 
 		link: function($scope, $element, $attrs, spformController) {
@@ -4802,10 +4963,15 @@ angular.module('ngSharePoint')
 				$scope.currentMode = newValue;
 
 			});
-		}
-	};
+
+		} // link
+
+	}; // Directive definition object
+
+
+	return spfieldLabel_DirectiveDefinitionObject;
 	
-});
+}); // Directive factory
 /*
 	SPFieldLookup - directive
 	
@@ -4824,11 +4990,11 @@ angular.module('ngSharePoint')
 
 angular.module('ngSharePoint').directive('spfieldLookup', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
 
-		return {
+		var spfieldLookup_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -4837,66 +5003,34 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+			
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
-
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
-
-				}, function(newValue, oldValue) {
-
-					$scope.currentMode = newValue.mode;
-
-					if (newValue.value !== oldValue.value) {
-						$scope.lookupItem = void 0;
-					}
-
-					refreshData();
-
-				}, true);
-				*/
-
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue, oldValue) {
-
-					if ($scope.currentMode === newValue) return;
+				var directive = {
 					
-					$scope.currentMode = newValue;
-					refreshData();
+					fieldTypeName: 'lookup',
+					replaceAll: false,
 
-				});
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						$scope.lookupItem = void 0;
+						refreshData();						
+					}
+				};
 
 
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-				// ****************************************************************************
-				// Watch for value (model) changes.
-				//
-				$scope.$watch('value', function(newValue, oldValue) {
-
-					if (newValue === oldValue) return;
-
-					$scope.lookupItem = void 0;
-					refreshData();
-
-				});
 
 
 				// ****************************************************************************
@@ -4930,7 +5064,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					if ($scope.lastValue !== $scope.value) {
 
 						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-						controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
 
 						$scope.lastValue = $scope.value;
 					}
@@ -4944,49 +5078,22 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				function refreshData() {
 					
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
 					getLookupData($scope.currentMode).then(function(){
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function(err) {
 
 						$scope.errorMsg = err.message;
 
 						if ($scope.value === void 0) {
-							setElementHTML('');
+							directive.setElementHTML('');
 						} else {
-							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
 						}
-					});
-
-				}
-
-
-
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
-
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-lookup-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
 					});
 
 				}
@@ -5243,11 +5350,14 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldLookup_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 /*
@@ -5268,11 +5378,11 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 angular.module('ngSharePoint').directive('spfieldLookupmulti', 
 
-	['$compile', '$templateCache', '$http', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
-	function($compile, $templateCache, $http, $q, $filter, SharePoint) {
+	function spfieldLookupmulti_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
 
-		return {
+		var spfieldLookupmulti_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -5281,79 +5391,54 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
-				$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
-				$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
-				$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
-				$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
 
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
-
-					// Adjust the model if no value is provided
-					// NOTA: Esto no sé si debería estar fuera.
-					//		 No entra en bucle infinito pero no tiene mucho sentido que esté aquí.
-					if ($scope.value === null) {
-						$scope.value = { results: [] };
-					}
+				var directive = {
 					
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: $scope.value };
+					fieldTypeName: 'lookupmulti',
+					replaceAll: false,
 
-				}, function(newValue, oldValue) {
+					init: function() {
 
-					$scope.currentMode = newValue.mode;
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+						$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
+						$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
+						$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
+						$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
 
-					//if (newValue.value.results !== oldValue.value.results) {
-					if (newValue.value !== oldValue.value) {
+						// Adjust the model if no value is provided
+						if ($scope.value === null || $scope.value === void 0) {
+							$scope.value = { results: [] };
+						}
+						
+					},
+					
+					parserFn: function(modelValue, viewValue) {
+
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
 						$scope.selectedLookupItems = void 0;
+						refreshData();						
 					}
-
-					refreshData();
-
-				}, true);
-				*/
+				};
 
 
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue, oldValue) {
-
-					if ($scope.currentMode === newValue) return;
-
-					$scope.currentMode = newValue;
-					refreshData();
-
-				});
-
-
-
-				// ****************************************************************************
-				// Watch for value (model) changes.
-				//
-				$scope.$watch('value', function(newValue, oldValue) {
-
-					if (newValue === oldValue) return;
-
-					$scope.selectedLookupItems = void 0;
-
-					refreshData();
-				});
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
 
@@ -5390,7 +5475,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				$scope.valueChanged = function() {
 
 					// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-					controllers[0].fieldValueChanged($scope.schema.InternalName, $scope.value);
+					$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
 				};
 				*/
 
@@ -5402,52 +5487,27 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				function refreshData() {
 
 					// Adjust the model if no value is provided
-					if ($scope.value === null) {
+					if ($scope.value === null || $scope.value === void 0) {
 						$scope.value = { results: [] };
 					}
 					
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData($scope.currentMode).then(function(){
+					getLookupData($scope.currentMode).then(function() {
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function(err) {
 
 						$scope.errorMsg = err.message;
 
 						if ($scope.value === void 0) {
-							setElementHTML('');
+							directive.setElementHTML('');
 						} else {
-							setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
+							directive.setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
 						}
-					});
-
-				}
-
-
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
-
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-lookupmulti-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
 					});
 
 				}
@@ -5743,11 +5803,14 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					updateModel();
 				};
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldLookupmulti_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 /*
@@ -5768,11 +5831,11 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 angular.module('ngSharePoint').directive('spfieldMultichoice', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldMultichoice_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldMultichoice_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -5781,51 +5844,36 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
 
-				// Adjust the model if no value is provided
-				if ($scope.value === null) {
-					$scope.value = { results: [] };
-				}
+				var directive = {
+					fieldTypeName: 'multichoice',
+					replaceAll: false,
 
-				$scope.choices = $scope.value.results;
-				sortChoices();
+					init: function() {
 
+						// Adjust the model if no value is provided
+						if ($scope.value === null || $scope.value === void 0) {
+							$scope.value = { results: [] };
+						}
 
+						$scope.choices = $scope.value.results;
+						sortChoices();
+					},
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+					parserFn: function(modelValue, viewValue) {
 
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+						return $scope.value;
+					}
+				};
 
 
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-multichoice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
 				// ****************************************************************************
@@ -5866,9 +5914,12 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 			}
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldMultichoice_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -5890,11 +5941,11 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 angular.module('ngSharePoint').directive('spfieldNote', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfielNote_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldNote_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -5903,48 +5954,28 @@ angular.module('ngSharePoint').directive('spfieldNote',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
+
+				var directive = {
+					fieldTypeName: 'note',
+					replaceAll: false
+				};
 
 
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+			} // link
 
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
+		}; // Directive definition object
 
 
+		return spfieldNote_DirectiveDefinitionObject;
 
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-note-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-
-			}
-
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -5966,11 +5997,11 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
 angular.module('ngSharePoint').directive('spfieldNumber', 
 
-	['$compile', '$templateCache', '$http', 'SPUtils',
+	['SPFieldDirective', 'SPUtils',
 
-	function($compile, $templateCache, $http, SPUtils) {
+	function spfieldNumber_DirectiveFactory(SPFieldDirective, SPUtils) {
 
-		return {
+		var spfieldNumber_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -5979,57 +6010,48 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				var schema = controllers[0].getFieldSchema($attrs.name);
-				var xml = SPUtils.parseXmlString(schema.SchemaXml);
-				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-				var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
-				schema.Percentage = percentage.toLowerCase() === 'true';
-				schema.Decimals = parseInt(decimals);
 
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
-				$scope.schema = schema;
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+				var directive = {
+					fieldTypeName: 'number',
+					replaceAll: false,
 
+					init: function() {
 
+						var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
+						var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
+						var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
+						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
+						$scope.schema.Decimals = parseInt(decimals);
+						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+					},
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
 
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
+					}
+				};
 
 
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-					$http.get('templates/form-templates/spfield-number-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
+			} // link
 
-				}
+		}; // Directive definition object
 
-			}
 
-		};
+		return spfieldNumber_DirectiveDefinitionObject;
 
-	}
+	} // Directive factory
 
 ]);
 
@@ -6041,40 +6063,50 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 //	SPNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spNumber', function() {
+angular.module('ngSharePoint').directive('spPercentage', 
 
-	return {
+	[
 
-		restrict: 'A',
-		require: 'ngModel',
+	function spPercentage_DirectiveFactory() {
 
-		link: function($scope, $element, $attrs, ngModel) {
+		var spPercentageDirectiveDefinitionObject = {
 
-			ngModel.$formatters.push(function(value) {
-				if ($scope.schema.Percentage && value !== void 0) {
-					// If decimals is set to 'Auto', use 2 decimals for percentage values.
-					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
-					return (value * 100).toFixed(decimals);
-				} else {
-					return value;
-				}
-			});
+			restrict: 'A',
+			require: 'ngModel',
+
+			link: function($scope, $element, $attrs, ngModel) {
+
+				ngModel.$formatters.push(function(value) {
+					if ($scope.schema.Percentage && value !== void 0) {
+						// If decimals is set to 'Auto', use 2 decimals for percentage values.
+						var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+						return (value * 100).toFixed(decimals);
+					} else {
+						return value;
+					}
+				});
 
 
-			ngModel.$parsers.push(function(value) {
-				if ($scope.schema.Percentage && value !== void 0) {
-					// If decimals is set to 'Auto', use 2 decimals for percentage values.
-					var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
-					return (value / 100).toFixed(decimals);
-				} else {
-					return value;
-				}
-			});
-		}
+				ngModel.$parsers.push(function(value) {
+					if ($scope.schema.Percentage && value !== void 0) {
+						// If decimals is set to 'Auto', use 2 decimals for percentage values.
+						var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+						return (value / 100).toFixed(decimals);
+					} else {
+						return value;
+					}
+				});
 
-	};
+			} // link
 
-});
+		}; // Directive definition object
+
+
+		return spPercentageDirectiveDefinitionObject;
+
+	} // Directive factory
+
+]);
 /*
 	SPFieldText - directive
 	
@@ -6093,11 +6125,11 @@ angular.module('ngSharePoint').directive('spNumber', function() {
 
 angular.module('ngSharePoint').directive('spfieldText', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldText_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldText_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -6106,49 +6138,28 @@ angular.module('ngSharePoint').directive('spfieldText',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 
-				
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
+				var directive = {
+					fieldTypeName: 'text',
+					replaceAll: false
+				};
 
 
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
+			} // link
 
-					$http.get('templates/form-templates/spfield-text-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
+		}; // Directive definition object
 
-				}
 
-			}
+		return spfieldText_DirectiveDefinitionObject;
 
-		};
-
-	}
+	} // Directive factory
 
 ]);
 /*
@@ -6169,11 +6180,11 @@ angular.module('ngSharePoint').directive('spfieldText',
 
 angular.module('ngSharePoint').directive('spfieldUrl', 
 
-	['$compile', '$templateCache', '$http',
+	['SPFieldDirective',
 
-	function($compile, $templateCache, $http) {
+	function spfieldUrl_DirectiveFactory(SPFieldDirective) {
 
-		return {
+		var spfieldUrl_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -6182,53 +6193,49 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div></div>',
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
-				$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
-				$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
-				$scope.Description_Text = Strings.STS.L_Description_Text;
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
 
-				
+				var directive = {
+					fieldTypeName: 'url',
+					replaceAll: false,
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
+					init: function() {
+						$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
+						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
+						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
+						$scope.Description_Text = Strings.STS.L_Description_Text;
+					},
 
-					return $scope.mode || controllers[0].getFormMode();
+					parserFn: function(modelValue, viewValue) {
+						
+						// Required validity
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
+						
+						// Url validity
+						var validUrlRegExp = new RegExp('^http://');
+						$scope.modelCtrl.$setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
+						
+						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
 
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
+						return $scope.value;
+					}
+				};
 
 
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-url-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldUrl_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 /*
@@ -6249,11 +6256,11 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 
 angular.module('ngSharePoint').directive('spfieldUser', 
 
-	['$compile', '$templateCache', '$http', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils',
+	['SPFieldDirective', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils',
 
-	function($compile, $templateCache, $http, $q, $timeout, $filter, SharePoint, SPUtils) {
+	function spfieldUser_DirectiveFactory(SPFieldDirective, $q, $timeout, $filter, SharePoint, SPUtils) {
 
-		return {
+		var spfieldUserDirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: ['^spform', 'ngModel'],
@@ -6262,100 +6269,73 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				mode: '@',
 				value: '=ngModel'
 			},
-			template: '<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>',
+			templateUrl: 'templates/form-templates/spfield-control-loading.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
-				$scope.schema = controllers[0].getFieldSchema($attrs.name);
-				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
-				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 
+				var directive = {
+					fieldTypeName: 'user',
+					replaceAll: false,
 
-				// $scope.schema.SelectionGroup (0 | [GroupId])	-> UserSelectionScope (XML) (0 (All Users) | [GroupId])
-				// $scope.schema.SelectionMode  (0 | 1)			-> UserSelectionMode (XML) ("PeopleOnly" | "PeopleAndGroups")
+					init: function() {
 
+						$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+					},
+					
+					parserFn: function(modelValue, viewValue) {
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
+						if ($scope.schema.AllowMultipleValues) {
 
-					// Adjust the model if no value is provided
-					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
-						$scope.value = { results: [] };
-					}
+							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
-					return { mode: $scope.mode || controllers[0].getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
+						} else {
 
-				}, function(newValue, oldValue) {
+							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
+							// NOTE: Required validator is implicitly applied when no multiple values.
 
-					$scope.currentMode = newValue.mode;
-
-					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
-
-					// Initialize the 'selectedUserItems' array if the value was changed.
-					if ($scope.schema.AllowMultipleValues) {
-						if (newValue.value.join(',') !== oldValue.value.join(',')) {
-							$scope.selectedUserItems = void 0;
+							// Unique validity (Only one value is allowed)
+							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
 						}
-					} else {
-						if (newValue.value !== oldValue.value) {
-							$scope.selectedUserItems = void 0;
+
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						// Adjust the model if no value is provided
+						if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+							$scope.value = { results: [] };
 						}
+
+						$scope.selectedUserItems = void 0;
+						refreshData();
+					},
+
+					postRenderFn: function(html) {
+
+						if ($scope.currentMode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+
 					}
-
-					// Gets the data for the user (lookup) and then render the field.
-					getUserData().then(function() {
-
-						renderField($scope.currentMode);
-
-					}, function() {
-
-						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
-
-					});
-
-				}, true);
-				*/
+				};
 
 
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || controllers[0].getFormMode();
-
-				}, function(newValue, oldValue) {
-
-					if ($scope.currentMode === newValue) return;
-
-					$scope.currentMode = newValue;
-					refreshData();
-
-				});
-
-
-
-				// ****************************************************************************
-				// Watch for value (model) changes.
-				//
-				$scope.$watch('value', function(newValue, oldValue) {
-
-					if (newValue === oldValue) return;
-
-					// Adjust the model if no value is provided
-					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
-						$scope.value = { results: [] };
-					}
-
-					$scope.selectedUserItems = void 0;
-					refreshData();
-
-				});
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
 
 
 
@@ -6370,54 +6350,18 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					}
 
 					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
+					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the user (lookup) and then render the field.
 					getUserData().then(function() {
 
-						renderField($scope.currentMode);
+						directive.renderField($scope.currentMode);
 
 					}, function() {
 
-						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
+						directive.setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
 
 					});
-				}
-
-
-
-
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
-
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-					
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-user-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
-
-						if (mode === 'edit') {
-							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
-
-							$timeout(function() {
-								initializePeoplePicker(peoplePickerElementId);
-							});
-						}
-					});
-
 				}
 
 
@@ -6490,6 +6434,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				}
 
 
+
 				// ****************************************************************************
 				// Gets the user data for display mode.
 				//
@@ -6536,6 +6481,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 									url: '',
 									data: null
 								};
+
 
 								if ($scope.value === null || $scope.value === 0) {
 
@@ -6693,6 +6639,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    // Get the people picker object from the page.
 				    var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
+				    $scope.peoplePicker = peoplePicker;
+
 				    if (peoplePicker !== void 0 && peoplePicker !== null) {
 
 				    	// Get information about all users.
@@ -6709,45 +6657,81 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
-				    		if ($scope.schema.AllowMultipleValues === true) {
-
-				    			$scope.value.results = [];
-
-				    		} else {
-
-				    			$scope.value = null;
-				    		}
-
-
+							var resolvedValues = [];
+							var promises = [];
 
 				    		angular.forEach(entitiesArray, function(entity) {
 
 				    			if (entity.IsResolved) {
 
-				    				SPUtils.getUserId(entity.Key).then(function(userId) {
+				    				if ($scope.schema.AllowMultipleValues || promises.length === 0) {
 
-						    			if ($scope.schema.AllowMultipleValues === true) {
+					    				var entityPromise;
 
-					    					$scope.value.results.push(userId);
+					    				if (entity.EntityType === 'User') {
+
+					    					// Get the user ID
+						    				entityPromise = SPUtils.getUserId(entity.Key).then(function(userId) {
+
+						    					resolvedValues.push(userId);
+						    					return resolvedValues;
+						    				});
 
 						    			} else {
 
-						    				$scope.value = userId;
+						    				// Get the group ID
+						    				entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
 						    			}
 
-				    				});
+					    				promises.push(entityPromise);
+
+					    			} else {
+
+					    				// Force to commit the value through the model controller $parsers and $validators pipelines.
+					    				// This way the validators will be launched and the view will be updated.
+					    				$scope.modelCtrl.$setViewValue($scope.modelCtrl.$viewValue);
+					    			}
 				    			}
 				    		});
 
-				    		$scope.$apply();
+
+							if (promises.length > 0) {
+					    		
+					    		$q.all(promises).then(function() {
+
+					    			updateModel(resolvedValues);
+
+					    		});
+
+					    	} else {
+
+					    		updateModel(resolvedValues);
+					    	}
 				    	};
 				    }
+				}
+
+
+
+				function updateModel(resolvedValues) {
+
+					if ($scope.schema.AllowMultipleValues === true) {
+
+						$scope.value.results = resolvedValues;
+
+					} else {
+
+						$scope.value = resolvedValues[0] || null;
+					}
+
+					$scope.modelCtrl.$setViewValue($scope.value);
 				}
 				
 
 
 				// ****************************************************************************
 				// Query the picker for user information.
+				// NOTE: This function is actually not used.
 				//
 				function getUserInfo(peoplePickerId) {
 				 
@@ -6771,14 +6755,59 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    console.log(keys);
 				}
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spfieldUserDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
+/*
+    SPFieldValidationMessages - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPFieldValidationMessages
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spfieldValidationMessages', 
+
+    [
+
+    function spfieldValidationMessages_DirectiveFactory() {
+
+        var spfieldValidationMessages_DirectiveDefinitionObject = {
+
+            restrict: 'E',
+            replace: true,
+            templateUrl: 'templates/form-templates/spfield-validation-messages.html',
+
+
+            link: function($scope, $element, $attrs) {
+
+                $scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
+            }
+
+        };
+
+
+        return spfieldValidationMessages_DirectiveDefinitionObject;
+
+    }
+
+]);
 /*
 	SPField - directive
 	
@@ -6799,47 +6828,55 @@ angular.module('ngSharePoint').directive('spfield',
 
 	['$compile', '$templateCache', '$http',
 
-	function($compile, $templateCache, $http) {
+	function spfield_DirectiveFactory($compile, $templateCache, $http) {
 
-		return {
+		var spfield_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
-			//replace: true,
-			template: '<tr></tr>',
+			template: '<div></div>',
 
-			compile: function(element, attrs) {
+			link: function($scope, $element, $attrs) {
 
-				return {
-					
-					pre: function($scope, $element, $attrs) {
+				$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
-						$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
+					var originalAttrs = $element[0].attributes;
+					var elementAttributes = '';
 
-							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
-							var dependsOn = ($attrs.dependsOn ? 'depends-on="' + $attrs.dependsOn + '"' : '');
-							var renderAs = ($attrs.renderAs ? 'render-as="' + $attrs.renderAs + '"' : '');
+					for (var i = 0; i < originalAttrs.length; i++) {
+                        
+						var nameAttr = originalAttrs.item(i).nodeName;
+						var valueAttr = originalAttrs.item(i).value;
 
-							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name)
-									   .replace(/\{\{mode\}\}/g, mode)
-									   .replace(/\{\{renderAs\}\}/g, renderAs)
-									   .replace(/\{\{dependsOn\}\}/g, dependsOn);
+						if (nameAttr == 'ng-repeat') continue;
+						if (nameAttr == 'spfield') nameAttr = 'name';
+						if (nameAttr == 'class') {
+							// Removes AngularJS classes (ng-*)
+							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
-							
-							var newElement = $compile(html)($scope);
-							$element.replaceWith(newElement);
-							$element = newElement;
+							// If there aren't classes after the removal, skips the 'class' attribute.
+							if (valueAttr === '') continue;
+						}
 
-						});
-
+						elementAttributes += nameAttr + '="' + valueAttr + '" ';
 					}
+
+
+					html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
 					
-				};
+                    var newElement = $compile(html)($scope);
+					$element.replaceWith(newElement);
+					$element = newElement;
 
-			}
+				});
 
-		};
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+        return spfield_DirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -6863,16 +6900,13 @@ angular.module('ngSharePoint').directive('spformRule',
 
 	['$compile', '$templateCache', '$http', '$animate',
 
-	function($compile, $templateCache, $http, $animate) {
+	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
-		return {
+		var spformruleDirectiveDefinitionObject = {
 			restrict: 'E',
-			replace: 'element',
-			//scope: false,
 			transclude: true,
-			priority: 50,
 
-			link: function ($scope, $element, $attrs, ctrl, $transclude) {
+			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
 				if ($element.parent().length > 0) {
 
@@ -6888,10 +6922,11 @@ angular.module('ngSharePoint').directive('spformRule',
 
 					} else {
 
-						$transclude($scope, function (clone) {
+						transcludeFn($scope, function (clone) {
 
 							for(var i = clone.length - 1; i >= 0; i--) {
 								var e = clone[i];
+								//$animate.enter(element, parentElement, afterElement, [options]);
 								$animate.enter(e, $element.parent(), $element);
 							}
 							
@@ -6901,10 +6936,15 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element = null;
 					}
 				}
-			}
-		};
+				
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spformruleDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -6928,9 +6968,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 	['$compile', '$templateCache', '$http', 'SPUtils',
 
-	function($compile, $templateCache, $http, SPUtils) {
+	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
 
-		return {
+		var spformToolbarDirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: '^spform',
@@ -6969,12 +7009,16 @@ angular.module('ngSharePoint').directive('spformToolbar',
 				});
 
 
+
+				// ****************************************************************************
+				// Public methods
+				//
+
 				$scope.saveForm = function() {
 
 					spformController.save();
 
 				};
-
 
 
 				$scope.cancelForm = function() {
@@ -6983,11 +7027,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 				};
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spformToolbarDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -7011,29 +7058,42 @@ angular.module('ngSharePoint').directive('spform',
 
 	['SPUtils', '$compile', '$templateCache', '$http', '$q',
 
-	function(SPUtils, $compile, $templateCache, $http, $q) {
+	function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q) {
 
-		return {
+		var spform_DirectiveDefinitionObject = {
+
 			restrict: 'EA',
+            transclude: true,
+            replace: true,
+            scope: {
+                originalItem: '=item',
+                onPreSave: '&',
+                onPostSave: '&',
+                onCancel: '&'
+            },
 			templateUrl: 'templates/form-templates/spform.html',
-			transclude: true,
-			replace: true,
-			priority: 100,
-			scope: {
-				originalItem: '=item',
-				onPreSave: '&',
-				onPostSave: '&',
-				onCancel: '&'
-			},
-
 
 
 			controller: ['$scope', '$attrs', function spformController($scope, $attrs) {
 
-				this.status = {
-					IDLE: 0,
-					PROCESSING: 1
-				};
+
+                this.status = {
+                    IDLE: 0,
+                    PROCESSING: 1
+                };
+
+                
+                this.getItem = function() {
+
+                    return $scope.item;
+                };
+
+
+                this.getFormCtrl = function() {
+
+                    // Returns the 'ng-form' directive controller
+                    return $scope.ngFormCtrl;
+                };
 
 
 				this.isNew = function() {
@@ -7105,9 +7165,6 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.fieldValueChanged = function(fieldName, fieldValue) {
 
-					//console.log('>>>> spform.fieldValueChanged(' + fieldName + ', ' + fieldValue + ')');
-					//console.log('-------------------------------------------------------------------------------');
-					
 					$scope.$broadcast(fieldName + '_changed', fieldValue);
 				};
 
@@ -7135,6 +7192,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
 				this.getFormStatus = function() {
+
 					return $scope.formStatus;
 				};
 
@@ -7142,6 +7200,17 @@ angular.module('ngSharePoint').directive('spform',
 				this.save = function(redirectUrl) {
 
 					var self = this;
+
+                    $scope.ngFormCtrl.$setDirty();
+
+                    if (!$scope.ngFormCtrl.$valid) {
+
+                        $scope.$broadcast('validate');
+
+                        // TODO: Set the focus to the first invalid control (Try ng-focus directive).
+
+                        return;
+                    }
 
 					$scope.formStatus = this.status.PROCESSING;
 
@@ -7154,10 +7223,14 @@ angular.module('ngSharePoint').directive('spform',
 
 							$scope.item.save().then(function(data) {
 
-								//angular.extend($scope.originalItem, data); //-> This launch $scope.originalItem $watch !!!
 								$scope.formStatus = this.status.IDLE;
 
-								$q.when($scope.onPostSave({ originalItem: $scope.originalItem, item: $scope.item })).then(function(result) {
+								var postSaveData = {
+									originalItem: $scope.originalItem,
+									item: $scope.item
+								};
+
+								$q.when($scope.onPostSave(postSaveData)).then(function(result) {
 
 									if (result !== false) {
 
@@ -7247,192 +7320,223 @@ angular.module('ngSharePoint').directive('spform',
 
 				};
 
-			}],
+			}], // controller property
 
 
 
-			compile: function(element, attrs, transclude) {
+            compile: function compile(element, attrs/*, transcludeFn (DEPRECATED)*/) {
 
-				return {
+                return {
 
-					pre: function($scope, $element, $attrs, spformController) {
+                    pre: function prelink($scope, $element, $attrs, spformController, transcludeFn) {
+                    
+                        // Sets the form 'name' attribute if user don't provide it.
+                        // This way has always available the 'ng-form' directive controller for form validations.
+                        if (!$attrs.name) {
+                            $attrs.$set('name', 'spform');
+                        }
 
-						$scope.isInDesignMode = SPUtils.inDesignMode();
-						
-						if ($scope.isInDesignMode) return;
+                    },
 
 
-						// Watch for form mode changes
-						$scope.$watch(function() {
 
-							return spformController.getFormMode();
+                    post: function postLink($scope, $element, $attrs, spformController, transcludeFn) {
 
-						}, function(newMode) {
+                        // Makes an internal reference to the 'ng-form' directive controller for form validations.
+                        // (See pre-linking function above).
+                        $scope.ngFormCtrl = $scope[$attrs.name];
 
-							$scope.mode = newMode;
 
-							if ($scope.item !== void 0) {
+                        // Checks if the page is in design mode.
+                        $scope.isInDesignMode = SPUtils.inDesignMode();
+                        if ($scope.isInDesignMode) return;
 
-								$scope.item.list.getFields().then(function(fields) {
 
-									$scope.schema = fields;
-									$scope.loadItemTemplate();
+                        // Watch for form mode changes
+                        $scope.$watch(function() {
 
-								});
+                            return spformController.getFormMode();
 
-							}
-						});
+                        }, function(newMode) {
 
+                            $scope.mode = newMode;
 
-						// Watch for item changes
-						$scope.$watch('originalItem', function(newValue) {
+                            if ($scope.item !== void 0) {
 
-							// Checks if the item has a value
-							if (newValue === void 0) return;
+                                $scope.item.list.getFields().then(function(fields) {
 
-							$scope.item = angular.copy(newValue);
-							$scope.item.clean();
+                                    $scope.schema = fields;
+                                    loadItemTemplate();
 
-							$scope.item.list.getFields().then(function(fields) {
+                                });
 
-								// NOTE: We need to get list properties to know if the list has 
-								//		 ContentTypesEnabled and, if so, get the schema from the
-								//		 ContentType instead.
-								//		 Also we need to know which is the default ContentType
-								//		 to get the correct schema (I don't know how).
-								//
-								//		 If the above is not done, field properties like 'Required' will have incorrect data.
+                            }
+                        });
 
-								$scope.schema = fields;
-								$scope.loadItemTemplate();
 
-							});
+                        // Watch for item changes
+                        $scope.$watch('originalItem', function(newValue) {
 
-						}, true);
+                            // Checks if the item has a value
+                            if (newValue === void 0) return;
 
+                            $scope.item = angular.copy(newValue);
+                            $scope.item.clean();
 
+                            $scope.item.list.getFields().then(function(fields) {
 
-						$scope.loadItemTemplate = function() {
-							
-							$scope.formStatus = spformController.status.PROCESSING;
+                                // TODO: We need to get list properties to know if the list has 
+                                //       ContentTypesEnabled and, if so, get the schema from the
+                                //       ContentType instead.
+                                //       Also we need to know which is the default ContentType
+                                //       to get the correct schema (I don't know how).
+                                //
+                                //       If the above is not done, field properties like 'Required' will have incorrect data.
 
-							
-							var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
-							if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                $scope.schema = fields;
+                                loadItemTemplate();
 
+                            });
 
-							if ($attrs.templateUrl) {
+                        }, true);
 
-								$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
 
-									$element.html('');
-									parseRules($element, angular.element(html), false);
-									$compile($element)($scope);
-									$scope.formStatus = spformController.status.IDLE;
 
-								});
+                        function loadItemTemplate() {
+                            
+                            $scope.formStatus = spformController.status.PROCESSING;
 
-							} else {
+                            // Search for the 'transclusion-container' attribute within the 'spform' template elements.
+                            var elements = $element.find('*');
+                            var transclusionContainer;
 
-								var elements = $element.find('*');
-								var transcludeFields = 'transclude-fields';
-								var elementToTransclude;
+                            angular.forEach(elements, function(elem) {
+                                if (elem.attributes['transclusion-container'] !== void 0) {
+                                    transclusionContainer = angular.element(elem);
+                                }
+                            });
 
-								angular.forEach(elements, function(elem) {
-									if (elem.attributes[transcludeFields] !== void 0) {
-										elementToTransclude = angular.element(elem);
-									}
-								});
+                            // Remove the 'loading animation' element
+                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
 
-								if (elementToTransclude === void 0) {
-									elementToTransclude = $element;
-								}
 
-								elementToTransclude.empty();
+                            // Check for 'templateUrl' attribute
+                            if ($attrs.templateUrl) {
 
-								transclude($scope, function (clone) {
-									parseRules(elementToTransclude, clone, true);
-								});
+                                // Apply the 'templateUrl' attribute
+                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
 
+                                    parseRules(transclusionContainer, angular.element(html), false);
+                                    $compile(transclusionContainer)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
 
-								// If no template-url attribute was provided generate a default form template
-								if (elementToTransclude[0].children.length === 0) {
+                                }).error(function(data, status, headers, config, statusText) {
 
-									$scope.fields = [];
+                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                    $compile(transclusionContainer)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+                                });
 
-									angular.forEach($scope.item.list.Fields, function(field) {
-										if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-											$scope.fields.push(field);
-										}
-									});
+                            } else {
 
-									$http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                // Apply transclusion
+                                transcludeFn($scope, function (clone) {
+                                    parseRules(transclusionContainer, clone, true);
+                                });
 
-										elementToTransclude.html('').append(html);
-										$compile(elementToTransclude)($scope);
-										$scope.formStatus = spformController.status.IDLE;
 
-									});
+                                // If no transclude content was detected inside the 'spform' directive, generate a default form template.
+                                if (transclusionContainer[0].children.length === 0) {
 
-								}
-								
-							}
-							
-						};
+                                    $scope.fields = [];
 
+                                    angular.forEach($scope.item.list.Fields, function(field) {
+                                        if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                            $scope.fields.push(field);
+                                        }
+                                    });
 
-						function parseRules(targetElement, sourceElements, isTransclude) {
+                                    $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
 
-							var terminalRuleAdded = false;
+                                        transclusionContainer.append(html);
+                                        $compile(transclusionContainer)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
 
-							// Initialize the 'rulesApplied' array for debug purposes.
-							$scope.rulesApplied = [];
+                                    });
 
-							angular.forEach(sourceElements, function (elem) {
+                                } else {
 
-								// Check if 'elem' is a <spform-rule> element.
-								if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
+                                    $scope.formStatus = spformController.status.IDLE;
+                                }
+                                
+                            }
+                            
+                        } // loadItemTemplate
 
-									var testExpression = elem.attributes.test.value;
 
-									// Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
-									if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+                        function parseRules(targetElement, sourceElements, isTransclude) {
 
-										targetElement.append(elem);
-										var terminalExpression = false;
+                            var terminalRuleAdded = false;
 
-										if (elem.attributes.terminal !== void 0) {
+                            // Initialize the 'rulesApplied' array for debug purposes.
+                            $scope.rulesApplied = [];
 
-											terminalExpression = elem.attributes.terminal.value;
-											terminalRuleAdded = $scope.$eval(terminalExpression);
+                            angular.forEach(sourceElements, function (elem) {
 
-										}
+                                // Check if 'elem' is a <spform-rule> element.
+                                if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
 
-										// Add the rule applied to the 'rulesApplied' array for debug purposes.
-										$scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+                                    var testExpression = elem.attributes.test.value;
 
-									} else if (isTransclude) {
+                                    // Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
+                                    if (!terminalRuleAdded && $scope.$eval(testExpression)) {
 
-										elem.remove();
-										elem = null;
-									}
-									
-								} else {
+                                        targetElement.append(elem);
+                                        var terminalExpression = false;
 
-									targetElement.append(elem);
-								}
-							});
+                                        if (elem.attributes.terminal !== void 0) {
 
-						}
+                                            terminalExpression = elem.attributes.terminal.value;
+                                            terminalRuleAdded = $scope.$eval(terminalExpression);
 
-					}
-					
-				};
+                                        }
 
-			}
+                                        // Add the rule applied to the 'rulesApplied' array for debug purposes.
+                                        $scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
 
-		};
-	}
+                                    } else if (isTransclude) {
+
+                                        // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
+                                        //       elements when the expression in its 'test' attribute evaluates to FALSE.
+                                        //       This is because when the transclusion is performed the elements are inside the 
+                                        //       current 'spform' element and should be removed.
+                                        //       When this function is called from an asynchronous template load ('templete-url' attribute), 
+                                        //       the elements are not yet in the element.
+                                        elem.remove();
+                                        elem = null;
+                                    }
+                                    
+                                } else {
+
+                                    targetElement.append(elem);
+                                }
+                            });
+
+                        } // parseRules private function
+
+                    } // compile.post-link
+
+                }; // compile function return
+
+            } // compile property
+
+		}; // Directive definition object
+
+
+        return spform_DirectiveDefinitionObject;
+
+	} // Directive factory function
 
 ]);
 /*
@@ -7452,55 +7556,58 @@ angular.module('ngSharePoint').directive('spform',
 //	This directive adds specific user information to then current context
 /////////////////////////////////////////////////////////////////////////////
 
-angular.module('ngSharePoint')
+angular.module('ngSharePoint').directive('spuser', 
 
-.directive('spuser', ['SharePoint', function(SharePoint) {
+	['SharePoint', 
 
-	return {
+	function spuser_DirectiveFactory(SharePoint) {
 
-		restrict: 'A',
-		replace: false,
-		scope: {
-			UserData: '=spuser'
-		},
+		return {
 
-		link: function($scope, $element, $attrs) {
+			restrict: 'A',
+			replace: false,
+			scope: {
+				UserData: '=spuser'
+			},
 
-			SharePoint.getCurrentWeb().then(function(web) {
+			link: function($scope, $element, $attrs) {
 
-				$scope.currentWeb = web;
+				SharePoint.getCurrentWeb().then(function(web) {
 
-				if ($element[0].attributes['user-id'] === void 0) {
+					$scope.currentWeb = web;
 
-					// current user
-					$scope.currentWeb.getCurrentUser().then(function(user) {
+					if ($element[0].attributes['user-id'] === void 0) {
 
-						$scope.UserData = user;
-					});
-
-				} else {
-
-					// Have userId attribute with the specified userId or LoginName
-					$scope.$watch(function() {
-						return $scope.$eval($attrs.userId);
-					}, function(newValue) {
-
-						if (newValue === void 0) return;
-
-						$scope.currentWeb.getUserById(newValue).then(function(user) {
+						// current user
+						$scope.currentWeb.getCurrentUser().then(function(user) {
 
 							$scope.UserData = user;
 						});
 
-					});
+					} else {
 
-				}
-			});
+						// Have userId attribute with the specified userId or LoginName
+						$scope.$watch(function() {
+							return $scope.$eval($attrs.userId);
+						}, function(newValue) {
 
-		}
-	};
-	
-}]);
+							if (newValue === void 0) return;
+
+							$scope.currentWeb.getUserById(newValue).then(function(user) {
+
+								$scope.UserData = user;
+							});
+
+						});
+
+					}
+				});
+
+			}
+		};
+		
+	}
+]);
 /*
 	SPWorkingOnIt - directive
 	
@@ -7517,7 +7624,11 @@ angular.module('ngSharePoint')
 //	SPWorkingOnIt
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spworkingonit', function() {
+angular.module('ngSharePoint').directive('spworkingonit', 
+
+	[
+
+	function spworkingonit_DirectiveFactory() {
 
 		return {
 
@@ -7528,7 +7639,7 @@ angular.module('ngSharePoint').directive('spworkingonit', function() {
 
 	}
 
-);
+]);
 /*
 	newlines - filter
 	
@@ -7539,18 +7650,27 @@ angular.module('ngSharePoint').directive('spworkingonit', function() {
 	Licensed under the MIT License
 */
 
-angular.module('ngSharePoint')
 
-.filter('newlines', ['$sce', function ($sce) {
 
-    return function(text) {
+///////////////////////////////////////
+//  newlines
+///////////////////////////////////////
 
-        return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
-    };
+angular.module('ngSharePoint').filter('newlines', 
 
-}]);
+    ['$sce', 
+
+    function newlines_Filter($sce) {
+
+        return function(text) {
+
+            return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
+        };
+        
+    }
+]);
 /*
-	newlines - filter
+	unsafe - filter
 	
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
@@ -7559,13 +7679,25 @@ angular.module('ngSharePoint')
 	Licensed under the MIT License
 */
 
-angular.module('ngSharePoint')
 
-.filter('unsafe', ['$sce', function($sce) {
-    return function(val) {
-        return $sce.trustAsHtml(val);
-    };
-}]);
+
+///////////////////////////////////////
+//  unsafe
+///////////////////////////////////////
+
+angular.module('ngSharePoint').filter('unsafe', 
+
+    ['$sce', 
+
+    function unsafe_Filter($sce) {
+
+        return function(val) {
+
+            return $sce.trustAsHtml(val);
+        };
+        
+    }
+]);
 angular.module('ngSharePointFormPage', ['ngSharePoint']);
 
 

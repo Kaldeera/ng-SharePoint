@@ -48,64 +48,6 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-/*				
-				var formCtrl = controllers[0], modelCtrl = controllers[1];
-				$scope.modelCtrl = modelCtrl;
-				$scope.schema = formCtrl.getFieldSchema($attrs.name);
-				$scope.choices = $scope.schema.Choices.results;
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || formCtrl.getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-				});
-
-
-
-				// ****************************************************************************
-				// Watch for field value changes.
-				//
-				$scope.$watch('value', function(newValue, oldValue) {
-
-					if (newValue === oldValue) return;
-					modelCtrl.$setViewValue(newValue);
-				});
-
-
-
-				// ****************************************************************************
-				// Validate the field.
-				//
-				var unregisterValidateFn = $scope.$on('validate', function() {
-
-					// Update the $viewValue to change its state to $dirty and force to run 
-					// $parsers, which include validators.
-					modelCtrl.$setViewValue(modelCtrl.$viewValue);
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-choice-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						$element.html(html);
-						$compile($element)($scope);
-					});
-
-				}
-*/
 			} // link
 
 		}; // Directive definition object

@@ -78,49 +78,6 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-/*
-				var formCtrl = controllers[0], modelCtrl = controllers[1];
-				$scope.modelCtrl = modelCtrl;
-
-				$scope.schema = formCtrl.getFieldSchema($attrs.name);
-				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
-				$scope.addButtonText = STSHtmlEncode(Strings.STS.L_LookupMultiFieldAddButtonText) + ' >';
-				$scope.removeButtonText = '< ' + STSHtmlEncode(Strings.STS.L_LookupMultiFieldRemoveButtonText);
-				$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
-				$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
-
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || formCtrl.getFormMode();
-
-				}, function(newValue, oldValue) {
-
-					if ($scope.currentMode === newValue) return;
-
-					$scope.currentMode = newValue;
-					refreshData();
-
-				});
-
-
-
-				// ****************************************************************************
-				// Watch for value (model) changes.
-				//
-				$scope.$watch('value', function(newValue, oldValue) {
-
-					if (newValue === oldValue) return;
-
-					$scope.selectedLookupItems = void 0;
-
-					refreshData();
-				});
-*/
 
 
 				// ****************************************************************************
@@ -156,7 +113,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				$scope.valueChanged = function() {
 
 					// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-					formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
+					$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
 				};
 				*/
 
@@ -193,32 +150,6 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 				}
 
-
-/*
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
-
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-lookupmulti-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
-					});
-
-				}
-*/
 
 
 				// ****************************************************************************
