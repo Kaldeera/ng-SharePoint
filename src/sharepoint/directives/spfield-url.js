@@ -44,6 +44,20 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
 						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
 						$scope.Description_Text = Strings.STS.L_Description_Text;
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Required validity
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
+						
+						// Url validity
+						var validUrlRegExp = new RegExp('^http://');
+						$scope.modelCtrl.$setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
+						
+						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
+
+						return $scope.value;
 					}
 				};
 
