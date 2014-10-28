@@ -69,45 +69,6 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
-/*				
-				var formCtrl = controllers[0], modelCtrl = controllers[1];
-				$scope.modelCtrl = modelCtrl;
-
-				$scope.schema = formCtrl.getFieldSchema($attrs.name);
-				$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
-				$scope.AttachFileText = Resources.core.cui_ButAttachFile;
-				$scope.L_Menu_LCID = L_Menu_LCID;
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || formCtrl.getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-
-					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
-
-					// Gets the files attached to the item
-					$scope.$parent.item.getAttachments().then(function(attachmentFiles){
-
-						$scope.attachmentFiles = attachmentFiles;
-						renderField($scope.currentMode);
-
-					}, function(err) {
-
-						$scope.errorMsg = err.message;
-						setElementHTML('<span style="color: brown">{{errorMsg}}</span>');
-					});
-
-				}, true);
-*/
-
 
 				// ****************************************************************************
 				// Add new attachment to the item locally.
@@ -181,33 +142,6 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					}
 				};
 
-
-/*
-				// ****************************************************************************
-				// Replaces the directive element HTML.
-				//
-				function setElementHTML(html) {
-
-					var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
-
-				}
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-attachments-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-
-						setElementHTML(html);
-					});
-
-				}
-*/
 			} // link
 
 		}; // Directive definition object
