@@ -21,6 +21,7 @@ angular.module('ngSharePoint').directive('spformRule',
 	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
 		var spformruleDirectiveDefinitionObject = {
+			
 			restrict: 'E',
 			transclude: true,
 

@@ -25,8 +25,6 @@ angular.module('ngSharePoint').directive('spform',
 			restrict: 'EA',
             transclude: true,
             replace: true,
-            priority: 100,
-            //priority: 100,
             scope: {
                 originalItem: '=item',
                 onPreSave: '&',

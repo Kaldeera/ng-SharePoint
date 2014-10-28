@@ -120,8 +120,8 @@ module.exports = function(grunt) {
               expand: true,
               src: '**',
               //dest: 'R:\\app\\kld-testforms\\js'
-              //dest: 'X:\\app\\ngSharepoint'
-              dest: 'V:\\app\\js\\ngSharepoint'
+              dest: 'X:\\app\\ngSharepoint'
+              //dest: 'V:\\app\\js\\ngSharepoint'
             }
           ]
         }      

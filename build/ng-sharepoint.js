@@ -4700,6 +4700,17 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
 						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
 					}
 				};
 				
@@ -6548,57 +6559,22 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Number validity
+						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+
+						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+						
+						return $scope.value;
 					}
 				};
 
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
-/*				
-				var formCtrl = controllers[0], modelCtrl = controllers[1];
-				$scope.modelCtrl = modelCtrl;
 
-				var schema = formCtrl.getFieldSchema($attrs.name);
-				var xml = SPUtils.parseXmlString(schema.SchemaXml);
-				var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-				var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
-				schema.Percentage = percentage.toLowerCase() === 'true';
-				schema.Decimals = parseInt(decimals);
-
-				$scope.SPClientRequiredValidatorError = Strings.STS.L_SPClientRequiredValidatorError;
-				$scope.schema = schema;
-				$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-
-
-
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(function() {
-
-					return $scope.mode || formCtrl.getFormMode();
-
-				}, function(newValue) {
-
-					$scope.currentMode = newValue;
-					renderField(newValue);
-
-				});
-
-
-
-				// ****************************************************************************
-				// Renders the field with the correct layout based on the form mode.
-				//
-				function renderField(mode) {
-
-					$http.get('templates/form-templates/spfield-number-' + mode + '.html', { cache: $templateCache }).success(function(html) {
-						var newElement = $compile(html)($scope);
-						$element.replaceWith(newElement);
-						$element = newElement;
-					});
-
-				}
-*/
 			} // link
 
 		}; // Directive definition object
@@ -6826,6 +6802,20 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
 						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
 						$scope.Description_Text = Strings.STS.L_Description_Text;
+					},
+
+					parserFn: function(modelValue, viewValue) {
+						
+						// Required validity
+						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
+						
+						// Url validity
+						var validUrlRegExp = new RegExp('^http://');
+						$scope.modelCtrl.$setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
+						
+						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
+
+						return $scope.value;
 					}
 				};
 
@@ -6982,54 +6972,70 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 */
 
-				// $scope.schema.SelectionGroup (0 | [GroupId])	-> UserSelectionScope (XML) (0 (All Users) | [GroupId])
-				// $scope.schema.SelectionMode  (0 | 1)			-> UserSelectionMode (XML) ("PeopleOnly" | "PeopleAndGroups")
+					init: function() {
 
+						$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+					},
+					
+					parserFn: function(modelValue, viewValue) {
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				/*
-				$scope.$watch(function() {
+						if ($scope.schema.AllowMultipleValues) {
 
-					// Adjust the model if no value is provided
-					if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
-						$scope.value = { results: [] };
-					}
+							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
-					return { mode: $scope.mode || formCtrl.getFormMode(), value: ($scope.schema.AllowMultipleValues ? $scope.value.results : $scope.value) };
+						} else {
 
-				}, function(newValue, oldValue) {
+							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
+							// NOTE: Required validator is implicit applied when no multiple values.
 
-					$scope.currentMode = newValue.mode;
-
-					// Show loading animation.
-					setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
-
-					// Initialize the 'selectedUserItems' array if the value was changed.
-					if ($scope.schema.AllowMultipleValues) {
-						if (newValue.value.join(',') !== oldValue.value.join(',')) {
-							$scope.selectedUserItems = void 0;
+							// Unique validity (Only one value is allowed)
+							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
 						}
-					} else {
-						if (newValue.value !== oldValue.value) {
-							$scope.selectedUserItems = void 0;
+
+						return $scope.value;
+					},
+
+					watchModeFn: function(newValue) {
+
+						refreshData();
+					},
+
+					watchValueFn: function(newValue, oldValue) {
+
+						if (newValue === oldValue) return;
+
+						// Adjust the model if no value is provided
+						if (($scope.value === null || $scope.value === void 0) && $scope.schema.AllowMultipleValues) {
+							$scope.value = { results: [] };
 						}
+
+						$scope.selectedUserItems = void 0;
+						refreshData();
+					},
+
+					postRenderFn: function(html) {
+
+						if ($scope.currentMode === 'edit') {
+							var peoplePickerElementId = $scope.idPrefix + '_$ClientPeoplePicker';
+
+							$timeout(function() {
+								initializePeoplePicker(peoplePickerElementId);
+							});
+						}
+
 					}
+				};
 
-					// Gets the data for the user (lookup) and then render the field.
-					getUserData().then(function() {
 
-						renderField($scope.currentMode);
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);				
+/*
+				var formCtrl = controllers[0], modelCtrl = controllers[1];
+				$scope.modelCtrl = modelCtrl;
 
-					}, function() {
-
-						setElementHTML('<div style="color: red;">Error al recuperar el usuario {{value}}.</div>');
-
-					});
-
-				}, true);
-				*/
+				$scope.schema = formCtrl.getFieldSchema($attrs.name);
+				$scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+				$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 
 
 /*
@@ -7404,6 +7410,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    // Get the people picker object from the page.
 				    var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
+				    $scope.peoplePicker = peoplePicker;
+
 				    if (peoplePicker !== void 0 && peoplePicker !== null) {
 
 				    	// Get information about all users.
@@ -7420,45 +7428,81 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 				    		//console.log('OnUserResolvedClientScript', peoplePickerId, entitiesArray);
 
-				    		if ($scope.schema.AllowMultipleValues === true) {
-
-				    			$scope.value.results = [];
-
-				    		} else {
-
-				    			$scope.value = null;
-				    		}
-
-
+							var resolvedValues = [];
+							var promises = [];
 
 				    		angular.forEach(entitiesArray, function(entity) {
 
 				    			if (entity.IsResolved) {
 
-				    				SPUtils.getUserId(entity.Key).then(function(userId) {
+				    				if ($scope.schema.AllowMultipleValues || promises.length === 0) {
 
-						    			if ($scope.schema.AllowMultipleValues === true) {
+					    				var entityPromise;
 
-					    					$scope.value.results.push(userId);
+					    				if (entity.EntityType === 'User') {
+
+					    					// Get the user ID
+						    				entityPromise = SPUtils.getUserId(entity.Key).then(function(userId) {
+
+						    					resolvedValues.push(userId);
+						    					return resolvedValues;
+						    				});
 
 						    			} else {
 
-						    				$scope.value = userId;
+						    				// Get the group ID
+						    				entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
 						    			}
 
-				    				});
+					    				promises.push(entityPromise);
+
+					    			} else {
+
+					    				// Force to commit the value through the model controller $parsers and $validators pipelines.
+					    				// This way the validators will be launched and the view will be updated.
+					    				$scope.modelCtrl.$setViewValue($scope.modelCtrl.$viewValue);
+					    			}
 				    			}
 				    		});
 
-				    		$scope.$apply();
+
+							if (promises.length > 0) {
+					    		
+					    		$q.all(promises).then(function() {
+
+					    			updateModel(resolvedValues);
+
+					    		});
+
+					    	} else {
+
+					    		updateModel(resolvedValues);
+					    	}
 				    	};
 				    }
+				}
+
+
+
+				function updateModel(resolvedValues) {
+
+					if ($scope.schema.AllowMultipleValues === true) {
+
+						$scope.value.results = resolvedValues;
+
+					} else {
+
+						$scope.value = resolvedValues[0] || null;
+					}
+
+					$scope.modelCtrl.$setViewValue($scope.value);
 				}
 				
 
 
 				// ****************************************************************************
 				// Query the picker for user information.
+				// NOTE: This function is actually not used.
 				//
 				function getUserInfo(peoplePickerId) {
 				 
@@ -7560,8 +7604,7 @@ angular.module('ngSharePoint').directive('spfield',
 		var spfield_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
-			template: '<tr></tr>',
-
+			template: '<div></div>',
 
 			link: function($scope, $element, $attrs) {
 
@@ -7581,7 +7624,7 @@ angular.module('ngSharePoint').directive('spfield',
 							// Removes AngularJS classes (ng-*)
 							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
-							// If there are no classes after the remove, don't inserts the 'class' attribute
+							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
 						}
 
@@ -7630,14 +7673,12 @@ angular.module('ngSharePoint').directive('spformRule',
 
 	function spformRule_DirectiveFactory($compile, $templateCache, $http, $animate) {
 
-		return {
+		var spformruleDirectiveDefinitionObject = {
+			
 			restrict: 'E',
-			//replace: 'element',
-			//scope: false,
 			transclude: true,
-			priority: 50,
 
-			link: function ($scope, $element, $attrs, ctrl, $transclude) {
+			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
 				if ($element.parent().length > 0) {
 
@@ -7653,10 +7694,11 @@ angular.module('ngSharePoint').directive('spformRule',
 
 					} else {
 
-						$transclude($scope, function (clone) {
+						transcludeFn($scope, function (clone) {
 
 							for(var i = clone.length - 1; i >= 0; i--) {
 								var e = clone[i];
+								//$animate.enter(element, parentElement, afterElement, [options]);
 								$animate.enter(e, $element.parent(), $element);
 							}
 							
@@ -7666,10 +7708,15 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element = null;
 					}
 				}
-			}
-		};
+				
+			} // link
 
-	}
+		}; // Directive definition object
+
+
+		return spformruleDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -7695,7 +7742,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
 
-		return {
+		var spformToolbarDirectiveDefinitionObject = {
 
 			restrict: 'EA',
 			require: '^spform',
@@ -7734,12 +7781,16 @@ angular.module('ngSharePoint').directive('spformToolbar',
 				});
 
 
+
+				// ****************************************************************************
+				// Public methods
+				//
+
 				$scope.saveForm = function() {
 
 					spformController.save();
 
 				};
-
 
 
 				$scope.cancelForm = function() {
@@ -7748,11 +7799,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 				};
 
-			}
+			} // link
 
-		};
+		}; // Directive definition object
 
-	}
+
+		return spformToolbarDirectiveDefinitionObject;
+
+	} // Directive factory
 
 ]);
 
@@ -7783,7 +7837,6 @@ angular.module('ngSharePoint').directive('spform',
 			restrict: 'EA',
             transclude: true,
             replace: true,
-            priority: 100,
             scope: {
                 originalItem: '=item',
                 onPreSave: '&',
@@ -8170,6 +8223,69 @@ angular.module('ngSharePoint').directive('spform',
                                     parseRules(elementToTransclude, clone, true);
                                 });
 
+                            var elements = $element.find('*');
+                            //var transcludeFields = 'transclude-fields';
+                            //var elementToTransclude;
+                            var transclusionContainer;
+
+                            angular.forEach(elements, function(elem) {
+                                if (elem.attributes['transclusion-container'] !== void 0) {
+                                    //elementToTransclude = angular.element(elem);
+                                    transclusionContainer = angular.element(elem);
+                                }
+                            });
+
+                            //if (elementToTransclude === void 0) {
+                            //    elementToTransclude = $element;
+                            //}
+
+                            //elementToTransclude.empty();
+
+                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+
+
+                            if ($attrs.templateUrl) {
+
+                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+
+                                    //$element.html('');
+                                    //parseRules($element, angular.element(html), false);
+                                    //$compile($element)($scope);
+                                    parseRules(transclusionContainer, angular.element(html), false);
+                                    $compile(transclusionContainer)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+
+                                }).error(function(data, status, headers, config, statusText) {
+
+                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                    //$compile($element)($scope);
+                                    $compile(transclusionContainer)($scope);
+                                    $scope.formStatus = spformController.status.IDLE;
+                                });
+
+                            } else {
+/*
+                                var elements = $element.find('*');
+                                var transcludeFields = 'transclude-fields';
+                                var elementToTransclude;
+
+                                angular.forEach(elements, function(elem) {
+                                    if (elem.attributes[transcludeFields] !== void 0) {
+                                        elementToTransclude = angular.element(elem);
+                                    }
+                                });
+
+                                if (elementToTransclude === void 0) {
+                                    elementToTransclude = $element;
+                                }
+
+                                elementToTransclude.empty();
+*/
+                                transcludeFn($scope, function (clone) {
+                                    //parseRules(elementToTransclude, clone, true);
+                                    parseRules(transclusionContainer, clone, true);
+                                });
 
                                 // If no transclude content was detected inside the 'spform' directive, generate a default form template.
                                 if (elementToTransclude[0].children.length === 0) {
@@ -8254,6 +8370,96 @@ angular.module('ngSharePoint').directive('spform',
             } // compile property
 
 		}; // Directive definition object
+                                // If no transclude content was detected inside the 'spform' directive, generate a default form template.
+                                //if (elementToTransclude[0].children.length === 0) {
+                                if (transclusionContainer[0].children.length === 0) {
+
+                                    $scope.fields = [];
+
+                                    angular.forEach($scope.item.list.Fields, function(field) {
+                                        if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                            $scope.fields.push(field);
+                                        }
+                                    });
+
+                                    $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+
+                                        //elementToTransclude.html('').append(html);
+                                        //$compile(elementToTransclude)($scope);
+                                        transclusionContainer.append(html);
+                                        $compile(transclusionContainer)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
+
+                                    });
+
+                                } else {
+
+                                    $scope.formStatus = spformController.status.IDLE;
+                                }
+                                
+                            }
+                            
+                        } // loadItemTemplate
+
+
+                        function parseRules(targetElement, sourceElements, isTransclude) {
+
+                            var terminalRuleAdded = false;
+
+                            // Initialize the 'rulesApplied' array for debug purposes.
+                            $scope.rulesApplied = [];
+
+                            angular.forEach(sourceElements, function (elem) {
+
+                                // Check if 'elem' is a <spform-rule> element.
+                                if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
+
+                                    var testExpression = elem.attributes.test.value;
+
+                                    // Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
+                                    if (!terminalRuleAdded && $scope.$eval(testExpression)) {
+
+                                        targetElement.append(elem);
+                                        var terminalExpression = false;
+
+                                        if (elem.attributes.terminal !== void 0) {
+
+                                            terminalExpression = elem.attributes.terminal.value;
+                                            terminalRuleAdded = $scope.$eval(terminalExpression);
+
+                                        }
+
+                                        // Add the rule applied to the 'rulesApplied' array for debug purposes.
+                                        $scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
+
+                                    } else if (isTransclude) {
+
+                                        // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
+                                        //       elements when the expression in its 'test' attribute evaluates to FALSE.
+                                        //       This is because when the transclusion is performed the elements are inside the 
+                                        //       current 'spform' element and should be removed.
+                                        //       When this function is called from an asynchronous template load ('templete-url' attribute), 
+                                        //       the elements are not yet in the element.
+                                        elem.remove();
+                                        elem = null;
+                                    }
+                                    
+                                } else {
+
+                                    targetElement.append(elem);
+                                }
+                            });
+
+                        } // parseRules private function
+
+                    } // compile.post-link
+
+                }; // compile function return
+
+            } // compile property
+
+		}; // Directive definition object
+
 
         return spform_DirectiveDefinitionObject;
 
