@@ -61,7 +61,7 @@ angular.module('ngSharePoint').factory('SPUtils',
 						loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 
 						// Shows current SPconfig settings.
-						console.info(SPConfig.options);
+//						console.info(SPConfig.options);
 
 
 						if (!SPConfig.options.loadMinimalSharePointInfraestructure) {
