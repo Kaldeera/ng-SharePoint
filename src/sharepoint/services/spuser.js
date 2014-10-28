@@ -78,15 +78,6 @@ angular.module('ngSharePoint').factory('SPUser',
 			var self = this;
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = '';
-
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
 
 			executor.executeAsync({
 

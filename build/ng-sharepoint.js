@@ -1143,21 +1143,12 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			var self = this;
 			var def = $q.defer();
-			var defaultExpandProperties = '';
 
 			var executor = new SP.RequestExecutor(self.web.url);
 
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
-
 			executor.executeAsync({
 
-				url: self.apiUrl + '/Folders',
+				url: self.apiUrl + '/Folders' + utils.parseQuery(query),
 				method: 'GET', 
 				headers: { 
 					"Accept": "application/json; odata=verbose"
@@ -2907,15 +2898,6 @@ angular.module('ngSharePoint').factory('SPUser',
 			var self = this;
 			var def = $q.defer();
 			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = '';
-
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
 
 			executor.executeAsync({
 
@@ -4298,7 +4280,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					}
 
 					// Gets the field type
-					var fieldType = $scope.fieldSchema.TypeAsString;
+					var fieldType = $attrs.renderAs | $scope.fieldSchema.TypeAsString;
 					if (fieldType === 'UserMulti') fieldType = 'User';
 
 					// Gets the field name
@@ -6835,9 +6817,11 @@ angular.module('ngSharePoint').directive('spfield',
 
 							var mode = ($attrs.mode ? 'mode="' + $attrs.mode + '"' : '');
 							var dependsOn = ($attrs.dependsOn ? 'depends-on="' + $attrs.dependsOn + '"' : '');
+							var renderAs = ($attrs.renderAs ? 'render-as="' + $attrs.renderAs + '"' : '');
 
 							html = html.replace(/\{\{name\}\}/g, $attrs.spfield || $attrs.name)
 									   .replace(/\{\{mode\}\}/g, mode)
+									   .replace(/\{\{renderAs\}\}/g, renderAs)
 									   .replace(/\{\{dependsOn\}\}/g, dependsOn);
 
 							

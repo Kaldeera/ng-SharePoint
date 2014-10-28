@@ -165,21 +165,12 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			var self = this;
 			var def = $q.defer();
-			var defaultExpandProperties = '';
 
 			var executor = new SP.RequestExecutor(self.web.url);
 
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
-
 			executor.executeAsync({
 
-				url: self.apiUrl + '/Folders',
+				url: self.apiUrl + '/Folders' + utils.parseQuery(query),
 				method: 'GET', 
 				headers: { 
 					"Accept": "application/json; odata=verbose"
