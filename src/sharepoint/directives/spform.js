@@ -341,7 +341,7 @@ angular.module('ngSharePoint').directive('spform',
                             // Checks if the item has a value
                             if (newValue === void 0) return;
 
-                            $scope.originalItem = newValue;
+                            $scope.originalItem = angular.copy(newValue);
                             $scope.item.clean();
 
                             $scope.item.list.getFields().then(function(fields) {
