@@ -1,3 +1,6 @@
 <div class="ms-formvalidation ms-csrformvalidation" ng-show="modelCtrl.$dirty && modelCtrl.$invalid">
     <span ng-show="modelCtrl.$error.required" role="alert">{{SPClientRequiredValidatorError}}</span>
+    <span ng-show="modelCtrl.$error.url" role="alert">Url error.</span>
+    <span ng-show="modelCtrl.$error.number" role="alert">Number error.</span>
+    <span ng-show="modelCtrl.$error.unique" role="alert">Unique error.</span>
 </div>

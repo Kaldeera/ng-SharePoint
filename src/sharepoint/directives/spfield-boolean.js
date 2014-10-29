@@ -36,9 +36,12 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 
 
 				var directive = {
+					
 					fieldTypeName: 'boolean',
 					replaceAll: false,
+
 					watchValueFn: function(newValue) {
+						
 						$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
 					}
 				};

@@ -36,7 +36,6 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 
 				var directive = {
-					
 					fieldTypeName: 'lookupmulti',
 					replaceAll: false,
 
@@ -55,10 +54,11 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						
 					},
 					
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
-						return $scope.value;
+						
+						return viewValue;
 					},
 
 					watchModeFn: function(newValue) {

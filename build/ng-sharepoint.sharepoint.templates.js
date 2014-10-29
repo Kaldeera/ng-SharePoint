@@ -98,6 +98,7 @@ angular.module("templates/form-templates/spfield-currency-display.html", []).run
 angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-edit.html",
     "<input type=\"text\" ng-model=\"value\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
+    "<span>&nbsp;{{cultureInfo.numberFormat.CurrencySymbol}}</span>\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
@@ -234,7 +235,12 @@ angular.module("templates/form-templates/spfield-number-display.html", []).run([
 
 angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-edit.html",
+<<<<<<< HEAD
     "<input type=\"text\" ng-model=\"value\" sp-number=\"true\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" /><span ng-if=\"schema.Percentage\">{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
+=======
+    "<input type=\"text\" ng-model=\"value\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
+    "<span ng-if=\"schema.Percentage\">&nbsp;{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
+>>>>>>> origin/PCASME
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
@@ -326,16 +332,19 @@ angular.module("templates/form-templates/spfield-validation-messages.html", []).
   $templateCache.put("templates/form-templates/spfield-validation-messages.html",
     "<div class=\"ms-formvalidation ms-csrformvalidation\" ng-show=\"modelCtrl.$dirty && modelCtrl.$invalid\">\n" +
     "    <span ng-show=\"modelCtrl.$error.required\" role=\"alert\">{{SPClientRequiredValidatorError}}</span>\n" +
+    "    <span ng-show=\"modelCtrl.$error.url\" role=\"alert\">Url error.</span>\n" +
+    "    <span ng-show=\"modelCtrl.$error.number\" role=\"alert\">Number error.</span>\n" +
+    "    <span ng-show=\"modelCtrl.$error.unique\" role=\"alert\">Unique error.</span>\n" +
     "</div>");
 }]);
 
 angular.module("templates/form-templates/spfield.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield.html",
-    "<div class=\"spfield-wrapper\">\n" +
-    "    <div class=\"ms-formlabel spfield-label\" style=\"float:left; display: inline-block; vertical-align: top; width: 113px;\">\n" +
+    "<div class=\"spfield-wrapper\" style=\"display: table-row; width: 100%;\">\n" +
+    "    <div class=\"ms-formlabel spfield-label\" style=\"display: table-cell; vertical-align: top; width: 113px;\">\n" +
     "        <spfield-label {{attributes}}></spfield-label>\n" +
     "    </div>\n" +
-    "    <div class=\"ms-formbody spfield-body\" style=\"float:left; display: inline-block; vertical-align: top; width: 350px;\">\n" +
+    "    <div class=\"ms-formbody spfield-body\" style=\"display: table-cell; vertical-align: top; width: 350px;\">\n" +
     "        <spfield-control {{attributes}}></spfield-control>\n" +
     "        <spfield-description {{attributes}}></spfield-description>\n" +
     "    </div>\n" +
