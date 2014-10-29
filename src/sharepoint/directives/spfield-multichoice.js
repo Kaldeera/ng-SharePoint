@@ -36,6 +36,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 
 				var directive = {
+					
 					fieldTypeName: 'multichoice',
 					replaceAll: false,
 
@@ -50,10 +51,11 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 						sortChoices();
 					},
 
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
-						return $scope.value;
+
+						return viewValue;
 					}
 				};
 

@@ -28,7 +28,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
             // Update the model property '$viewValue' to change the model state to $dirty and
             // force to run $parsers, which include validators.
-            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue);
+            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue || null);
         }
 
 
@@ -95,17 +95,23 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *              replaceAll: If set to true, the 'renderField' function will replace 
          *                          the entire element instead its contents.
          *
+         *              displayTemplateUrl: Custom field template for display rendering.
+         *
+         *              editTemplateUrl: Custom field template for edit rendering.
+         *
          *              init (function): An initialization function for the directive.
          *
          *              parserFn (function): If defined, add this parser function to the 
-         *              (model to view)      model controller '$parsers' array.
-         *                                   This could be usefull if the directive requires
-         *                                   custom or special validations.
+         *              (view to model)      model controller '$parsers' array.
+         *                                   Used to sanitize/convert the value as well as 
+         *                                   validation.
          *                                   Working examples are in the 'spfieldMultichoice' 
-         *                                   or 'spfieldMultiLookup' directives.
+         *                                   or 'spfieldLookupmulti' directives.
          *
          *              formatterFn (function): If defined, add this formatter function to the 
-         *              (view to model)         model controller '$formatters' array.
+         *              (model to view)         model controller '$formatters' array.
+         *                                      Used to format/convert values for display in the 
+         *                                      control and validation.
          *
          *              watchModeFn (function): If defined, replace the default behavior in the 
          *                                      'Watch for form mode changes' function.
@@ -171,7 +177,13 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             //
             directive.renderField = function() {
 
-                $http.get('templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html', { cache: $templateCache }).success(function(html) {
+                var templateUrl = 'templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html';
+
+                if ($scope.currentMode === 'display' && directive.displayTemplateUrl) templateUrl = directive.displayTemplateUrl;
+                if ($scope.currentMode === 'edit' && directive.editTemplateUrl) templateUrl = directive.editTemplateUrl;
+
+
+                $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
 
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);

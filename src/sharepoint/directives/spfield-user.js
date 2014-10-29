@@ -36,6 +36,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
 				var directive = {
+					
 					fieldTypeName: 'user',
 					replaceAll: false,
 
@@ -45,7 +46,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 					},
 					
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						if ($scope.schema.AllowMultipleValues) {
 
@@ -60,7 +61,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
 						}
 
-						return $scope.value;
+						return viewValue;
 					},
 
 					watchModeFn: function(newValue) {

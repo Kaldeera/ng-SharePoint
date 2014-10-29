@@ -41,4 +41,8 @@ lib
 oldJs
 forms-editor
 build\ng-sharepoint.forms-editor.*
+
+# Other
+# ==========================
+.*
 Gruntfile.js

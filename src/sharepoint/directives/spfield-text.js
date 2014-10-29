@@ -36,6 +36,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 
 
 				var directive = {
+					
 					fieldTypeName: 'text',
 					replaceAll: false
 				};

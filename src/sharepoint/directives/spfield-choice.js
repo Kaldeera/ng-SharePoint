@@ -36,6 +36,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 
 				var directive = {
+					
 					fieldTypeName: 'choice',
 					replaceAll: false,
 

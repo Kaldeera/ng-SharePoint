@@ -998,7 +998,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
             // Update the model property '$viewValue' to change the model state to $dirty and
             // force to run $parsers, which include validators.
-            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue);
+            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue || null);
         }
 
 
@@ -1065,17 +1065,23 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *              replaceAll: If set to true, the 'renderField' function will replace 
          *                          the entire element instead its contents.
          *
+         *              displayTemplateUrl: Custom field template for display rendering.
+         *
+         *              editTemplateUrl: Custom field template for edit rendering.
+         *
          *              init (function): An initialization function for the directive.
          *
          *              parserFn (function): If defined, add this parser function to the 
-         *              (model to view)      model controller '$parsers' array.
-         *                                   This could be usefull if the directive requires
-         *                                   custom or special validations.
+         *              (view to model)      model controller '$parsers' array.
+         *                                   Used to sanitize/convert the value as well as 
+         *                                   validation.
          *                                   Working examples are in the 'spfieldMultichoice' 
-         *                                   or 'spfieldMultiLookup' directives.
+         *                                   or 'spfieldLookupmulti' directives.
          *
          *              formatterFn (function): If defined, add this formatter function to the 
-         *              (view to model)         model controller '$formatters' array.
+         *              (model to view)         model controller '$formatters' array.
+         *                                      Used to format/convert values for display in the 
+         *                                      control and validation.
          *
          *              watchModeFn (function): If defined, replace the default behavior in the 
          *                                      'Watch for form mode changes' function.
@@ -1141,7 +1147,13 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             //
             directive.renderField = function() {
 
-                $http.get('templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html', { cache: $templateCache }).success(function(html) {
+                var templateUrl = 'templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html';
+
+                if ($scope.currentMode === 'display' && directive.displayTemplateUrl) templateUrl = directive.displayTemplateUrl;
+                if ($scope.currentMode === 'edit' && directive.editTemplateUrl) templateUrl = directive.editTemplateUrl;
+
+
+                $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
 
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
@@ -4255,9 +4267,12 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 
 
 				var directive = {
+					
 					fieldTypeName: 'boolean',
 					replaceAll: false,
+
 					watchValueFn: function(newValue) {
+						
 						$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
 					}
 				};
@@ -4353,6 +4368,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 
 				var directive = {
+					
 					fieldTypeName: 'choice',
 					replaceAll: false,
 
@@ -4523,6 +4539,7 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 
 				var directive = {
+					
 					fieldTypeName: 'currency',
 					replaceAll: false,
 
@@ -4534,12 +4551,18 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					},
 
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 						
 						// Number validity
-						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+						$scope.modelCtrl.$setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
 
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+
+						// Adjust value to match field type 'Double' in SharePoint.
+						if (viewValue === '' || viewValue === void 0) {
+						
+							$scope.value = null;
+						}
 						
 						return $scope.value;
 					}
@@ -5398,7 +5421,6 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 
 				var directive = {
-					
 					fieldTypeName: 'lookupmulti',
 					replaceAll: false,
 
@@ -5417,10 +5439,11 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						
 					},
 					
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
-						return $scope.value;
+						
+						return viewValue;
 					},
 
 					watchModeFn: function(newValue) {
@@ -5851,6 +5874,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 
 				var directive = {
+					
 					fieldTypeName: 'multichoice',
 					replaceAll: false,
 
@@ -5865,10 +5889,11 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 						sortChoices();
 					},
 
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
-						return $scope.value;
+
+						return viewValue;
 					}
 				};
 
@@ -5961,6 +5986,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
 
 				var directive = {
+					
 					fieldTypeName: 'note',
 					replaceAll: false
 				};
@@ -6017,6 +6043,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 
 				var directive = {
+					
 					fieldTypeName: 'number',
 					replaceAll: false,
 
@@ -6030,12 +6057,18 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 					},
 
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 						
 						// Number validity
-						$scope.modelCtrl.$setValidity('number', $scope.value && !isNaN(+$scope.value) && isFinite($scope.value));
+						$scope.modelCtrl.$setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
 
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
+
+						// Adjust value to match field type 'Double' in SharePoint.
+						if (viewValue === '' || viewValue === void 0) {
+						
+							$scope.value = null;
+						}
 						
 						return $scope.value;
 					}
@@ -6145,6 +6178,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 
 
 				var directive = {
+					
 					fieldTypeName: 'text',
 					replaceAll: false
 				};
@@ -6200,17 +6234,19 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 
 
 				var directive = {
+
 					fieldTypeName: 'url',
 					replaceAll: false,
 
 					init: function() {
+
 						$scope.UrlFieldTypeText = Strings.STS.L_UrlFieldTypeText;
 						$scope.UrlFieldTypeDescription = Strings.STS.L_UrlFieldTypeDescription;
 						$scope.UrlFieldClickText = Strings.STS.L_UrlFieldClickText;
 						$scope.Description_Text = Strings.STS.L_Description_Text;
 					},
 
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 						
 						// Required validity
 						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
@@ -6221,7 +6257,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						
 						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
 
-						return $scope.value;
+						return viewValue;
 					}
 				};
 
@@ -6276,6 +6312,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
 				var directive = {
+					
 					fieldTypeName: 'user',
 					replaceAll: false,
 
@@ -6285,7 +6322,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
 					},
 					
-					parserFn: function(modelValue, viewValue) {
+					parserFn: function(viewValue) {
 
 						if ($scope.schema.AllowMultipleValues) {
 
@@ -6300,7 +6337,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
 						}
 
-						return $scope.value;
+						return viewValue;
 					},
 
 					watchModeFn: function(newValue) {
