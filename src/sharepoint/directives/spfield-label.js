@@ -33,6 +33,17 @@ angular.module('ngSharePoint')
 
 			$scope.schema = spformController.getFieldSchema($attrs.name);
 
+			// Sets the field label
+			if ($attrs.label !== void 0) {
+
+				// Custom label
+				$scope.label = $attrs.label;
+
+			} else {
+
+				// Default label
+				$scope.label = $scope.schema.Title;
+			}
 
 
 			// ****************************************************************************
