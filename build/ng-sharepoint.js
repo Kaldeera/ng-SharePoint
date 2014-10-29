@@ -4972,6 +4972,17 @@ angular.module('ngSharePoint')
 
 			$scope.schema = spformController.getFieldSchema($attrs.name);
 
+			// Sets the field label
+			if ($attrs.label !== void 0) {
+
+				// Custom label
+				$scope.label = $attrs.label;
+
+			} else {
+
+				// Default label
+				$scope.label = $scope.schema.Title;
+			}
 
 
 			// ****************************************************************************
@@ -6878,6 +6889,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 					var originalAttrs = $element[0].attributes;
 					var elementAttributes = '';
+					var cssClasses = ['spfield-wrapper'];
 
 					for (var i = 0; i < originalAttrs.length; i++) {
                         
@@ -6892,6 +6904,12 @@ angular.module('ngSharePoint').directive('spfield',
 
 							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
+
+							cssClasses.push(valueAttr.trim());
+
+							// Leave the 'class' attribute just in the main element (field wrapper) 
+							// and do not propagate the attribute to child elements.
+							continue;
 						}
 
 						elementAttributes += nameAttr + '="' + valueAttr + '" ';
@@ -6899,6 +6917,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 
 					html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
+					html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
 					
                     var newElement = $compile(html)($scope);
 					$element.replaceWith(newElement);
@@ -7103,7 +7122,7 @@ angular.module('ngSharePoint').directive('spform',
             transclude: true,
             replace: true,
             scope: {
-                originalItem: '=item',
+                item: '=item',
                 onPreSave: '&',
                 onPostSave: '&',
                 onCancel: '&'
@@ -7135,7 +7154,7 @@ angular.module('ngSharePoint').directive('spform',
 
 				this.isNew = function() {
 
-					return $scope.originalItem.isNew();
+                    return $scope.item.isNew();
 				};
 
 
@@ -7266,6 +7285,7 @@ angular.module('ngSharePoint').directive('spform',
 									originalItem: $scope.originalItem,
 									item: $scope.item
 								};
+                                // NOTE: The above code don't works !!!!
 
 								$q.when($scope.onPostSave(postSaveData)).then(function(result) {
 
@@ -7412,12 +7432,12 @@ angular.module('ngSharePoint').directive('spform',
 
 
                         // Watch for item changes
-                        $scope.$watch('originalItem', function(newValue) {
+                        $scope.$watch('item', function(newValue) {
 
                             // Checks if the item has a value
                             if (newValue === void 0) return;
 
-                            $scope.item = angular.copy(newValue);
+                            $scope.originalItem = newValue;
                             $scope.item.clean();
 
                             $scope.item.list.getFields().then(function(fields) {
@@ -7435,7 +7455,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             });
 
-                        }, true);
+                        });
 
 
 
@@ -7456,6 +7476,9 @@ angular.module('ngSharePoint').directive('spform',
                             // Remove the 'loading animation' element
                             var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
                             if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+
+
+                            transclusionContainer.empty(); // Needed?
 
 
                             // Check for 'templateUrl' attribute

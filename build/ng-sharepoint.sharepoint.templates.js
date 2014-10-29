@@ -144,7 +144,7 @@ angular.module("templates/form-templates/spfield-description.html", []).run(["$t
 
 angular.module("templates/form-templates/spfield-label.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-label.html",
-    "<h3 class=\"ms-standardheader\"><nobr>{{schema.Title}}<span class=\"ms-accentText\" title=\"This is a required field.\" ng-show=\"schema.Required && currentMode == 'edit'\"> *</span></nobr></h3>");
+    "<h3 class=\"ms-standardheader\"><nobr>{{label}}<span class=\"ms-accentText\" title=\"This is a required field.\" ng-show=\"schema.Required && currentMode == 'edit'\"> *</span></nobr></h3>");
 }]);
 
 angular.module("templates/form-templates/spfield-lookup-display.html", []).run(["$templateCache", function($templateCache) {
@@ -319,7 +319,7 @@ angular.module("templates/form-templates/spfield-validation-messages.html", []).
 
 angular.module("templates/form-templates/spfield.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield.html",
-    "<div class=\"spfield-wrapper\" style=\"display: table-row; width: 100%;\">\n" +
+    "<div class=\"{{classAttr}}\" style=\"display: table-row; width: 100%;\">\n" +
     "    <div class=\"ms-formlabel spfield-label\" style=\"display: table-cell; vertical-align: top; width: 113px;\">\n" +
     "        <spfield-label {{attributes}}></spfield-label>\n" +
     "    </div>\n" +

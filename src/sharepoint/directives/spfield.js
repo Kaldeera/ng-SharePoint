@@ -31,6 +31,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 					var originalAttrs = $element[0].attributes;
 					var elementAttributes = '';
+					var cssClasses = ['spfield-wrapper'];
 
 					for (var i = 0; i < originalAttrs.length; i++) {
                         
@@ -45,6 +46,12 @@ angular.module('ngSharePoint').directive('spfield',
 
 							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
+
+							cssClasses.push(valueAttr.trim());
+
+							// Leave the 'class' attribute just in the main element (field wrapper) 
+							// and do not propagate the attribute to child elements.
+							continue;
 						}
 
 						elementAttributes += nameAttr + '="' + valueAttr + '" ';
@@ -52,6 +59,7 @@ angular.module('ngSharePoint').directive('spfield',
 
 
 					html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
+					html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
 					
                     var newElement = $compile(html)($scope);
 					$element.replaceWith(newElement);
