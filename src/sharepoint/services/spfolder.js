@@ -268,11 +268,22 @@ angular.module('ngSharePoint').factory('SPFolder',
 		// @folderName: The name of the folder to remove
 		// @returns: Promise with the new SPFolder object.
 		//
-		SPFolderObj.prototype.deleteFolder = function(folderName) {
+		SPFolderObj.prototype.deleteFolder = function(folder) {
 
 			var self = this;
 			var def = $q.defer();
-			var folderPath = self.ServerRelativeUrl + '/' + folderName;
+			var folderPath;
+
+			if (typeof folder === 'string') {
+
+				var folderName = folder;
+				folderPath = self.ServerRelativeUrl + '/' + folderName;
+
+			} else if (typeof folder === 'object') {
+
+				folderPath = folder.ServerRelativeUrl;
+			}
+
 			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
 
 			var executor = new SP.RequestExecutor(self.web.url);
