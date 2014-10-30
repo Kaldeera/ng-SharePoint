@@ -93,6 +93,11 @@ angular.module('ngSharePoint').factory('SPUtils',
 									console.error('Error loading SharePoint script dependences', err);
 									deferred.reject(err);
 								});
+								
+							} else {
+
+								isSharePointReady = true;
+								deferred.resolve();
 							}
 
 						}, function(err) {
