@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spform', 
 
-	['SPUtils', '$compile', '$templateCache', '$http', '$q',
+	['SPUtils', '$compile', '$templateCache', '$http', '$q', 'SPExpressionResolver',
 
-	function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q) {
+	function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, SPExpressionResolver) {
 
 		var spform_DirectiveDefinitionObject = {
 
@@ -352,7 +352,8 @@ angular.module('ngSharePoint').directive('spform',
                                 //       Also we need to know which is the default ContentType
                                 //       to get the correct schema (I don't know how).
                                 //
-                                //       If the above is not done, field properties like 'Required' will have incorrect data.
+                                //       If the above is not done, field properties like 'Required' will 
+                                //       have incorrect data when ContentTypes are enabled.
 
                                 $scope.schema = fields;
                                 loadItemTemplate();
@@ -367,7 +368,7 @@ angular.module('ngSharePoint').directive('spform',
                             
                             $scope.formStatus = spformController.status.PROCESSING;
 
-                            // Search for the 'transclusion-container' attribute within the 'spform' template elements.
+                            // Search for the 'transclusion-container' attribute in the 'spform' template elements.
                             var elements = $element.find('*');
                             var transclusionContainer;
 
@@ -391,9 +392,18 @@ angular.module('ngSharePoint').directive('spform',
                                 // Apply the 'templateUrl' attribute
                                 $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
 
+                                    /*
                                     parseRules(transclusionContainer, angular.element(html), false);
                                     $compile(transclusionContainer)($scope);
                                     $scope.formStatus = spformController.status.IDLE;
+                                    */
+
+                                    parseRules(transclusionContainer, angular.element(html), false).then(function() {
+
+                                        $compile(transclusionContainer)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
+
+                                    });
 
                                 }).error(function(data, status, headers, config, statusText) {
 
@@ -404,11 +414,11 @@ angular.module('ngSharePoint').directive('spform',
 
                             } else {
 
+/*
                                 // Apply transclusion
                                 transcludeFn($scope, function (clone) {
                                     parseRules(transclusionContainer, clone, true);
                                 });
-
 
                                 // If no transclude content was detected inside the 'spform' directive, generate a default form template.
                                 if (transclusionContainer[0].children.length === 0) {
@@ -433,12 +443,43 @@ angular.module('ngSharePoint').directive('spform',
 
                                     $scope.formStatus = spformController.status.IDLE;
                                 }
-                                
+*/
+                                // Apply transclusion
+                                transcludeFn($scope, function (clone) {
+                                    
+                                    parseRules(transclusionContainer, clone, true).then(function() {
+
+                                        // If no content was detected within the 'spform' element, generates a default form template.
+                                        if (transclusionContainer[0].children.length === 0) {
+
+                                            $scope.fields = [];
+
+                                            angular.forEach($scope.item.list.Fields, function(field) {
+                                                if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                                    $scope.fields.push(field);
+                                                }
+                                            });
+
+                                            $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+
+                                                transclusionContainer.append(html);
+                                                $compile(transclusionContainer)($scope);
+                                                $scope.formStatus = spformController.status.IDLE;
+
+                                            });
+
+                                        } else {
+
+                                            $scope.formStatus = spformController.status.IDLE;
+                                        }
+                                    });
+                                });
+
                             }
                             
                         } // loadItemTemplate
 
-
+/*
                         function parseRules(targetElement, sourceElements, isTransclude) {
 
                             var terminalRuleAdded = false;
@@ -488,6 +529,133 @@ angular.module('ngSharePoint').directive('spform',
                             });
 
                         } // parseRules private function
+*/
+
+
+                        function parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded) {
+
+                            elementIndex = elementIndex || 0;
+                            deferred = deferred || $q.defer();
+                            terminalRuleAdded = terminalRuleAdded || false;
+
+                            // Gets the element to parse.
+                            var elem = sourceElements[elementIndex++];
+
+                            // Resolve the promise when there are no more elements to parse.
+                            if (elem === void 0) {
+
+                                deferred.resolve();
+                                return;
+                            }
+
+
+                            // Initialize the 'rulesApplied' array for debug purposes.
+                            $scope.rulesApplied = $scope.rulesApplied || [];
+
+
+                            // Check if 'elem' is a <spform-rule> element.
+                            if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule') {
+
+                                // Check if a previous 'terminal' <spform-rule> element was detected.
+                                if (!terminalRuleAdded) {
+
+                                    var testExpression = elem.getAttribute('test');
+                                    var terminalExpression = elem.getAttribute('terminal');
+/*
+                                    // Check for 'test' attribute
+                                    if (elem.hasAttribute('test')) {
+                                        testExpression = elem.attributes.test.value;
+                                    }
+
+                                    // Check for 'terminal' attribute
+                                    if (elem.hasAttribute('terminal')) {
+                                        terminalExpression = elem.attributes.terminal.value;
+                                    }
+*/
+
+                                    // Resolve 'test' attribute expressions.
+                                    SPExpressionResolver.resolve(testExpression).then(function(testResolved) {
+
+                                        // Evaluates the test expression.
+                                        if ($scope.$eval(testResolved)) {
+
+                                            // Update the 'test' attribute value
+                                            elem.setAttribute('test', testResolved);
+
+
+                                            // Resolve the 'terminal' attribute expression
+                                            SPExpressionResolver.resolve(terminalExpression).then(function(terminalResolved) {
+
+                                                // Update the 'terminal' attribute value
+                                                elem.setAttribute('terminal', terminalResolved);
+
+                                                // Evaluates the 'terminal' attribute
+                                                terminalRuleAdded = $scope.$eval(terminalResolved);
+
+
+                                                // Resolve 'expressions' within the 'spform-rule' element.
+                                                SPExpressionResolver.resolve(elem.outerHTML).then(function(elemResolved) {
+
+                                                    var elem = angular.element(elemResolved)[0];
+
+                                                    // Append the element to the final form template
+                                                    targetElement.append(elem);
+
+                                                    // Add the rule applied to the 'rulesApplied' array for debug purposes.
+                                                    $scope.rulesApplied.push({
+                                                        test: testExpression, 
+                                                        testResolved: testResolved, 
+                                                        terminal: terminalExpression, 
+                                                        terminalResolved: terminalResolved
+                                                    });
+
+
+                                                    // Process the next element
+                                                    parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
+
+                                                });
+                                            });
+
+                                        } else if (isTransclude) {
+
+                                            // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
+                                            //       elements when the expression in its 'test' attribute evaluates to FALSE.
+                                            //       This is because when the transclusion is performed the elements are inside the 
+                                            //       current 'spform' element and should be removed.
+                                            //       When this function is called from an asynchronous template load ('templete-url' attribute), 
+                                            //       the elements are not yet in the element.
+                                            elem.remove();
+                                            elem = null;
+
+
+                                            // Process the next element
+                                            parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
+                                        }
+                                        
+                                    });
+
+                                } else {
+
+                                    // Process the next element
+                                    parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
+
+                                }
+
+                            } else {
+
+                                // Append the element to the final form template
+                                targetElement.append(elem);
+
+
+                                // Process the next element
+                                parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
+                            }
+
+
+                            return deferred.promise;
+
+                        } // parseRules private function
+
 
                     } // compile.post-link
 
