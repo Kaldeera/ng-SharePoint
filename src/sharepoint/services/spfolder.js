@@ -209,6 +209,104 @@ angular.module('ngSharePoint').factory('SPFolder',
 		}; // getFolders
 
 
+		// ****************************************************************************
+		// addFolder
+		//
+		// Create a new folder under the current folder
+		//
+		// @folderName: The name of the new folder
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.addFolder = function(folderName) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath = self.ServerRelativeUrl + '/' + folderName;
+			var url = self.apiUrl + '/folders/add(\'' + folderPath + '\')';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json; odata=verbose'
+				},
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					var newFolder = new SPFolderObj(self.web, folderPath, data);
+					def.resolve(newFolder);
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		};	// addFolder
+
+
+
+		// ****************************************************************************
+		// deleteFolder
+		//
+		// Delete the specified folder under the current folder
+		//
+		// @folderName: The name of the folder to remove
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.deleteFolder = function(folderName) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath = self.ServerRelativeUrl + '/' + folderName;
+			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+				headers: { "X-HTTP-Method":"DELETE" },
+
+				success: function() {
+
+					def.resolve();
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		};	// deleteFolder
+
+
+
  		// Returns the SPFolderObj class
 		return SPFolderObj;
 
