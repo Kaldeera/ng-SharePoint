@@ -69,7 +69,7 @@ var utils = {
 
 		var guidRegExp = new RegExp("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
-		return guidRegExp.test(value.trim().ltrim('{').rtrim('}'));
+		return guidRegExp.test((value || '').trim().ltrim('{').rtrim('}'));
 
 	},
 
@@ -949,11 +949,122 @@ angular.module('ngSharePoint').provider('SPConfig',
 		'use strict';
 
 		var self = this;
-		
+
 		self.options = {
+
+			/* 
+			 * force15LayoutsDirectory 
+			 * -----------------------------------------------------------------------------
+			 * Force to load LAYOUTS files from '../15/Layouts' folder instead of get the
+			 * default LAYOUTS folder (14|15/Layouts) using the function 
+			 * 'SP.Utilities.Utility.getLayoutsPageUrl()'.
+			 *
+			 */
 			force15LayoutsDirectory: false,
-			loadMinimalSharePointInfraestructure: true
+
+
+			/* 
+			 * loadMinimalSharePointInfraestructure
+			 * -----------------------------------------------------------------------------
+			 * Load minimal script resources from SharePoint.
+			 * See 'SPUtils.SharePointReady' method for more details about the scripts loaded when
+			 * in full-load mode (i.e., when 'loadMinimalSharePointInfraestructure' is set to FALSE).
+			 *
+			 */
+			loadMinimalSharePointInfraestructure: true,
+
+
+            /*
+             * forceLoadResources
+             * -----------------------------------------------------------------------------
+             * If set to TRUE ignores the property 'loadMinimalSharePointInfraestructure'
+             * and load the resource files specified in the 'filenames' property.
+             * Automatically set to TRUE when the user adds resources manually.
+             *
+             */
+            forceLoadResources: false,
+
+
+			/* 
+			 * resourceFiles
+			 * -----------------------------------------------------------------------------
+			 * Object to manipulate resources to load at start-up.
+			 *
+			 */
+			resourceFiles: (function() {
+
+				var _ResourceFiles = function() {
+
+					/*
+			         * _filenames
+			         * -----------------------------------------------------------------------------
+			         * Array of resource files (.resx filenames) to load at start-up.
+			         * By default loads 'core.resx' when 'loadMinimalSharePointInfraestructure' 
+			         * is set to FALSE.
+			         *
+			         */
+					var _filenames = ['core'];
+
+
+					/*
+					 * get()
+					 * -----------------------------------------------------------------------------
+					 * Return the array of resources filenames.
+					 *
+					 */
+					this.get = function() {
+						return _filenames;
+					};
+
+
+		            /*
+		             * add()
+		             * -----------------------------------------------------------------------------
+		             * Add resource/s file/s to load at start-up.
+		             * The 'resources' parameter could be a single string or an array of strings.
+		             *
+		             */
+		            this.add = function(resources) {
+
+		                var validResource = false;
+
+		                if (angular.isArray(resources)) {
+
+		                    // Process the array of resources filenames
+		                    anfular.forEach(resources, function(resource) {
+		                        
+		                        if (angular.isString(resource)) {
+
+		                            _filenames.push(resource);
+		                            validResource = true;
+		                        }
+		                    });
+
+		                } else {
+
+		                    // Process a single resource filename
+		                    if (angular.isString(resources)) {
+
+		                        _filenames.push(resources);
+		                        validResource = true;
+		                    }
+		                }
+
+
+		                if (validResource) {
+
+		                    self.options.forceLoadResources = true;
+		                }
+
+		            };
+				};
+
+				// Returns a new  '_ResourceFiles' object.
+				return new _ResourceFiles();
+
+			})()
 		};
+
 		
 		self.$get = function() {
 
@@ -986,47 +1097,167 @@ angular.module('ngSharePoint').provider('SPConfig',
 
 angular.module('ngSharePoint').service('SPExpressionResolver', 
 
-    ['$q',
+    ['$q', 'SharePoint',
 
-    function SPExpressionResolver_Factory($q) {
+    function SPExpressionResolver_Factory($q, SharePoint) {
 
         'use strict';
 
 
-        var EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g,
-            VALUE_IN_BRACKETS_REGEXP = /\[(\w+)\]/;
+        //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
+        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}/g;
+        //var PARTS_REGEXP = /\[([\w ]+)\]|\.([\w ]+)|/([\w ]+)/g;
+        var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+
+        // ****************************************************************************
+        // Private methods
+        //
+
+        function resolveExpression(expressionsArray, scope, index, deferred) {
+
+            index = index || 0;
+            deferred = deferred || $q.defer();
+
+            var expression = expressionsArray[index++];
+
+            if (expression === void 0) {
+
+                deferred.resolve();
+                return deferred.promise;
+            }
+
+
+            // Extract the expression type.
+            var expressionType = expression.substring(0, expression.indexOf(/\W/.exec(expression)));
+            var expressionPromise;
+
+            switch (expressionType) {
+
+                case 'param':
+                    var paramName = getExpressionParts(expression)[0];
+                    expressionPromise = utils.getQueryStringParamByName(paramName);
+                    break;
+
+                case 'item':
+                    expressionPromise = resolveItemExpression(expression, scope);
+                    break;
+
+                case 'currentUser':
+                    expressionPromise = resolveCurrentUserExpression(expression);
+                    break;
+            }
+
+
+            $q.when(expressionPromise).then(function(result) {
+
+                // Sets the resolved value for the current expression
+                expressionsArray[index - 1] = result;
+
+                // Resolve next expression
+                resolveExpression(expressionsArray, scope, index, deferred);
+            });
+
+
+            return deferred.promise;
+        }
+
+
+        function getExpressionParts(text) {
+
+            var matches = [];
+            var match;
+
+            while ((match = PARTS_REGEXP.exec(text))) {
+
+                match.shift();
+                matches.push(match.join(''));
+            }
+
+            return matches;
+        }
+
+
+        function resolveItemExpression(expression, scope) {
+
+            var queryParts = getExpressionParts(expression);
+
+            return scope.item.list.getItemQueryById(scope.item.Id, queryParts.join('/')).then(function(data) {
+
+                return data[queryParts[queryParts.length - 1]];
+        
+            }, function() {
+
+                return undefined;
+            });
+            
+        }
+
+
+        function resolveCurrentUserExpression(expression) {
+
+            return SharePoint.getCurrentWeb().then(function(web) {
+            
+                return web.getList('UserInfoList').then(function(list) {
+
+                    var queryParts = getExpressionParts(expression);
+
+                    return list.getItemQueryById(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
+
+                        return data[queryParts[queryParts.length - 1]];
+
+                    }, function() {
+
+                        return undefined;
+                    });
+                });
+            });
+        }
 
 
 
-        this.resolve = function(text) {
+        // ****************************************************************************
+        // Public methods (Service API)
+        //
+
+        this.resolve = function(text, scope) {
 
             var deferred = $q.defer();
+            var expressionsArray = [];
 
-            $q.when(text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
+            // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
+            text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
 
-                var expression = p1,
-                    expressionType = expression.substring(0, expression.indexOf(/\W/.exec(expression))),
-                    expressionValue;
+                // Check if the expression is already added.
+                // This way resolves the expression only once and replaces it in all places 
+                // where appears in the text.
+                var pos = expressionsArray.indexOf(p1);
 
-                switch (expressionType.toLowerCase()) {
-
-                    case 'param':
-                        var paramName = VALUE_IN_BRACKETS_REGEXP.exec(expression)[1];
-                        expressionValue = utils.getQueryStringParamByName(paramName);
-                        break;
-
+                if (pos == -1) {
+                    expressionsArray.push(p1);
+                    pos = expressionsArray.length - 1;
                 }
 
-                return expressionValue;
-
-            })).then(function(result) {
-
-                deferred.resolve(result);
+                return '{e:' + pos + '}';
             });
+
+
+            // Resolve the 'expressionsArray' with promises
+            resolveExpression(expressionsArray, scope).then(function() {
+
+                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expression value.
+                for (var i = 0; i < expressionsArray.length; i++) {
+                    text = text.replace(new RegExp('{e:' + i + '}', 'g'), expressionsArray[i]);
+                }
+
+                // Resolve the main promise
+                deferred.resolve(text);
+            });
+
 
             return deferred.promise;
 
-        }; // resolve
+        }; // resolve method
 
     } // SPExpressionResolver factory
 ]);
@@ -2023,54 +2254,6 @@ angular.module('ngSharePoint').factory('SPList',
 				}, 
 
 				success: function(data) {
-
-					// El siguiente código retorna una colección de SPListItem
-					// y recupera las propiedades File y/o Folder cuando la lista 
-					// es una DocumentLibrary.
-					//
-					// Se ha comentado porque se ha implemtado la expansión
-					// automática de ciertas propiedades necesarias (campos) cuando
-					// la lista es una DocumentLibrary (File/Folder).
-					//
-					// Con el siguiente código, es más lento ya que realiza varias
-					// llamadas REST para obtener los datos necesarios.
-					/*
-					var d = utils.parseSPResponse(data);
-					var items = [];
-					var itemsPromises = [];
-
-					angular.forEach(d, function(item) {
-
-						var spListItem = new SPListItem(self, item.ID);
-
-						items.push(spListItem);
-
-						// Checks if list is a DocumentLibrary
-						if (self.BaseType === 1) {
-							// Gets file or folder properties
-							itemsPromises.push(spListItem.getProperties());
-						} else {
-							angular.extend(spListItem, item);
-						}
-
-					});
-
-					$q.all(itemsPromises).then(function() {
-						def.resolve(items);
-					});
-					*/
-
-
-
-					// Código por defecto que retorna la colección de items que retorna la llamada REST.
-					/*
-					var d = utils.parseSPResponse(data);
-					def.resolve(d);
-					*/
-
-
-
-					// Código que retorna una colección de objectos SPListItem ya inicializados.
 					var d = utils.parseSPResponse(data);
 					var items = [];
 
@@ -2079,6 +2262,7 @@ angular.module('ngSharePoint').factory('SPList',
 						items.push(spListItem);
 					});
 
+					// Returns an array of initialized 'SPListItem' objects.
 					def.resolve(items);
 
 				}, 
@@ -2134,6 +2318,56 @@ angular.module('ngSharePoint').factory('SPList',
 					var d = utils.parseSPResponse(data);
 					var spListItem = new SPListItem(self, d);
 					def.resolve(spListItem);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+            return def.promise;
+
+		}; // getItemById
+
+
+
+		// ****************************************************************************
+		// getItemById
+		//
+		// Gets an item from the list by its ID. 
+		//
+		// @id: {Counter} The id of the item.
+		// @query: {String} The REST query after '.../getItemById(<id>)/'
+		//		   e.g. If query parameter equals to 'Author/Name'
+		//		        the final query will be '.../getItemById(<id>)/Author/Name'
+		//				and will return the 'Name' of the 'Author' of the item.
+		// @returns: Promise with the result of the REST query.
+		//
+		SPListObj.prototype.getItemQueryById = function(id, query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + '/getItemById(' + id + ')/' + query.ltrim('/'),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					def.resolve(d);
 				}, 
 
 				error: function(data, errorCode, errorMessage) {
@@ -2569,6 +2803,9 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 						}
 
+					} else {
+
+						def.resolve(d);
 					}
 				}, 
 
@@ -3314,7 +3551,7 @@ angular.module('ngSharePoint').factory('SPUtils',
 //						console.info(SPConfig.options);
 
 
-						if (!SPConfig.options.loadMinimalSharePointInfraestructure) {
+						if (SPConfig.options.loadMinimalSharePointInfraestructure === false) {
 
 							loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
 							loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
@@ -3326,28 +3563,39 @@ angular.module('ngSharePoint').factory('SPUtils',
 							loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
 						}
 
+                        // Resolve script promises
 						$q.all(loadScriptPromises).then(function() {
 
-							if (!SPConfig.options.loadMinimalSharePointInfraestructure) {
+							if (SPConfig.options.loadMinimalSharePointInfraestructure === false || SPConfig.options.forceLoadResources) {
 
-								loadResourcePromises.push(self.loadResourceFile('core.resx'));
-								//loadScriptPromises.push(self.loadResourceFile('sp.publishing.resources.resx'));
+	                            // Process resource files
+								angular.forEach(SPConfig.options.resourceFiles.get(), function(filename) {
 
-								$q.all(loadResourcePromises).then(function() {
+	                                // Add the 'resx' extension to the 'filename' if don't have it.
+									if (filename.indexOf('.resx') == -1) {
+										filename += '.resx';
+									}
 
-									isSharePointReady = true;
-									deferred.resolve();
-
-								}, function(err) {
-
-									console.error('Error loading SharePoint script dependences', err);
-									deferred.reject(err);
+									loadResourcePromises.push(self.loadResourceFile(filename));
 								});
+								
 							}
+
+                            // Resolve resource promises
+							$q.all(loadResourcePromises).then(function() {
+
+								isSharePointReady = true;
+								deferred.resolve();
+
+							}, function(err) {
+
+								console.error('Error loading SharePoint resources dependences.', err);
+								deferred.reject(err);
+							});
 
 						}, function(err) {
 
-							console.error('Error loading SharePoint script dependences', err);
+							console.error('Error loading SharePoint scripts dependences.', err);
 							deferred.reject(err);
 						});
 
@@ -3365,8 +3613,8 @@ angular.module('ngSharePoint').factory('SPUtils',
 				var pos = resourceFilename.lastIndexOf('.resx');
 				var name = resourceFilename.substr(0, (pos != -1 ? pos : resourceFilename.length));
 				var url;
-				var params = '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name);
-				//var params = '?name=' + name + '&culture=' + _spPageContextInfo.currentUICultureName;
+				var params = '?name=' + name + '&culture=' + STSHtmlEncode(Strings.STS.L_CurrentUICulture_Name || _spPageContextInfo.currentUICultureName);
+
 
 				if (SPConfig.options.force15LayoutsDirectory) {
 					url = '/_layouts/15/ScriptResx.ashx' + params;
@@ -3374,32 +3622,39 @@ angular.module('ngSharePoint').factory('SPUtils',
 					url = SP.Utilities.Utility.getLayoutsPageUrl('ScriptResx.ashx') + params;
 				}
 
-				$http.get(url).success(function(data) {
+				$http.get(url)
+					.success(function(data, status, headers, config) {
 
-					window.Resources = window.Resources || {};
+						window.Resources = window.Resources || {};
 
-					// Fix bad transformation in core.resx
-					data = data.replace(/align - right|align-right/g, 'align_right');
-					data = data.replace(/e - mail|e-mail/g, 'email');
-					data = data.replace(/e - Mail|e-Mail/g, 'email');
-					data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
-					
-					try {
-						var _eval = eval; // Fix jshint warning: eval can be harmful.
-						_eval(data);
+						// Fix bad transformation in core.resx
+						data = data.replace(/align - right|align-right/g, 'align_right');
+						data = data.replace(/e - mail|e-mail/g, 'email');
+						data = data.replace(/e - Mail|e-Mail/g, 'email');
+						data = data.replace(/tty - TDD|tty-TDD/g, 'tty_TDD');
+						
+						try {
+							var _eval = eval; // Fix jshint warning: eval can be harmful.
+							_eval(data);
 
-						window.Res = window.Res || void 0;
+							window.Res = window.Res || void 0;
 
-						if (window.Res !== void 0) {
-							window.Resources[name] = window.Res;
+							if (window.Res !== void 0) {
+								window.Resources[name] = window.Res;
+							}
+
+						} catch(ex) {
+
+							console.error(ex);
 						}
 
-					} catch(ex) {
-						console.error(ex);
-					}
+						deferred.resolve();
 
-					deferred.resolve();
-				});
+					})
+					.error(function(data, status, headers, config) {
+
+						deferred.resolve();
+					});
 
 				return deferred.promise;
 			},
@@ -4549,7 +4804,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 				} else {
 
-					console.error('Unknown field ' + $attrs.name);
+					console.error('Unknown field "' + $attrs.name + '"');
+
+					/*
+					var errorElement = '<span class="ms-formvalidation ms-csrformvalidation">Unknown field "' + $attrs.name + '"</span>';
+					$element.replaceWith(errorElement);
+					$element = errorElement;
+					*/
 				}
 
 			} // link
@@ -5043,7 +5304,7 @@ angular.module('ngSharePoint')
 			} else {
 
 				// Default label
-				$scope.label = $scope.schema.Title;
+				$scope.label = ($scope.schema ? $scope.schema.Title : '');//'[' + $attrs.name + ']');
 			}
 
 
@@ -7572,36 +7833,6 @@ angular.module('ngSharePoint').directive('spform',
 
                             } else {
 
-/*
-                                // Apply transclusion
-                                transcludeFn($scope, function (clone) {
-                                    parseRules(transclusionContainer, clone, true);
-                                });
-
-                                // If no transclude content was detected inside the 'spform' directive, generate a default form template.
-                                if (transclusionContainer[0].children.length === 0) {
-
-                                    $scope.fields = [];
-
-                                    angular.forEach($scope.item.list.Fields, function(field) {
-                                        if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-                                            $scope.fields.push(field);
-                                        }
-                                    });
-
-                                    $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
-
-                                        transclusionContainer.append(html);
-                                        $compile(transclusionContainer)($scope);
-                                        $scope.formStatus = spformController.status.IDLE;
-
-                                    });
-
-                                } else {
-
-                                    $scope.formStatus = spformController.status.IDLE;
-                                }
-*/
                                 // Apply transclusion
                                 transcludeFn($scope, function (clone) {
                                     
@@ -7637,57 +7868,6 @@ angular.module('ngSharePoint').directive('spform',
                             
                         } // loadItemTemplate
 
-/*
-                        function parseRules(targetElement, sourceElements, isTransclude) {
-
-                            var terminalRuleAdded = false;
-
-                            // Initialize the 'rulesApplied' array for debug purposes.
-                            $scope.rulesApplied = [];
-
-                            angular.forEach(sourceElements, function (elem) {
-
-                                // Check if 'elem' is a <spform-rule> element.
-                                if (elem.tagName !== void 0 && elem.tagName.toLowerCase() == 'spform-rule' && elem.attributes.test !== undefined) {
-
-                                    var testExpression = elem.attributes.test.value;
-
-                                    // Evaluates the test expression if no 'terminal' attribute was detected in a previous valid rule.
-                                    if (!terminalRuleAdded && $scope.$eval(testExpression)) {
-
-                                        targetElement.append(elem);
-                                        var terminalExpression = false;
-
-                                        if (elem.attributes.terminal !== void 0) {
-
-                                            terminalExpression = elem.attributes.terminal.value;
-                                            terminalRuleAdded = $scope.$eval(terminalExpression);
-
-                                        }
-
-                                        // Add the rule applied to the 'rulesApplied' array for debug purposes.
-                                        $scope.rulesApplied.push({ test: testExpression, terminal: terminalExpression });
-
-                                    } else if (isTransclude) {
-
-                                        // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
-                                        //       elements when the expression in its 'test' attribute evaluates to FALSE.
-                                        //       This is because when the transclusion is performed the elements are inside the 
-                                        //       current 'spform' element and should be removed.
-                                        //       When this function is called from an asynchronous template load ('templete-url' attribute), 
-                                        //       the elements are not yet in the element.
-                                        elem.remove();
-                                        elem = null;
-                                    }
-                                    
-                                } else {
-
-                                    targetElement.append(elem);
-                                }
-                            });
-
-                        } // parseRules private function
-*/
 
 
                         function parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded) {
@@ -7703,7 +7883,7 @@ angular.module('ngSharePoint').directive('spform',
                             if (elem === void 0) {
 
                                 deferred.resolve();
-                                return;
+                                return deferred.promise;
                             }
 
 
@@ -7717,22 +7897,22 @@ angular.module('ngSharePoint').directive('spform',
                                 // Check if a previous 'terminal' <spform-rule> element was detected.
                                 if (!terminalRuleAdded) {
 
-                                    var testExpression = elem.getAttribute('test');
-                                    var terminalExpression = elem.getAttribute('terminal');
-/*
+                                    var testExpression = 'false',
+                                        terminalExpression = 'false';
+
                                     // Check for 'test' attribute
                                     if (elem.hasAttribute('test')) {
-                                        testExpression = elem.attributes.test.value;
+                                        testExpression = elem.getAttribute('test');
                                     }
 
                                     // Check for 'terminal' attribute
                                     if (elem.hasAttribute('terminal')) {
-                                        terminalExpression = elem.attributes.terminal.value;
+                                        terminalExpression = elem.getAttribute('terminal');
                                     }
-*/
+
 
                                     // Resolve 'test' attribute expressions.
-                                    SPExpressionResolver.resolve(testExpression).then(function(testResolved) {
+                                    SPExpressionResolver.resolve(testExpression, $scope).then(function(testResolved) {
 
                                         // Evaluates the test expression.
                                         if ($scope.$eval(testResolved)) {
@@ -7742,7 +7922,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                             // Resolve the 'terminal' attribute expression
-                                            SPExpressionResolver.resolve(terminalExpression).then(function(terminalResolved) {
+                                            SPExpressionResolver.resolve(terminalExpression, $scope).then(function(terminalResolved) {
 
                                                 // Update the 'terminal' attribute value
                                                 elem.setAttribute('terminal', terminalResolved);
@@ -7752,7 +7932,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                                 // Resolve 'expressions' within the 'spform-rule' element.
-                                                SPExpressionResolver.resolve(elem.outerHTML).then(function(elemResolved) {
+                                                SPExpressionResolver.resolve(elem.outerHTML, $scope).then(function(elemResolved) {
 
                                                     var elem = angular.element(elemResolved)[0];
 
@@ -7774,17 +7954,19 @@ angular.module('ngSharePoint').directive('spform',
                                                 });
                                             });
 
-                                        } else if (isTransclude) {
+                                        } else {
 
-                                            // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
-                                            //       elements when the expression in its 'test' attribute evaluates to FALSE.
-                                            //       This is because when the transclusion is performed the elements are inside the 
-                                            //       current 'spform' element and should be removed.
-                                            //       When this function is called from an asynchronous template load ('templete-url' attribute), 
-                                            //       the elements are not yet in the element.
-                                            elem.remove();
-                                            elem = null;
+                                            if (isTransclude) {
 
+                                                // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
+                                                //       elements when the expression in its 'test' attribute evaluates to FALSE.
+                                                //       This is because when the transclusion is performed the elements are inside the 
+                                                //       current 'spform' element and should be removed.
+                                                //       When this function is called from an asynchronous template load ('templete-url' attribute), 
+                                                //       the elements are not yet in the element.
+                                                elem.remove();
+                                                elem = null;
+                                            }
 
                                             // Process the next element
                                             parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
