@@ -177,7 +177,7 @@ angular.module('ngSharePoint').directive('spform',
                     // Shows the 'Working on it...' dialog.
                     var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
 
-                    $q.when($scope.onPreSave({ item: $scope.item })).then(function(result) {
+                    $q.when(($scope.onPreSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                         if (result !== false) {
 
@@ -185,13 +185,7 @@ angular.module('ngSharePoint').directive('spform',
 
                                 $scope.formStatus = this.status.IDLE;
 
-                                var postSaveData = {
-                                    originalItem: $scope.originalItem,
-                                    item: $scope.item
-                                };
-                                // NOTE: The above code don't works !!!!
-
-                                $q.when($scope.onPostSave(postSaveData)).then(function(result) {
+                                $q.when(($scope.onPostSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                                     if (result !== false) {
 
@@ -254,7 +248,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                 this.cancel = function(redirectUrl) {
-
+/*
                     $scope.item = angular.copy($scope.originalItem);
 
                     if ($scope.onCancel({ item: $scope.item }) !== false) {
@@ -263,6 +257,23 @@ angular.module('ngSharePoint').directive('spform',
                         this.closeForm(redirectUrl);
 
                     }
+*/
+                    
+                    var self = this;
+
+                    $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
+
+                        if (result !== false) {
+
+                            // Performs the default 'cancel' action.
+                            self.closeForm(redirectUrl);
+                        }
+
+                    }, function() {
+
+                        // Performs the default 'cancel' action.
+                        self.closeForm(redirectUrl);
+                    });
                 };
 
 
