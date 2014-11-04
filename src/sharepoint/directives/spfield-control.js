@@ -94,7 +94,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 				} else {
 
-					console.error('Unknown field ' + $attrs.name);
+					console.error('Unknown field "' + $attrs.name + '"');
+
+					/*
+					var errorElement = '<span class="ms-formvalidation ms-csrformvalidation">Unknown field "' + $attrs.name + '"</span>';
+					$element.replaceWith(errorElement);
+					$element = errorElement;
+					*/
 				}
 
 			} // link

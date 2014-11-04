@@ -241,6 +241,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
         }; // baseLinkFn
 
-    } // SPFieldDirectiveFactory
+    } // SPFieldDirective factory
 
 ]);

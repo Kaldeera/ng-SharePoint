@@ -119,7 +119,7 @@ module.exports = function(grunt) {
               cwd: 'build/',
               expand: true,
               src: '**',
-              //dest: 'R:\\app\\kld-testforms\\js'
+              //dest: 'R:\\app-ngforms\\js\\ngSharePoint'
               dest: 'X:\\app\\ngSharepoint'
               //dest: 'V:\\app\\js\\ngSharepoint'
             }

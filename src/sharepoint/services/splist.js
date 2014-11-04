@@ -1,704 +1,707 @@
 /*
-	SPList - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+    SPList - factory
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
-	Copyright (c) 2014
-	Licensed under the MIT License
+    Copyright (c) 2014
+    Licensed under the MIT License
 */
 
 
 
 ///////////////////////////////////////
-//	SPList
+//  SPList
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPList', 
 
-	['$q', 'SPCache', 'SPFolder', 'SPListItem', 
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 
 
-	function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
+    function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
 
-		'use strict';
+        'use strict';
 
 
-		// ****************************************************************************
-		// SPList constructor
-		//
-		// @web: SPWeb instance that contains the list in SharePoint.
-		// @listName: Name or Guid of the list you want to instantiate.
-		//
-		var SPListObj = function(web, listName, listProperties) {
+        // ****************************************************************************
+        // SPList constructor
+        //
+        // @web: SPWeb instance that contains the list in SharePoint.
+        // @listName: Name or Guid of the list you want to instantiate.
+        //
+        var SPListObj = function(web, listName, listProperties) {
 
-			if (web === void 0) {
-				throw '@web parameter not specified in SPList constructor.';
-			}
+            if (web === void 0) {
+                throw '@web parameter not specified in SPList constructor.';
+            }
 
-			if (listName === void 0) {
-				throw '@listName parameter not specified in SPList constructor.';
-			}
+            if (listName === void 0) {
+                throw '@listName parameter not specified in SPList constructor.';
+            }
 
 
-			this.web = web;
+            this.web = web;
 
-			// Cleans the 'listName' parameter.
-			this.listName = listName.trim().ltrim('{').rtrim('}');
+            // Cleans the 'listName' parameter.
+            this.listName = listName.trim().ltrim('{').rtrim('}');
 
 
-			if (utils.isGuid(this.listName)) {
+            if (utils.isGuid(this.listName)) {
 
-				this.apiUrl = '/Lists(guid\'' + this.listName + '\')';
+                this.apiUrl = '/Lists(guid\'' + this.listName + '\')';
 
-			} else {
+            } else {
 
-				if (this.listName.toLowerCase() == 'userinfolist') {
+                if (this.listName.toLowerCase() == 'userinfolist') {
 
-					this.apiUrl = '/SiteUserInfoList';
+                    this.apiUrl = '/SiteUserInfoList';
 
-				} else {
+                } else {
 
-					this.apiUrl = '/Lists/GetByTitle(\'' + this.listName + '\')';
+                    this.apiUrl = '/Lists/GetByTitle(\'' + this.listName + '\')';
 
-				}
-			}
+                }
+            }
 
 
-			// Initializes the SharePoint API REST url for the list.
-			this.apiUrl = web.apiUrl + this.apiUrl;
+            // Initializes the SharePoint API REST url for the list.
+            this.apiUrl = web.apiUrl + this.apiUrl;
 
-			// Gets the list fields (Schema) from the cache if exists.
-			this.Fields = SPCache.getCacheValue('SPListFieldsCache', this.apiUrl);
+            // Gets the list fields (Schema) from the cache if exists.
+            this.Fields = SPCache.getCacheValue('SPListFieldsCache', this.apiUrl);
 
-			// Init listProperties (if exists)
-			if (listProperties !== void 0) {
-				angular.extend(this, listProperties);
-			}
-		};
+            // Init listProperties (if exists)
+            if (listProperties !== void 0) {
+                angular.extend(this, listProperties);
+            }
+        };
 
 
 
-		// ****************************************************************************
-		// getListItemEntityTypeFullName
-		//
-		// Gets the 'ListItemEntityTypeFullName' for the list and attach to 'this' object.
-		// This property is needed for CRUD operations.
-		//
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getListItemEntityTypeFullName = function() {
+        // ****************************************************************************
+        // getListItemEntityTypeFullName
+        //
+        // Gets the 'ListItemEntityTypeFullName' for the list and attach to 'this' object.
+        // This property is needed for CRUD operations.
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getListItemEntityTypeFullName = function() {
 
-			var self = this;
-			var def = $q.defer();
+            var self = this;
+            var def = $q.defer();
 
 
-			if (this.ListItemEntityTypeFullName) {
+            if (this.ListItemEntityTypeFullName) {
 
-				def.resolve(this.ListItemEntityTypeFullName);
+                def.resolve(this.ListItemEntityTypeFullName);
 
-			} else {
+            } else {
 
-				self.getProperties().then(function() {
-					def.resolve(self.ListItemEntityTypeFullName);
-				});
-				
-			}
-
-			return def.promise;
-
-		}; // getListItemEntityTypeFullName
-
-
-
-		// ****************************************************************************
-		// getProperties
-		//
-		// Gets list properties and attach it to 'this' object.
-		//
-		// http://msdn.microsoft.com/es-es/library/office/jj164022(v=office.15).aspx
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getProperties = function(query) {
-
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = 'Views';
-			// NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
-			// que si la lista es la 'SiteUserInfoList' se genera un error porque no 
-			// tiene formularios sino que se utiliza la página /_layouts/15/UserDisp.aspx
-			// para visualizar un usuario y un popup para la edición.
-
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
-
-			executor.executeAsync({
-
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
-
-				success: function(data) {
-
-					var d = utils.parseSPResponse(data);
-					delete d.Fields;
-
-					angular.extend(self, d);
-
-					def.resolve(d);
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
-				}
-			});
-
-			return def.promise;
-
-		}; // getProperties
-
-
-
-		// ****************************************************************************
-		// getFields
-		//
-		// Gets list fields
-		//
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getFields = function() {
-
-		    var self = this;
-		    var def = $q.defer();
-
-		    if (this.Fields !== void 0) {
-
-		        def.resolve(this.Fields);
-
-		    } else {
-
-		        var executor = new SP.RequestExecutor(self.web.url);
-
-		        executor.executeAsync({
-
-		            url: self.apiUrl + '/Fields',
-		            method: 'GET',
-		            headers: {
-		                "Accept": "application/json; odata=verbose"
-		            },
-
-		            success: function(data) {
-
-		                var d = utils.parseSPResponse(data);
-		                var fields = {};
-
-		                angular.forEach(d, function(field) {
-		                    fields[field.InternalName] = field;
-		                });
-
-		                self.Fields = fields;
-		                SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
-
-		                def.resolve(fields);
-		            },
-
-		            error: function(data, errorCode, errorMessage) {
-
-		                var err = utils.parseError({
-		                    data: data,
-		                    errorCode: errorCode,
-		                    errorMessage: errorMessage
-		                });
-
-		                def.reject(err);
-		            }
-		        });
-		    }
-		    
-		    return def.promise;
-
-		}; // getFields
-
-
-
-		// ****************************************************************************
-		// getRootFolder
-		//
-		// Gets root folder
-		//
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getRootFolder = function() {
-
-			var self = this;
-			var def = $q.defer();
-
-			if (this.RootFolder !== void 0) {
-
-				if (this.RootFolder.__deferred !== void 0) {
-					
-					delete this.RootFolder;
-				}
-			}
-
-
-			if (this.RootFolder !== void 0) {
-
-				def.resolve(this.RootFolder);
-
-			} else {
-
-				var executor = new SP.RequestExecutor(self.web.url);
-
-				executor.executeAsync({
-
-					url: self.apiUrl + '/RootFolder',
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}, 
-
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-						this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
-
-						def.resolve(this.RootFolder);
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
-				});
-			}
-
-			return def.promise;
-
-		}; // getRootFolder
-
-
-
-		// ****************************************************************************
-		// getListItems
-		//
-		// Gets the list items
-		//
-		// @query: An object with REST query options.
-		//		   References:
-		//				http://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx
-		//				http://msdn.microsoft.com/en-us/library/office/dn292552(v=office.15).aspx
-		//				http://msdn.microsoft.com/en-us/library/office/dn292553(v=office.15).aspx
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getListItems = function(query) {
-
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
-
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
-
-			executor.executeAsync({
-
-				url: self.apiUrl + '/Items' + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
-
-				success: function(data) {
-
-					// El siguiente código retorna una colección de SPListItem
-					// y recupera las propiedades File y/o Folder cuando la lista 
-					// es una DocumentLibrary.
-					//
-					// Se ha comentado porque se ha implemtado la expansión
-					// automática de ciertas propiedades necesarias (campos) cuando
-					// la lista es una DocumentLibrary (File/Folder).
-					//
-					// Con el siguiente código, es más lento ya que realiza varias
-					// llamadas REST para obtener los datos necesarios.
-					/*
-					var d = utils.parseSPResponse(data);
-					var items = [];
-					var itemsPromises = [];
-
-					angular.forEach(d, function(item) {
-
-						var spListItem = new SPListItem(self, item.ID);
-
-						items.push(spListItem);
-
-						// Checks if list is a DocumentLibrary
-						if (self.BaseType === 1) {
-							// Gets file or folder properties
-							itemsPromises.push(spListItem.getProperties());
-						} else {
-							angular.extend(spListItem, item);
-						}
-
-					});
-
-					$q.all(itemsPromises).then(function() {
-						def.resolve(items);
-					});
-					*/
-
-
-
-					// Código por defecto que retorna la colección de items que retorna la llamada REST.
-					/*
-					var d = utils.parseSPResponse(data);
-					def.resolve(d);
-					*/
-
-
-
-					// Código que retorna una colección de objectos SPListItem ya inicializados.
-					var d = utils.parseSPResponse(data);
-					var items = [];
-
-					angular.forEach(d, function(item) {
-						var spListItem = new SPListItem(self, item);
-						items.push(spListItem);
-					});
-
-					def.resolve(items);
-
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
-				}
-			});
+                self.getProperties().then(function() {
+                    def.resolve(self.ListItemEntityTypeFullName);
+                });
+                
+            }
 
             return def.promise;
 
-		}; // getListItems
+        }; // getListItemEntityTypeFullName
 
 
 
-		// ****************************************************************************
-		// getItemById
-		//
-		// Gets an item from the list by its ID. 
-		//
-		// @id: {Counter} The id of the item.
-		// @expandProperties: {String} Comma separated values with the properties to 
-		//					  expand in the REST query.
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.getItemById = function(id, expandProperties) {
+        // ****************************************************************************
+        // getProperties
+        //
+        // Gets list properties and attach it to 'this' object.
+        //
+        // http://msdn.microsoft.com/es-es/library/office/jj164022(v=office.15).aspx
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getProperties = function(query) {
 
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
-			var query = {
-				$expand: defaultExpandProperties + (expandProperties ? ', ' + expandProperties : '')
-			};
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+            var defaultExpandProperties = 'Views';
+            // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
+            // que si la lista es la 'SiteUserInfoList' se genera un error porque no 
+            // tiene formularios sino que se utiliza la página /_layouts/15/UserDisp.aspx
+            // para visualizar un usuario y un popup para la edición.
 
-			executor.executeAsync({
+            if (query) {
+                query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+            } else {
+                query = { 
+                    $expand: defaultExpandProperties
+                };
+            }
 
-				url: self.apiUrl + '/getItemById(' + id + ')' + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
+            executor.executeAsync({
 
-				success: function(data) {
+                url: self.apiUrl + utils.parseQuery(query),
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }, 
 
-					var d = utils.parseSPResponse(data);
-					var spListItem = new SPListItem(self, d);
-					def.resolve(spListItem);
-				}, 
+                success: function(data) {
 
-				error: function(data, errorCode, errorMessage) {
+                    var d = utils.parseSPResponse(data);
+                    delete d.Fields;
 
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+                    angular.extend(self, d);
 
-					def.reject(err);
-				}
-			});
+                    def.resolve(d);
+                }, 
 
-            return def.promise;
+                error: function(data, errorCode, errorMessage) {
 
-		}; // getItemById
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
 
-
-
-		// ****************************************************************************
-		// createItem
-		//
-		// Creates an item in the list. 
-		//
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.createItem = function(properties) {
-
-			var self = this;
-			var def = $q.defer();
-
-
-			self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
-
-				var executor = new SP.RequestExecutor(self.web.url);
-
-
-				// Set the contents for the REST API call.
-				// ----------------------------------------------------------------------------
-				var body = {
-					__metadata: {
-						type: listItemEntityTypeFullName
-					}
-				};
-
-				angular.extend(body, properties);
-
-
-				// Set the headers for the REST API call.
-				// ----------------------------------------------------------------------------
-				var headers = {
-					"Accept": "application/json; odata=verbose",
-					"content-type": "application/json;odata=verbose"
-				};
-
-				var requestDigest = document.getElementById('__REQUESTDIGEST');
-				// Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-				// SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-				if (requestDigest !== null) {
-					headers['X-RequestDigest'] = requestDigest.value;
-				}
-
-
-				// Make the call.
-				// ----------------------------------------------------------------------------
-				executor.executeAsync({
-
-					url: self.apiUrl + '/items',
-					method: 'POST',
-					body: angular.toJson(body),
-					headers: headers, 
-
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-
-						def.resolve(d);
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
-				});
-
-			});
-
+                    def.reject(err);
+                }
+            });
 
             return def.promise;
 
-		}; // createItem
+        }; // getProperties
 
 
 
-		// ****************************************************************************
-		// updateItem
-		//
-		// Creates an item in the list. 
-		//
-		// @id: {counter} The ID of the item to update.
-		// @properties: {Object} The item properties to update.
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.updateItem = function(id, properties) {
+        // ****************************************************************************
+        // getFields
+        //
+        // Gets list fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getFields = function() {
 
-			var self = this;
-			var def = $q.defer();
+            var self = this;
+            var def = $q.defer();
+
+            if (this.Fields !== void 0) {
+
+                def.resolve(this.Fields);
+
+            } else {
+
+                var executor = new SP.RequestExecutor(self.web.url);
+
+                executor.executeAsync({
+
+                    url: self.apiUrl + '/Fields',
+                    method: 'GET',
+                    headers: {
+                        "Accept": "application/json; odata=verbose"
+                    },
+
+                    success: function(data) {
+
+                        var d = utils.parseSPResponse(data);
+                        var fields = {};
+
+                        angular.forEach(d, function(field) {
+                            fields[field.InternalName] = field;
+                        });
+
+                        self.Fields = fields;
+                        SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+
+                        def.resolve(fields);
+                    },
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+            }
+            
+            return def.promise;
+
+        }; // getFields
 
 
-			self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
-				var executor = new SP.RequestExecutor(self.web.url);
+        // ****************************************************************************
+        // getRootFolder
+        //
+        // Gets root folder
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getRootFolder = function() {
 
+            var self = this;
+            var def = $q.defer();
 
-				// Set the contents for the REST API call.
-				// ----------------------------------------------------------------------------
-				var body = {
-					__metadata: {
-						type: listItemEntityTypeFullName
-					}
-				};
+            if (this.RootFolder !== void 0) {
 
-				angular.extend(body, properties);
-
-
-				// Set the headers for the REST API call.
-				// ----------------------------------------------------------------------------
-				var headers = {
-					"Accept": "application/json; odata=verbose",
-					"content-type": "application/json;odata=verbose",
-					"X-HTTP-Method": "MERGE",
-					"IF-MATCH": "*" // Overwrite any changes in the item. 
-									// Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
-				};
-
-				var requestDigest = document.getElementById('__REQUESTDIGEST');
-
-				if (requestDigest !== null) {
-					headers['X-RequestDigest'] = requestDigest.value;
-				}
+                if (this.RootFolder.__deferred !== void 0) {
+                    
+                    delete this.RootFolder;
+                }
+            }
 
 
-				// Make the call.
-				// ----------------------------------------------------------------------------
-				executor.executeAsync({
+            if (this.RootFolder !== void 0) {
 
-					url: self.apiUrl + '/items(' + id + ')',
-					method: 'POST',
-					body: angular.toJson(body),
-					headers: headers,
+                def.resolve(this.RootFolder);
 
-					success: function(data) {
+            } else {
 
-						var d = utils.parseSPResponse(data);
+                var executor = new SP.RequestExecutor(self.web.url);
 
-						def.resolve(d);
-					}, 
+                executor.executeAsync({
 
-					error: function(data, errorCode, errorMessage) {
+                    url: self.apiUrl + '/RootFolder',
+                    method: 'GET', 
+                    headers: { 
+                        "Accept": "application/json; odata=verbose"
+                    }, 
 
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
+                    success: function(data) {
 
-						def.reject(err);
-					}
-				});
+                        var d = utils.parseSPResponse(data);
+                        this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
 
-			});
+                        def.resolve(this.RootFolder);
+                    }, 
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+            }
+
+            return def.promise;
+
+        }; // getRootFolder
+
+
+
+        // ****************************************************************************
+        // getListItems
+        //
+        // Gets the list items
+        //
+        // @query: An object with REST query options.
+        //         References:
+        //              http://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx
+        //              http://msdn.microsoft.com/en-us/library/office/dn292552(v=office.15).aspx
+        //              http://msdn.microsoft.com/en-us/library/office/dn292553(v=office.15).aspx
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getListItems = function(query) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+            var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+
+            if (query) {
+                query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+            } else {
+                query = { 
+                    $expand: defaultExpandProperties
+                };
+            }
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/Items' + utils.parseQuery(query),
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }, 
+
+                success: function(data) {
+                    var d = utils.parseSPResponse(data);
+                    var items = [];
+
+                    angular.forEach(d, function(item) {
+                        var spListItem = new SPListItem(self, item);
+                        items.push(spListItem);
+                    });
+
+                    // Returns an array of initialized 'SPListItem' objects.
+                    def.resolve(items);
+
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        }; // getListItems
+
+
+
+        // ****************************************************************************
+        // getItemById
+        //
+        // Gets an item from the list by its ID. 
+        //
+        // @id: {Counter} The id of the item.
+        // @expandProperties: {String} Comma separated values with the properties to 
+        //                    expand in the REST query.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getItemById = function(id, expandProperties) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+            var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+            var query = {
+                $expand: defaultExpandProperties + (expandProperties ? ', ' + expandProperties : '')
+            };
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/getItemById(' + id + ')' + utils.parseQuery(query),
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }, 
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    var spListItem = new SPListItem(self, d);
+                    def.resolve(spListItem);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        }; // getItemById
+
+
+
+        // ****************************************************************************
+        // getItemQueryById
+        //
+        // Gets an item from the list by its ID. 
+        //
+        // @id: {Counter} The id of the item.
+        // @query: {String} The REST query after '.../getItemById(<id>)/'
+        //         e.g. If query parameter equals to 'Author/Name'
+        //              the final query will be '.../getItemById(<id>)/Author/Name'
+        //              and will return the 'Name' of the 'Author' of the item.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getItemQueryById = function(id, query) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/getItemById(' + id + ')/' + query.ltrim('/'),
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }, 
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    def.resolve(d);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        }; // getItemById
+
+
+
+        // ****************************************************************************
+        // createItem
+        //
+        // Creates an item in the list. 
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.createItem = function(properties) {
+
+            var self = this;
+            var def = $q.defer();
+
+
+            self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
+
+                var executor = new SP.RequestExecutor(self.web.url);
+
+
+                // Set the contents for the REST API call.
+                // ----------------------------------------------------------------------------
+                var body = {
+                    __metadata: {
+                        type: listItemEntityTypeFullName
+                    }
+                };
+
+                angular.extend(body, properties);
+
+
+                // Set the headers for the REST API call.
+                // ----------------------------------------------------------------------------
+                var headers = {
+                    "Accept": "application/json; odata=verbose",
+                    "content-type": "application/json;odata=verbose"
+                };
+
+                var requestDigest = document.getElementById('__REQUESTDIGEST');
+                // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+                // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+                if (requestDigest !== null) {
+                    headers['X-RequestDigest'] = requestDigest.value;
+                }
+
+
+                // Make the call.
+                // ----------------------------------------------------------------------------
+                executor.executeAsync({
+
+                    url: self.apiUrl + '/items',
+                    method: 'POST',
+                    body: angular.toJson(body),
+                    headers: headers, 
+
+                    success: function(data) {
+
+                        var d = utils.parseSPResponse(data);
+
+                        def.resolve(d);
+                    }, 
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+
+            });
 
 
             return def.promise;
 
-		}; // updateItem
+        }; // createItem
 
 
 
-		// ****************************************************************************
-		// deleteItem
-		//
-		// Removes an item from the list.
-		//
-		// @id: {counter} The ID of the item to delete.
-		// @returns: Promise with the result of the REST query.
-		//
-		SPListObj.prototype.deleteItem = function(id) {
+        // ****************************************************************************
+        // updateItem
+        //
+        // Creates an item in the list. 
+        //
+        // @id: {counter} The ID of the item to update.
+        // @properties: {Object} The item properties to update.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.updateItem = function(id, properties) {
 
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
-
-
-			// Set the headers for the REST API call.
-			// ----------------------------------------------------------------------------
-			var headers = {
-				"Accept": "application/json; odata=verbose",
-				"X-HTTP-Method": "DELETE",
-				"IF-MATCH": "*"
-			};
-
-			var requestDigest = document.getElementById('__REQUESTDIGEST');
-
-			if (requestDigest !== null) {
-				headers['X-RequestDigest'] = requestDigest.value;
-			}
+            var self = this;
+            var def = $q.defer();
 
 
-			// Make the call.
-			// ----------------------------------------------------------------------------				
-			executor.executeAsync({
+            self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
-				url: self.apiUrl + '/items(' + id + ')',
-				method: 'POST',
-				headers: headers,
+                var executor = new SP.RequestExecutor(self.web.url);
 
-				success: function(data) {
 
-					var d = utils.parseSPResponse(data);
+                // Set the contents for the REST API call.
+                // ----------------------------------------------------------------------------
+                var body = {
+                    __metadata: {
+                        type: listItemEntityTypeFullName
+                    }
+                };
 
-					def.resolve(d);
-				}, 
+                angular.extend(body, properties);
 
-				error: function(data, errorCode, errorMessage) {
 
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+                // Set the headers for the REST API call.
+                // ----------------------------------------------------------------------------
+                var headers = {
+                    "Accept": "application/json; odata=verbose",
+                    "content-type": "application/json;odata=verbose",
+                    "X-HTTP-Method": "MERGE",
+                    "IF-MATCH": "*" // Overwrite any changes in the item. 
+                                    // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
+                };
 
-					def.reject(err);
-				}
-			});
+                var requestDigest = document.getElementById('__REQUESTDIGEST');
+
+                if (requestDigest !== null) {
+                    headers['X-RequestDigest'] = requestDigest.value;
+                }
+
+
+                // Make the call.
+                // ----------------------------------------------------------------------------
+                executor.executeAsync({
+
+                    url: self.apiUrl + '/items(' + id + ')',
+                    method: 'POST',
+                    body: angular.toJson(body),
+                    headers: headers,
+
+                    success: function(data) {
+
+                        var d = utils.parseSPResponse(data);
+
+                        def.resolve(d);
+                    }, 
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+
+            });
 
 
             return def.promise;
 
-		}; // deleteItem
+        }; // updateItem
 
 
 
-		// Returns the SPListObj class
-		return SPListObj;
+        // ****************************************************************************
+        // deleteItem
+        //
+        // Removes an item from the list.
+        //
+        // @id: {counter} The ID of the item to delete.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.deleteItem = function(id) {
 
-	}
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+
+
+            // Set the headers for the REST API call.
+            // ----------------------------------------------------------------------------
+            var headers = {
+                "Accept": "application/json; odata=verbose",
+                "X-HTTP-Method": "DELETE",
+                "IF-MATCH": "*"
+            };
+
+            var requestDigest = document.getElementById('__REQUESTDIGEST');
+
+            if (requestDigest !== null) {
+                headers['X-RequestDigest'] = requestDigest.value;
+            }
+
+
+            // Make the call.
+            // ----------------------------------------------------------------------------             
+            executor.executeAsync({
+
+                url: self.apiUrl + '/items(' + id + ')',
+                method: 'POST',
+                headers: headers,
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+
+                    def.resolve(d);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+
+            return def.promise;
+
+        }; // deleteItem
+
+
+
+        // Returns the SPListObj class
+        return SPListObj;
+
+    }
 ]);
