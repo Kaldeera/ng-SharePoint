@@ -1105,8 +1105,8 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
 
         //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
-        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}/g;
-        //var PARTS_REGEXP = /\[([\w ]+)\]|\.([\w ]+)|/([\w ]+)/g;
+        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}(?!})/g; //-> Faster but less accurate
+        //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
         var PARTS_REGEXP = /[\[./]([\w )]+)/g;
 
 
@@ -1286,7 +1286,9 @@ angular.module('ngSharePoint').service('SPFieldDirective',
         // ****************************************************************************
         // Private functions
         //
+
         function defaultOnValidateFn() {
+
             // NOTE: Executed in the directive's '$scope' context (i.e.: this === $scope).
 
             // Update the model property '$viewValue' to change the model state to $dirty and
@@ -1296,6 +1298,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
         function defaultWatchValueFn(newValue, oldValue) {
+
             // NOTE: Executed in the directive $scope context.
 
             if (newValue === oldValue) return;
@@ -1392,11 +1395,13 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          */
         this.baseLinkFn = function($scope, $element, $attrs, controllers) {
 
+            // Directive definition object from 'spfield-xxx' directive.
             var directive = this;
 
             // Initialize some $scope properties.
             $scope.formCtrl = controllers[0];
             $scope.modelCtrl = controllers[1];
+            $scope.name = $attrs.name;
             $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
             $scope.item = $scope.formCtrl.getItem(); // Needed?
 
@@ -5218,48 +5223,95 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 //	SPFieldDescription
 ///////////////////////////////////////
 
-angular.module('ngSharePoint')
+angular.module('ngSharePoint').directive('spfieldDescription', 
 
-.directive('spfieldDescription', function spfieldDescription_DirectiveFactory() {
+	[
 
-	var spfieldDescription_DirectiveDefinitionObject = {
+	function spfieldDescription_DirectiveFactory() {
 
-		restrict: 'EA',
-		require: '^spform',
-		replace: true,
-		scope: {
-			mode: '@'
-		},
-		templateUrl: 'templates/form-templates/spfield-description.html',
+		var spfieldDescription_DirectiveDefinitionObject = {
 
 
-		link: function($scope, $element, $attrs, spformController) {
-
-			$scope.schema = spformController.getFieldSchema($attrs.name);
-
-
-
-			// ****************************************************************************
-			// Watch for form mode changes.
-			//
-			$scope.$watch(function() {
-
-				return $scope.mode || spformController.getFormMode();
-
-			}, function(newValue) {
-
-				$scope.currentMode = newValue;
-
-			});
-
-		} // link
-
-	}; // Directive definition object
+			restrict: 'EA',
+			require: '^spform',
+			replace: true,
+			scope: {
+				mode: '@'
+			},
+			templateUrl: 'templates/form-templates/spfield-description.html',
 
 
-	return spfieldDescription_DirectiveDefinitionObject;
-	
-}); // Directive factory
+			link: function($scope, $element, $attrs, spformController) {
+
+				$scope.schema = spformController.getFieldSchema($attrs.name);
+
+
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || spformController.getFormMode();
+
+				}, function(newValue) {
+
+					$scope.currentMode = newValue;
+
+				});
+
+			} // link
+
+		}; // Directive definition object
+
+
+		return spfieldDescription_DirectiveDefinitionObject;
+		
+	} // Directive factory
+
+]); 
+/*
+    SPFieldFocusElement - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPFieldFocusElement
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spfieldFocusElement', 
+
+    [
+
+    function spfieldFocusElement_DirectiveFactory() {
+
+        var spfieldFocusElement_DirectiveDefinitionObject = {
+
+            restrict: 'A',
+            require: '^spform',
+
+            link: function($scope, $element, $attrs, spformCtrl) {
+
+                spformCtrl.focusElements = spformCtrl.focusElements || [];
+                spformCtrl.focusElements.push({ name: $scope.name, element: $element });
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spfieldFocusElement_DirectiveDefinitionObject;
+        
+    } // Directive factory
+
+]);
 /*
 	SPFieldLabel - directive
 	
@@ -5276,62 +5328,66 @@ angular.module('ngSharePoint')
 //	SPFieldLabel
 ///////////////////////////////////////
 
-angular.module('ngSharePoint')
+angular.module('ngSharePoint').directive('spfieldLabel', 
 
-.directive('spfieldLabel', function spfieldLabel_DirectiveFactory() {
+	[
 
-	var spfieldLabel_DirectiveDefinitionObject = {
+	function spfieldLabel_DirectiveFactory() {
 
-		restrict: 'EA',
-		require: '^spform',
-		replace: true,
-		scope: {
-			mode: '@'
-		},
-		templateUrl: 'templates/form-templates/spfield-label.html',
+		var spfieldLabel_DirectiveDefinitionObject = {
 
-
-		link: function($scope, $element, $attrs, spformController) {
-
-			$scope.schema = spformController.getFieldSchema($attrs.name);
-
-			// Sets the field label
-			if ($attrs.label !== void 0) {
-
-				// Custom label
-				$scope.label = $attrs.label;
-
-			} else {
-
-				// Default label
-				// If no 'label' attribute specified assigns the 'Title' property from the field schema as label.
-				// NOTE: If field don't exists, assigns an empty label or code will crash when try to access the schema.
-				//	     As alternative could assign the 'name' attribute as label.
-				$scope.label = ($scope.schema ? $scope.schema.Title : '');
-			}
+			restrict: 'EA',
+			require: '^spform',
+			replace: true,
+			scope: {
+				mode: '@'
+			},
+			templateUrl: 'templates/form-templates/spfield-label.html',
 
 
-			// ****************************************************************************
-			// Watch for form mode changes.
-			//
-			$scope.$watch(function() {
+			link: function($scope, $element, $attrs, spformController) {
 
-				return $scope.mode || spformController.getFormMode();
+				$scope.schema = spformController.getFieldSchema($attrs.name);
 
-			}, function(newValue) {
+				// Sets the field label
+				if ($attrs.label !== void 0) {
 
-				$scope.currentMode = newValue;
+					// Custom label
+					$scope.label = $attrs.label;
 
-			});
+				} else {
 
-		} // link
+					// Default label
+					// If no 'label' attribute specified assigns the 'Title' property from the field schema as label.
+					// NOTE: If field don't exists, assigns an empty label or code will crash when try to access the schema.
+					//	     As alternative could assign the 'name' attribute as label.
+					$scope.label = ($scope.schema ? $scope.schema.Title : '');
+				}
 
-	}; // Directive definition object
+
+				// ****************************************************************************
+				// Watch for form mode changes.
+				//
+				$scope.$watch(function() {
+
+					return $scope.mode || spformController.getFormMode();
+
+				}, function(newValue) {
+
+					$scope.currentMode = newValue;
+
+				});
+
+			} // link
+
+		}; // Directive definition object
 
 
-	return spfieldLabel_DirectiveDefinitionObject;
+		return spfieldLabel_DirectiveDefinitionObject;
 	
-}); // Directive factory
+	} // Directive factory
+
+]);
 /*
 	SPFieldLookup - directive
 	
@@ -7231,7 +7287,7 @@ angular.module('ngSharePoint').directive('spfield',
 							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
 
-							cssClasses.push(valueAttr.trim());
+							cssClasses.push(valueAttr);
 
 							// Leave the 'class' attribute just in the main element (field wrapper) 
 							// and do not propagate the attribute to child elements.
@@ -7453,6 +7509,16 @@ angular.module('ngSharePoint').directive('spform',
                 onPreSave: '&',
                 onPostSave: '&',
                 onCancel: '&'
+                // NOTE: The functions 'onPreSave', 'onPostSave' and 'onCancel' must be 
+                //       function references (without parenthesis).
+                //       Using this technique allows us to pass the right argument values.
+                //
+                //       e.g. assigning the function directly (WRONG):
+                //              <spform ... on-pre-save="myOnPreSaveFn()" ... ></spform>
+                //
+                //       e.g. assigning the function reference (CORRECT):
+                //              <spform ... on-pre-save="myOnPreSaveFn" ... ></spform>
+                //
             },
             templateUrl: 'templates/form-templates/spform.html',
 
@@ -7580,6 +7646,36 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
+                this.setFieldFocus = function(fieldName) {
+
+                    // Set the focus in the field specified by @fieldName argument or, if not defined,
+                    // in the first invalid field found.
+
+                    for (var i = 0; i < this.focusElements.length; i++) {
+                        
+                        if (fieldName !== void 0) {
+
+                            // If argument @fieldName is defined, set the focus in the field specified (if found).
+                            if (this.focusElements[i].name === fieldName) {
+
+                                this.focusElements[i].element.focus();
+                                break;
+                            }
+
+                        } else {
+
+                            // If argument @fieldName is not defined, set the focus in the first invalid field.
+                            if (!$scope.ngFormCtrl[this.focusElements[i].name].$valid) {
+
+                                this.focusElements[i].element.focus();
+                                break;
+                            }
+                        }
+                    }
+
+                };
+
+
                 this.save = function(redirectUrl) {
 
                     var self = this;
@@ -7588,9 +7684,12 @@ angular.module('ngSharePoint').directive('spform',
 
                     if (!$scope.ngFormCtrl.$valid) {
 
-                        $scope.$broadcast('validate');
+                        $q.when($scope.$broadcast('validate')).then(function(result) {
 
-                        // TODO: Set the focus to the first invalid control (Try ng-focus directive).
+                            // Set the focus in the first invalid field.
+                            self.setFieldFocus();
+
+                        });
 
                         return;
                     }
@@ -7600,23 +7699,24 @@ angular.module('ngSharePoint').directive('spform',
                     // Shows the 'Working on it...' dialog.
                     var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
 
+
+                    // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onPreSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
+                        // If the 'onPreSave' function returns FALSE, cancels the save operation.
                         if (result !== false) {
 
                             $scope.item.save().then(function(data) {
 
                                 $scope.formStatus = this.status.IDLE;
 
+                                // Invoke 'onPostSave' function and pass the 'item' and the 'originalItem' as arguments.
                                 $q.when(($scope.onPostSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                                     if (result !== false) {
 
-                                        // TODO: Performs the 'post-save' action/s or redirect
-
                                         // Default 'post-save' action.
                                         self.closeForm(redirectUrl);
-
                                     }
 
                                     // Close the 'Working on it...' dialog.
@@ -7671,19 +7771,10 @@ angular.module('ngSharePoint').directive('spform',
 
 
                 this.cancel = function(redirectUrl) {
-/*
-                    $scope.item = angular.copy($scope.originalItem);
 
-                    if ($scope.onCancel({ item: $scope.item }) !== false) {
-
-                        // Performs the default 'cancel' action.
-                        this.closeForm(redirectUrl);
-
-                    }
-*/
-                    
                     var self = this;
 
+                    // Invoke 'onCancel' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                         if (result !== false) {

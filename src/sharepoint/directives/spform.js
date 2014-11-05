@@ -30,6 +30,16 @@ angular.module('ngSharePoint').directive('spform',
                 onPreSave: '&',
                 onPostSave: '&',
                 onCancel: '&'
+                // NOTE: The functions 'onPreSave', 'onPostSave' and 'onCancel' must be 
+                //       function references (without parenthesis).
+                //       Using this technique allows us to pass the right argument values.
+                //
+                //       e.g. assigning the function directly (WRONG):
+                //              <spform ... on-pre-save="myOnPreSaveFn()" ... ></spform>
+                //
+                //       e.g. assigning the function reference (CORRECT):
+                //              <spform ... on-pre-save="myOnPreSaveFn" ... ></spform>
+                //
             },
             templateUrl: 'templates/form-templates/spform.html',
 
@@ -157,6 +167,36 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
+                this.setFieldFocus = function(fieldName) {
+
+                    // Set the focus in the field specified by @fieldName argument or, if not defined,
+                    // in the first invalid field found.
+
+                    for (var i = 0; i < this.focusElements.length; i++) {
+                        
+                        if (fieldName !== void 0) {
+
+                            // If argument @fieldName is defined, set the focus in the field specified (if found).
+                            if (this.focusElements[i].name === fieldName) {
+
+                                this.focusElements[i].element.focus();
+                                break;
+                            }
+
+                        } else {
+
+                            // If argument @fieldName is not defined, set the focus in the first invalid field.
+                            if (!$scope.ngFormCtrl[this.focusElements[i].name].$valid) {
+
+                                this.focusElements[i].element.focus();
+                                break;
+                            }
+                        }
+                    }
+
+                };
+
+
                 this.save = function(redirectUrl) {
 
                     var self = this;
@@ -165,9 +205,12 @@ angular.module('ngSharePoint').directive('spform',
 
                     if (!$scope.ngFormCtrl.$valid) {
 
-                        $scope.$broadcast('validate');
+                        $q.when($scope.$broadcast('validate')).then(function(result) {
 
-                        // TODO: Set the focus to the first invalid control (Try ng-focus directive).
+                            // Set the focus in the first invalid field.
+                            self.setFieldFocus();
+
+                        });
 
                         return;
                     }
@@ -177,23 +220,24 @@ angular.module('ngSharePoint').directive('spform',
                     // Shows the 'Working on it...' dialog.
                     var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
 
+
+                    // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onPreSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
+                        // If the 'onPreSave' function returns FALSE, cancels the save operation.
                         if (result !== false) {
 
                             $scope.item.save().then(function(data) {
 
                                 $scope.formStatus = this.status.IDLE;
 
+                                // Invoke 'onPostSave' function and pass the 'item' and the 'originalItem' as arguments.
                                 $q.when(($scope.onPostSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                                     if (result !== false) {
 
-                                        // TODO: Performs the 'post-save' action/s or redirect
-
                                         // Default 'post-save' action.
                                         self.closeForm(redirectUrl);
-
                                     }
 
                                     // Close the 'Working on it...' dialog.
@@ -248,19 +292,10 @@ angular.module('ngSharePoint').directive('spform',
 
 
                 this.cancel = function(redirectUrl) {
-/*
-                    $scope.item = angular.copy($scope.originalItem);
 
-                    if ($scope.onCancel({ item: $scope.item }) !== false) {
-
-                        // Performs the default 'cancel' action.
-                        this.closeForm(redirectUrl);
-
-                    }
-*/
-                    
                     var self = this;
 
+                    // Invoke 'onCancel' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
 
                         if (result !== false) {

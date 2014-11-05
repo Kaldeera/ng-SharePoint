@@ -24,8 +24,8 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
 
         //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
-        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}/g;
-        //var PARTS_REGEXP = /\[([\w ]+)\]|\.([\w ]+)|/([\w ]+)/g;
+        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}(?!})/g; //-> Faster but less accurate
+        //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
         var PARTS_REGEXP = /[\[./]([\w )]+)/g;
 
 

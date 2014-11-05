@@ -23,7 +23,9 @@ angular.module('ngSharePoint').service('SPFieldDirective',
         // ****************************************************************************
         // Private functions
         //
+
         function defaultOnValidateFn() {
+
             // NOTE: Executed in the directive's '$scope' context (i.e.: this === $scope).
 
             // Update the model property '$viewValue' to change the model state to $dirty and
@@ -33,6 +35,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
         function defaultWatchValueFn(newValue, oldValue) {
+
             // NOTE: Executed in the directive $scope context.
 
             if (newValue === oldValue) return;
@@ -129,11 +132,13 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          */
         this.baseLinkFn = function($scope, $element, $attrs, controllers) {
 
+            // Directive definition object from 'spfield-xxx' directive.
             var directive = this;
 
             // Initialize some $scope properties.
             $scope.formCtrl = controllers[0];
             $scope.modelCtrl = controllers[1];
+            $scope.name = $attrs.name;
             $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
             $scope.item = $scope.formCtrl.getItem(); // Needed?
 
