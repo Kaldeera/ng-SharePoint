@@ -222,17 +222,35 @@ angular.module('ngSharePoint').factory('SPFolder',
 			var self = this;
 			var def = $q.defer();
 			var folderPath = self.ServerRelativeUrl + '/' + folderName;
-			var url = self.apiUrl + '/folders/add(\'' + folderPath + '\')';
+			var url = self.apiUrl + '/folders';
+
+			var headers = {
+				'Accept': 'application/json; odata=verbose',
+				"content-type": "application/json;odata=verbose"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
 
 			var executor = new SP.RequestExecutor(self.web.url);
+
+			// Set the contents for the REST API call.
+			// ----------------------------------------------------------------------------
+			var body = {
+				__metadata: {
+					type: 'SP.Folder'
+				},
+				ServerRelativeUrl: folderPath
+			};
 
 			executor.executeAsync({
 
 				url: url,
 				method: 'POST',
-				headers: {
-					'Accept': 'application/json; odata=verbose'
-				},
+				headers: headers,
+				body: angular.toJson(body),
 
 				success: function(data) {
 
