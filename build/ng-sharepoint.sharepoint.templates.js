@@ -115,7 +115,7 @@ angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["
     "		<tr>\n" +
     "			<td class=\"ms-dtinput\">\n" +
     "				<label for=\"{{idPrefix}}_$DateTimeFieldDate\" style=\"display:none\">{{STSHtmlEncode(StBuildParam(Strings.STS.L_DateTimeFieldDateLabel, schema.InternalName))}}</label>\n" +
-    "				<input type=\"text\" ng-model=\"dateOnlyModel\" maxlength=\"45\" id=\"{{idPrefix}}_$DateTimeFieldDate\" title=\"{{schema.Title}}\" class=\"ms-input\" autopostback=\"0\" />\n" +
+    "				<input type=\"text\" ng-model=\"dateOnlyModel\" data-spfield-focus-element=\"true\" maxlength=\"45\" id=\"{{idPrefix}}_$DateTimeFieldDate\" title=\"{{schema.Title}}\" class=\"ms-input\" autopostback=\"0\" />\n" +
     "			</td>\n" +
     "			<td class=\"ms-dtinput\">\n" +
     "				<a href=\"\" ng-click=\"showDatePicker($event)\">\n" +
@@ -154,7 +154,7 @@ angular.module("templates/form-templates/spfield-lookup-display.html", []).run([
 
 angular.module("templates/form-templates/spfield-lookup-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-edit.html",
-    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
+    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" data-spfield-focus-element=\"true\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
 
@@ -169,7 +169,7 @@ angular.module("templates/form-templates/spfield-lookupmulti-edit.html", []).run
     "	<tbody>\n" +
     "		<tr>\n" +
     "			<td class=\"ms-input\">\n" +
-    "				<select id=\"{{idPrefix}}_SelectCandidate\" ng-model=\"selectedCandidateItems\" ng-options=\"item as item.name for item in candidateItems | orderBy:'name'\" multiple=\"multiple\" title=\"{{candidateAltText}}\" style=\"width:143px; height:125px; overflow:scroll;\" ng-focus=\"selectedResultItems = []\" ng-dblclick=\"addItems()\"></select>\n" +
+    "				<select id=\"{{idPrefix}}_SelectCandidate\" ng-model=\"selectedCandidateItems\" data-spfield-focus-element=\"true\" ng-options=\"item as item.name for item in candidateItems | orderBy:'name'\" multiple=\"multiple\" title=\"{{candidateAltText}}\" style=\"width:143px; height:125px; overflow:scroll;\" ng-focus=\"selectedResultItems = []\" ng-dblclick=\"addItems()\"></select>\n" +
     "			</td>\n" +
     "			<td style=\"padding-left:10px\"></td>\n" +
     "			<td align=\"center\" valign=\"middle\" class=\"ms-input ms-noWrap\">\n" +
@@ -218,7 +218,7 @@ angular.module("templates/form-templates/spfield-note-display.html", []).run(["$
 angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-note-edit.html",
     "<span dir=\"ltr\">\n" +
-    "	<textarea ng-model=\"value\" data-spfield-focus-element=\"true\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\" style=\"width: 100%\"></textarea>\n" +
+    "	<textarea ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\"></textarea>\n" +
     "</span>\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
@@ -248,7 +248,7 @@ angular.module("templates/form-templates/spfield-text-display.html", []).run(["$
 
 angular.module("templates/form-templates/spfield-text-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-text-edit.html",
-    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-long ms-spellcheck-true\" style=\"width: 100%\" />\n" +
+    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-long ms-spellcheck-true\" />\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");

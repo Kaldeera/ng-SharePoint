@@ -1435,7 +1435,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     $element.html(html);
                     $compile($element)($scope);
                 }
-
             };
 
 
@@ -1456,6 +1455,25 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
                 });
+            };
+
+
+
+            // ****************************************************************************
+            // Sets the field validity only when in 'edit' mode.
+            //
+            // @validator: String with the validator name.
+            // @isValid: Boolean value indicating if the validator is valid or not.
+            //
+            // IMPORTANT: Use this function in custom 'parserFn' to set field validities instead
+            //            to call directly to '$scope.modelCtrl.$setValidity' method.
+            //
+            directive.setValidity = function(validator, isValid) {
+
+                if ($scope.currentMode === 'edit') {
+
+                    $scope.modelCtrl.$setValidity(validator, isValid);
+                }
             };
 
 
@@ -4789,6 +4807,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					switch(schema.TypeAsString) {
 
 						case 'Text':
+						case 'Note':
 							validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
 							break;
 					}
@@ -4797,6 +4816,12 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					// Check for 'render-as' attribute
 					if ($attrs.renderAs) {
 						fieldType = $attrs.renderAs;
+					}
+
+
+					// Check for 'require' attribute (Force required)
+					if ($attrs.required) {
+						schema.Required = $attrs.required == 'true';
 					}
 					
 
@@ -4881,8 +4906,9 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					parserFn: function(viewValue) {
 						
+
 						// Number validity
-						$scope.modelCtrl.$setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
+						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
 
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
 
@@ -5295,12 +5321,14 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
         var spfieldFocusElement_DirectiveDefinitionObject = {
 
             restrict: 'A',
-            require: '^spform',
 
-            link: function($scope, $element, $attrs, spformCtrl) {
+            link: function($scope, $element, $attrs) {
 
-                spformCtrl.focusElements = spformCtrl.focusElements || [];
-                spformCtrl.focusElements.push({ name: $scope.name, element: $element });
+                if ($scope.formCtrl) {
+
+                    $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
+                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+                }
 
             } // link
 
@@ -5834,7 +5862,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					
 					parserFn: function(viewValue) {
 
-						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 						
 						return viewValue;
 					},
@@ -6284,7 +6312,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 					parserFn: function(viewValue) {
 
-						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+						directive.setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
 
 						return viewValue;
 					}
@@ -6453,7 +6481,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 					parserFn: function(viewValue) {
 						
 						// Number validity
-						$scope.modelCtrl.$setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
+						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
 
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
 
@@ -6642,11 +6670,11 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 					parserFn: function(viewValue) {
 						
 						// Required validity
-						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
+						directive.setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
 						
 						// Url validity
 						var validUrlRegExp = new RegExp('^http://');
-						$scope.modelCtrl.$setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
+						directive.setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
 						
 						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
 
@@ -6719,15 +6747,19 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						if ($scope.schema.AllowMultipleValues) {
 
-							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+							directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
 						} else {
 
-							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
+							//directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
 							// NOTE: Required validator is implicitly applied when no multiple values.
 
-							// Unique validity (Only one value is allowed)
-							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
+							// Checks for 'peoplePicker' due to when in 'display' mode it's not created.
+							if ($scope.peoplePicker) {
+								
+								// Unique validity (Only one value is allowed)
+								directive.setValidity('unique', $scope.peoplePicker.TotalUserCount <= 1);
+							}
 						}
 
 						return viewValue;
@@ -7648,8 +7680,14 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.setFieldFocus = function(fieldName) {
 
+                    var fieldFocused = false;
+
+                    // Ensure 'focusElements' array.
+                    this.focusElements = this.focusElements || [];
+
                     // Set the focus in the field specified by @fieldName argument or, if not defined,
-                    // in the first invalid field found.
+                    // in the first invalid field found or, if there are no invalid fields, in
+                    // the first field.
 
                     for (var i = 0; i < this.focusElements.length; i++) {
                         
@@ -7659,29 +7697,73 @@ angular.module('ngSharePoint').directive('spform',
                             if (this.focusElements[i].name === fieldName) {
 
                                 this.focusElements[i].element.focus();
+                                fieldFocused = true;
                                 break;
                             }
 
                         } else {
 
                             // If argument @fieldName is not defined, set the focus in the first invalid field.
-                            if (!$scope.ngFormCtrl[this.focusElements[i].name].$valid) {
+                            if ($scope.ngFormCtrl[this.focusElements[i].name].$invalid) {
 
                                 this.focusElements[i].element.focus();
+                                fieldFocused = true;
                                 break;
                             }
                         }
                     }
 
+                    if (!fieldFocused && this.focusElements.length > 0) {
+
+                        this.focusElements[0].element.focus();
+                    }
+
                 };
 
 
-                this.save = function(redirectUrl) {
+
+                this.save = function(options) {
 
                     var self = this;
+                    var dlg;
 
+
+                    function closeDialog() {
+                        if (dlg) dlg.close();
+                    }
+
+
+                    // Process @options argument.
+                    // If is a string, assumes the value as the redirect url to use after the save operation.
+                    // Otherwise, process as an object with the next properties:
+                    //
+                    //      redirectUrl:    The url to redirect after the save operation. Default is undefined.
+                    //      force:          Indicates that must perform the save operation even if the form is not valid.
+                    //                      Default is FALSE.
+                    //      silent:         Indicates that runs in 'silent' mode, i.e., don't show the 'Working on it...' dialog.
+                    //                      Default is FALSE.
+                    //
+                    // NOTE: This options are unavailable when use the built-in toolbar which uses the default options.
+                    //
+                    if (angular.isString(options)) {
+
+                        options = {
+                            redirectUrl: options
+                        };
+
+                    } else {
+
+                        // If @options is not an object, initializes it as an object.
+                        if (!angular.isObject(options) || angular.isArray(options)) {
+
+                            options = {};
+                        }
+                    }
+
+                    // Change the form to a 'dirty' state.
                     $scope.ngFormCtrl.$setDirty();
 
+                    // Check the form validity broadcasting a 'validate' event to all the fields.
                     if (!$scope.ngFormCtrl.$valid) {
 
                         $q.when($scope.$broadcast('validate')).then(function(result) {
@@ -7691,13 +7773,15 @@ angular.module('ngSharePoint').directive('spform',
 
                         });
 
-                        return;
+                        if (options.force !== true) return;
                     }
 
                     $scope.formStatus = this.status.PROCESSING;
 
                     // Shows the 'Working on it...' dialog.
-                    var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+                    if (options.silent !== true) {
+                        dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+                    }
 
 
                     // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
@@ -7716,15 +7800,16 @@ angular.module('ngSharePoint').directive('spform',
                                     if (result !== false) {
 
                                         // Default 'post-save' action.
-                                        self.closeForm(redirectUrl);
+                                        self.closeForm(options.redirectUrl);
                                     }
 
                                     // Close the 'Working on it...' dialog.
-                                    dlg.close();
+                                    closeDialog();
+                                    $scope.formStatus = this.status.IDLE;
                                     
                                 }, function() {
 
-                                    dlg.close();
+                                    closeDialog();
                                     $scope.formStatus = this.status.IDLE;
                                     
                                 });
@@ -7733,7 +7818,7 @@ angular.module('ngSharePoint').directive('spform',
 
                                 console.error(err);
 
-                                dlg.close();
+                                closeDialog();
 
                                 var dom = document.createElement('div');
                                 dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
@@ -7755,13 +7840,13 @@ angular.module('ngSharePoint').directive('spform',
                         } else {
 
                             console.log('>>>> Save form was canceled!');
-                            dlg.close();
+                            closeDialog();
                             $scope.formStatus = this.status.IDLE;
                         }
                         
                     }, function() {
 
-                        dlg.close();
+                        closeDialog();
                         $scope.formStatus = this.status.IDLE;
 
                     });
@@ -7891,6 +7976,8 @@ angular.module('ngSharePoint').directive('spform',
 
                         function loadItemTemplate() {
                             
+                            if ($scope.formStatus === spformController.status.PROCESSING) return;
+
                             $scope.formStatus = spformController.status.PROCESSING;
 
                             // Search for the 'transclusion-container' attribute in the 'spform' template elements.
@@ -7934,7 +8021,7 @@ angular.module('ngSharePoint').directive('spform',
                             } else {
 
                                 // Apply transclusion
-                                transcludeFn($scope, function (clone) {
+                                transcludeFn($scope, function(clone) {
                                     
                                     parseRules(transclusionContainer, clone, true).then(function() {
 

@@ -23,12 +23,14 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
         var spfieldFocusElement_DirectiveDefinitionObject = {
 
             restrict: 'A',
-            require: '^spform',
 
-            link: function($scope, $element, $attrs, spformCtrl) {
+            link: function($scope, $element, $attrs) {
 
-                spformCtrl.focusElements = spformCtrl.focusElements || [];
-                spformCtrl.focusElements.push({ name: $scope.name, element: $element });
+                if ($scope.formCtrl) {
+
+                    $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
+                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+                }
 
             } // link
 

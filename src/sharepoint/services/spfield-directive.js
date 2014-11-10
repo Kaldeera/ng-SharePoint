@@ -172,7 +172,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     $element.html(html);
                     $compile($element)($scope);
                 }
-
             };
 
 
@@ -193,6 +192,25 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
                 });
+            };
+
+
+
+            // ****************************************************************************
+            // Sets the field validity only when in 'edit' mode.
+            //
+            // @validator: String with the validator name.
+            // @isValid: Boolean value indicating if the validator is valid or not.
+            //
+            // IMPORTANT: Use this function in custom 'parserFn' to set field validities instead
+            //            to call directly to '$scope.modelCtrl.$setValidity' method.
+            //
+            directive.setValidity = function(validator, isValid) {
+
+                if ($scope.currentMode === 'edit') {
+
+                    $scope.modelCtrl.$setValidity(validator, isValid);
+                }
             };
 
 

@@ -3,7 +3,7 @@
 		<tr>
 			<td class="ms-dtinput">
 				<label for="{{idPrefix}}_$DateTimeFieldDate" style="display:none">{{STSHtmlEncode(StBuildParam(Strings.STS.L_DateTimeFieldDateLabel, schema.InternalName))}}</label>
-				<input type="text" ng-model="dateOnlyModel" maxlength="45" id="{{idPrefix}}_$DateTimeFieldDate" title="{{schema.Title}}" class="ms-input" autopostback="0" />
+				<input type="text" ng-model="dateOnlyModel" data-spfield-focus-element="true" maxlength="45" id="{{idPrefix}}_$DateTimeFieldDate" title="{{schema.Title}}" class="ms-input" autopostback="0" />
 			</td>
 			<td class="ms-dtinput">
 				<a href="" ng-click="showDatePicker($event)">

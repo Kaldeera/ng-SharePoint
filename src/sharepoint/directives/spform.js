@@ -169,8 +169,14 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.setFieldFocus = function(fieldName) {
 
+                    var fieldFocused = false;
+
+                    // Ensure 'focusElements' array.
+                    this.focusElements = this.focusElements || [];
+
                     // Set the focus in the field specified by @fieldName argument or, if not defined,
-                    // in the first invalid field found.
+                    // in the first invalid field found or, if there are no invalid fields, in
+                    // the first field.
 
                     for (var i = 0; i < this.focusElements.length; i++) {
                         
@@ -180,29 +186,73 @@ angular.module('ngSharePoint').directive('spform',
                             if (this.focusElements[i].name === fieldName) {
 
                                 this.focusElements[i].element.focus();
+                                fieldFocused = true;
                                 break;
                             }
 
                         } else {
 
                             // If argument @fieldName is not defined, set the focus in the first invalid field.
-                            if (!$scope.ngFormCtrl[this.focusElements[i].name].$valid) {
+                            if ($scope.ngFormCtrl[this.focusElements[i].name].$invalid) {
 
                                 this.focusElements[i].element.focus();
+                                fieldFocused = true;
                                 break;
                             }
                         }
                     }
 
+                    if (!fieldFocused && this.focusElements.length > 0) {
+
+                        this.focusElements[0].element.focus();
+                    }
+
                 };
 
 
-                this.save = function(redirectUrl) {
+
+                this.save = function(options) {
 
                     var self = this;
+                    var dlg;
 
+
+                    function closeDialog() {
+                        if (dlg) dlg.close();
+                    }
+
+
+                    // Process @options argument.
+                    // If is a string, assumes the value as the redirect url to use after the save operation.
+                    // Otherwise, process as an object with the next properties:
+                    //
+                    //      redirectUrl:    The url to redirect after the save operation. Default is undefined.
+                    //      force:          Indicates that must perform the save operation even if the form is not valid.
+                    //                      Default is FALSE.
+                    //      silent:         Indicates that runs in 'silent' mode, i.e., don't show the 'Working on it...' dialog.
+                    //                      Default is FALSE.
+                    //
+                    // NOTE: This options are unavailable when use the built-in toolbar which uses the default options.
+                    //
+                    if (angular.isString(options)) {
+
+                        options = {
+                            redirectUrl: options
+                        };
+
+                    } else {
+
+                        // If @options is not an object, initializes it as an object.
+                        if (!angular.isObject(options) || angular.isArray(options)) {
+
+                            options = {};
+                        }
+                    }
+
+                    // Change the form to a 'dirty' state.
                     $scope.ngFormCtrl.$setDirty();
 
+                    // Check the form validity broadcasting a 'validate' event to all the fields.
                     if (!$scope.ngFormCtrl.$valid) {
 
                         $q.when($scope.$broadcast('validate')).then(function(result) {
@@ -212,13 +262,15 @@ angular.module('ngSharePoint').directive('spform',
 
                         });
 
-                        return;
+                        if (options.force !== true) return;
                     }
 
                     $scope.formStatus = this.status.PROCESSING;
 
                     // Shows the 'Working on it...' dialog.
-                    var dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+                    if (options.silent !== true) {
+                        dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+                    }
 
 
                     // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
@@ -237,15 +289,16 @@ angular.module('ngSharePoint').directive('spform',
                                     if (result !== false) {
 
                                         // Default 'post-save' action.
-                                        self.closeForm(redirectUrl);
+                                        self.closeForm(options.redirectUrl);
                                     }
 
                                     // Close the 'Working on it...' dialog.
-                                    dlg.close();
+                                    closeDialog();
+                                    $scope.formStatus = this.status.IDLE;
                                     
                                 }, function() {
 
-                                    dlg.close();
+                                    closeDialog();
                                     $scope.formStatus = this.status.IDLE;
                                     
                                 });
@@ -254,7 +307,7 @@ angular.module('ngSharePoint').directive('spform',
 
                                 console.error(err);
 
-                                dlg.close();
+                                closeDialog();
 
                                 var dom = document.createElement('div');
                                 dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
@@ -276,13 +329,13 @@ angular.module('ngSharePoint').directive('spform',
                         } else {
 
                             console.log('>>>> Save form was canceled!');
-                            dlg.close();
+                            closeDialog();
                             $scope.formStatus = this.status.IDLE;
                         }
                         
                     }, function() {
 
-                        dlg.close();
+                        closeDialog();
                         $scope.formStatus = this.status.IDLE;
 
                     });
@@ -412,6 +465,8 @@ angular.module('ngSharePoint').directive('spform',
 
                         function loadItemTemplate() {
                             
+                            if ($scope.formStatus === spformController.status.PROCESSING) return;
+
                             $scope.formStatus = spformController.status.PROCESSING;
 
                             // Search for the 'transclusion-container' attribute in the 'spform' template elements.
@@ -455,7 +510,7 @@ angular.module('ngSharePoint').directive('spform',
                             } else {
 
                                 // Apply transclusion
-                                transcludeFn($scope, function (clone) {
+                                transcludeFn($scope, function(clone) {
                                     
                                     parseRules(transclusionContainer, clone, true).then(function() {
 
