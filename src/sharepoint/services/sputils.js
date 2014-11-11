@@ -61,7 +61,7 @@ angular.module('ngSharePoint').factory('SPUtils',
                         loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 
                         // Shows current SPconfig settings.
-//                      console.info(SPConfig.options);
+                        // console.info(SPConfig.options);
 
 
                         if (SPConfig.options.loadMinimalSharePointInfraestructure === false) {
@@ -298,6 +298,34 @@ angular.module('ngSharePoint').factory('SPUtils',
                 return deferred.promise;
             },
 
+
+            refreshDigestValue: function() {
+
+                var self = this;
+                var deferred = $q.defer();
+
+                $http({
+
+                    url: _spPageContextInfo.webAbsoluteUrl + "/_api/contextinfo",
+                    method: "POST",
+                    headers: { "Accept": "application/json; odata=verbose"}
+
+                }).then(function (data) {
+
+                    var requestDigest = document.getElementById('__REQUESTDIGEST');
+                    if (requestDigest !== null) {
+                        requestDigest.value = data.data.d.GetContextWebInformation.FormDigestValue;
+                    }
+
+                    deferred.resolve(data.data.d.GetContextWebInformation.FormDigestValue);
+
+                }, function (data) {
+                    console.log(data.data);
+                    deferred.reject(data.data);
+                });
+
+                return deferred.promise;
+            },
 
             // TODA ESTA FUNCIONALIDAD DEBE ESTAR DENTRO DE UN SERVICIO SPUser (o algo asi)
             // O en todo caso, la llamada a getCurrentUser debe ser del SPWeb!!!
