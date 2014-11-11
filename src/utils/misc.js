@@ -236,6 +236,16 @@ var utils = {
 			if (d.results) {
 				d = d.results;
 			}
+
+			// If a new REQUESTDIGEST value was received in the last server call,
+			// update the __REQUESTDIGEST form control with the new value.
+			if (response.headers['X-REQUESTDIGEST']) {
+
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+				if (requestDigest !== null) {
+					requestDigest.value = response.headers['X-REQUESTDIGEST'];
+				}
+			}
 		}
 
 		return d;
