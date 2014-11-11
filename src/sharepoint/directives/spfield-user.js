@@ -50,15 +50,19 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						if ($scope.schema.AllowMultipleValues) {
 
-							$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+							directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
 
 						} else {
 
-							//$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || !!$scope.value);
+							//directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
 							// NOTE: Required validator is implicitly applied when no multiple values.
 
-							// Unique validity (Only one value is allowed)
-							$scope.modelCtrl.$setValidity('unique', $scope.peoplePicker.TotalUserCount == 1);
+							// Checks for 'peoplePicker' due to when in 'display' mode it's not created.
+							if ($scope.peoplePicker) {
+								
+								// Unique validity (Only one value is allowed)
+								directive.setValidity('unique', $scope.peoplePicker.TotalUserCount <= 1);
+							}
 						}
 
 						return viewValue;

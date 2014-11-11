@@ -1,5 +1,5 @@
 <span dir="ltr">
-	<textarea ng-model="value" ng-required="{{schema.Required}}" rows="{{schema.NumberOfLines}}" cols="20" title="{{schema.Title}}" class="ms-long" style="width: 100%"></textarea>
+	<textarea ng-model="value" data-spfield-focus-element="true" maxlength="{{schema.MaxLength}}" ng-maxlength="{{schema.MaxLength}}" ng-required="{{schema.Required}}" rows="{{schema.NumberOfLines}}" cols="20" title="{{schema.Title}}" class="ms-long"></textarea>
 </span>
 <br/>
 <spfield-validation-messages></spfield-validation-messages>

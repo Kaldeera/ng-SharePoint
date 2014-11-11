@@ -53,7 +53,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 					parserFn: function(viewValue) {
 
-						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
+						directive.setValidity('required', !$scope.schema.Required || $scope.choices.length > 0);
 
 						return viewValue;
 					}

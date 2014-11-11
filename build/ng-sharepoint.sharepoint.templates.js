@@ -61,7 +61,7 @@ angular.module("templates/form-templates/spfield-choice-edit.html", []).run(["$t
   $templateCache.put("templates/form-templates/spfield-choice-edit.html",
     "<div ng-switch=\"schema.EditFormat\">\n" +
     "\n" +
-    "	<select ng-switch-when=\"0\" ng-model=\"$parent.value\" ng-options=\"option for option in choices\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-RadioText\" ></select>\n" +
+    "	<select ng-switch-when=\"0\" ng-model=\"$parent.value\" data-spfield-focus-element=\"true\" ng-options=\"option for option in choices\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-RadioText\" ></select>\n" +
     "\n" +
     "	<table ng-switch-when=\"1\" cellpadding=\"0\" cellspacing=\"1\">\n" +
     "		<tbody>\n" +
@@ -97,7 +97,7 @@ angular.module("templates/form-templates/spfield-currency-display.html", []).run
 
 angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-edit.html",
-    "<input type=\"text\" ng-model=\"value\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
+    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
     "<span>&nbsp;{{cultureInfo.numberFormat.CurrencySymbol}}</span>\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
@@ -115,7 +115,7 @@ angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["
     "		<tr>\n" +
     "			<td class=\"ms-dtinput\">\n" +
     "				<label for=\"{{idPrefix}}_$DateTimeFieldDate\" style=\"display:none\">{{STSHtmlEncode(StBuildParam(Strings.STS.L_DateTimeFieldDateLabel, schema.InternalName))}}</label>\n" +
-    "				<input type=\"text\" ng-model=\"dateOnlyModel\" maxlength=\"45\" id=\"{{idPrefix}}_$DateTimeFieldDate\" title=\"{{schema.Title}}\" class=\"ms-input\" autopostback=\"0\" />\n" +
+    "				<input type=\"text\" ng-model=\"dateOnlyModel\" data-spfield-focus-element=\"true\" maxlength=\"45\" id=\"{{idPrefix}}_$DateTimeFieldDate\" title=\"{{schema.Title}}\" class=\"ms-input\" autopostback=\"0\" />\n" +
     "			</td>\n" +
     "			<td class=\"ms-dtinput\">\n" +
     "				<a href=\"\" ng-click=\"showDatePicker($event)\">\n" +
@@ -154,7 +154,7 @@ angular.module("templates/form-templates/spfield-lookup-display.html", []).run([
 
 angular.module("templates/form-templates/spfield-lookup-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-edit.html",
-    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
+    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" data-spfield-focus-element=\"true\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
 
@@ -169,7 +169,7 @@ angular.module("templates/form-templates/spfield-lookupmulti-edit.html", []).run
     "	<tbody>\n" +
     "		<tr>\n" +
     "			<td class=\"ms-input\">\n" +
-    "				<select id=\"{{idPrefix}}_SelectCandidate\" ng-model=\"selectedCandidateItems\" ng-options=\"item as item.name for item in candidateItems | orderBy:'name'\" multiple=\"multiple\" title=\"{{candidateAltText}}\" style=\"width:143px; height:125px; overflow:scroll;\" ng-focus=\"selectedResultItems = []\" ng-dblclick=\"addItems()\"></select>\n" +
+    "				<select id=\"{{idPrefix}}_SelectCandidate\" ng-model=\"selectedCandidateItems\" data-spfield-focus-element=\"true\" ng-options=\"item as item.name for item in candidateItems | orderBy:'name'\" multiple=\"multiple\" title=\"{{candidateAltText}}\" style=\"width:143px; height:125px; overflow:scroll;\" ng-focus=\"selectedResultItems = []\" ng-dblclick=\"addItems()\"></select>\n" +
     "			</td>\n" +
     "			<td style=\"padding-left:10px\"></td>\n" +
     "			<td align=\"center\" valign=\"middle\" class=\"ms-input ms-noWrap\">\n" +
@@ -218,14 +218,14 @@ angular.module("templates/form-templates/spfield-note-display.html", []).run(["$
 angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-note-edit.html",
     "<span dir=\"ltr\">\n" +
-    "	<textarea ng-model=\"value\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\" style=\"width: 100%\"></textarea>\n" +
+    "	<textarea ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\"></textarea>\n" +
     "</span>\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "<div class=\"ms-formdescription\" ng-if=\"schema.RichText && currentMode == 'edit'\">\n" +
     "    <a href=\"javascript:HelpWindowKey('nsrichtext')\">Click for help about adding basic HTML formatting.</a>\n" +
     "</div>\n" +
-    "<!--<br ng-if=\"schema.RichText\" />-->");
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-number-display.html", []).run(["$templateCache", function($templateCache) {
@@ -235,12 +235,8 @@ angular.module("templates/form-templates/spfield-number-display.html", []).run([
 
 angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-edit.html",
-<<<<<<< HEAD
-    "<input type=\"text\" ng-model=\"value\" sp-number=\"true\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" /><span ng-if=\"schema.Percentage\">{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
-=======
-    "<input type=\"text\" ng-model=\"value\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
+    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
     "<span ng-if=\"schema.Percentage\">&nbsp;{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
->>>>>>> origin/PCASME
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>");
 }]);
@@ -252,7 +248,7 @@ angular.module("templates/form-templates/spfield-text-display.html", []).run(["$
 
 angular.module("templates/form-templates/spfield-text-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-text-edit.html",
-    "<input type=\"text\" ng-model=\"value\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-long ms-spellcheck-true\" style=\"width: 100%\" />\n" +
+    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-long ms-spellcheck-true\" />\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");
@@ -270,7 +266,7 @@ angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$temp
   $templateCache.put("templates/form-templates/spfield-url-edit.html",
     "<div>\n" +
     "	<div class=\"ms-formdescription\">{{UrlFieldTypeText}}&nbsp;(<a id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlControlId\" href=\"javascript:TestURL('{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl')\" target=\"_self\">{{UrlFieldClickText}}</a>)</div>\n" +
-    "	<input dir=\"ltr\" type=\"text\" ng-model=\"value.Url\" ng-required=\"{{schema.Required}}\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl\" title=\"{{schema.Title}}\" class=\"ms-long\">\n" +
+    "	<input dir=\"ltr\" type=\"text\" ng-model=\"value.Url\" data-spfield-focus-element=\"true\" ng-required=\"{{schema.Required}}\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl\" title=\"{{schema.Title}}\" class=\"ms-long\">\n" +
     "	<div class=\"ms-formdescription\">{{UrlFieldTypeDescription}}&nbsp;</div>\n" +
     "	<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" ng-model=\"value.Description\" class=\"ms-long\">\n" +
     "	<input type=\"text\" ng-model=\"value.Description\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" class=\"ms-long\">\n" +
@@ -281,24 +277,8 @@ angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$temp
 angular.module("templates/form-templates/spfield-user-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-user-display.html",
     "<div>\n" +
-    "	\n" +
     "	<div class=\"ms-vb\" ng-repeat=\"item in selectedUserItems\">\n" +
     "		<nobr ng-if=\"schema.LookupField == 'ImnName' && item.Title != ''\">\n" +
-    "			<!--\n" +
-    "			<span class=\"ms-imnSpan\">\n" +
-    "				<a href=\"#\" onclick=\"IMNImageOnClick(event); return false;\" class=\"ms-imnlink ms-spimn-presenceLink\" tabindex=\"-1\">\n" +
-    "					<span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
-    "						<img title=\"\" alt=\"No presence information\" name=\"imnmark\" class=\"ms-spimn-img ms-spimn-presence-disconnected-10x10x32\" showofflinepawn=\"1\" src=\"/_layouts/15/images/spimn.png\" sip=\"\" id=\"imn0,type=sip\" />\n" +
-    "					</span>\n" +
-    "				</a>\n" +
-    "			</span>\n" +
-    "			<span class=\"ms-noWrap ms-imnSpan\">\n" +
-    "				<a href=\"#\" onclick=\"IMNImageOnClick(event); return false;\" class=\"ms-imnlink\" tabindex=\"-1\">\n" +
-    "					<img title=\"\" alt=\"No presence information\" name=\"imnmark\" class=\"ms-hide\" showofflinepawn=\"1\" src=\"/_layouts/15/images/spimn.png\" sip=\"\" id=\"imn1,type=sip\"/>\n" +
-    "				</a>\n" +
-    "				<a onclick=\"GoToLinkOrDialogNewWindow(this); return false;\" class=\"ms-peopleux-userdisplink ms-subtleLink\" href=\"/_layouts/15/listform.aspx?PageType=4&amp;ListId={a12cca6c-a92e-495a-80ce-66f110b74735}&amp;ID=8\">SP2013-01\\pau</a>\n" +
-    "			</span>\n" +
-    "			-->\n" +
     "			<span class=\"ms-imnSpan\">\n" +
     "				<a href=\"\" ng-click=\"IMNImageOnClick($event)\" class=\"ms-imnlink ms-spimn-presenceLink\" tabindex=\"-1\">\n" +
     "					<span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
@@ -318,7 +298,6 @@ angular.module("templates/form-templates/spfield-user-display.html", []).run(["$
     "	<div ng-if=\"schema.LookupField != 'ImnName'\">\n" +
     "		<span ng-repeat=\"item in selectedUserItems\"><a ng-href=\"{{item.url}}\" ng-bind=\"item.Title\"></a>{{!$last ? '; ' : ''}}</span>\n" +
     "	</div>\n" +
-    "\n" +
     "</div>");
 }]);
 
@@ -349,17 +328,6 @@ angular.module("templates/form-templates/spfield.html", []).run(["$templateCache
     "        <spfield-description {{attributes}}></spfield-description>\n" +
     "    </div>\n" +
     "</div>\n" +
-    "<!--\n" +
-    "<tr>\n" +
-    "	<td nowrap=\"true\" valign=\"top\" width=\"113px\" class=\"ms-formlabel\">\n" +
-    "        <spfield-label {{attributes}}></spfield-label>\n" +
-    "	</td>\n" +
-    "	<td valign=\"top\" width=\"350px\" class=\"ms-formbody\">\n" +
-    "        <spfield-control {{attributes}}></spfield-control>\n" +
-    "        <spfield-description {{attributes}}></spfield-description>\n" +
-    "	</td>\n" +
-    "</tr>\n" +
-    "-->\n" +
     "");
 }]);
 
@@ -367,7 +335,7 @@ angular.module("templates/form-templates/spform-default.html", []).run(["$templa
   $templateCache.put("templates/form-templates/spform-default.html",
     "<div ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></div>\n" +
     "<spform-toolbar></spform-toolbar>\n" +
-    "<!--<tr ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></tr>-->");
+    "");
 }]);
 
 angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templateCache", function($templateCache) {
@@ -587,23 +555,7 @@ angular.module("templates/form-templates/spform.html", []).run(["$templateCache"
   $templateCache.put("templates/form-templates/spform.html",
     "<form novalidate=\"true\">\n" +
     "    <div id=\"form-loading-animation-wrapper-{{$id}}\" ng-show=\"!isInDesignMode\"><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>\n" +
-    "    <table class=\"ms-formtable\" style=\"margin-top: 8px;\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" +
-    "        <tbody transclude-fields>\n" +
-    "        </tbody>\n" +
-    "    </table>\n" +
-    "\n" +
-    "    <spform-toolbar></spform-toolbar>\n" +
-    "\n" +
     "    <div transclusion-container=\"\"></div>\n" +
-    "\n" +
-    "<!--\n" +
-    "    <table class=\"ms-formtable\" style=\"margin-top: 8px;\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" +
-    "        <tbody transclude-fields>\n" +
-    "        </tbody>\n" +
-    "    </table>\n" +
-    "\n" +
-    "    <spform-toolbar></spform-toolbar>\n" +
-    "-->\n" +
     "</form>\n" +
     "");
 }]);

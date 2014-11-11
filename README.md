@@ -9,7 +9,7 @@ I like to work with:
 * Promises (no global callback functions)
 * Directives (easy functional HTML)
 * Templates (no javascript concatenation of strings and results)
-* Services (encasulate JSOM and REST calls)
+* Services (encapsulate JSOM and REST calls)
 * Other cool frameworks from the community (angular-ui, ionic, ...)
 
 Current Status

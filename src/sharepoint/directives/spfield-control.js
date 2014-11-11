@@ -74,6 +74,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					switch(schema.TypeAsString) {
 
 						case 'Text':
+						case 'Note':
 							validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
 							break;
 					}
@@ -82,6 +83,12 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					// Check for 'render-as' attribute
 					if ($attrs.renderAs) {
 						fieldType = $attrs.renderAs;
+					}
+
+
+					// Check for 'require' attribute (Force required)
+					if ($attrs.required) {
+						schema.Required = $attrs.required == 'true';
 					}
 					
 
@@ -94,7 +101,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 				} else {
 
-					console.error('Unknown field ' + $attrs.name);
+					console.error('Unknown field "' + $attrs.name + '"');
+
+					/*
+					var errorElement = '<span class="ms-formvalidation ms-csrformvalidation">Unknown field "' + $attrs.name + '"</span>';
+					$element.replaceWith(errorElement);
+					$element = errorElement;
+					*/
 				}
 
 			} // link

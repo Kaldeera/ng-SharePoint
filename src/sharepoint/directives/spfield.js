@@ -47,7 +47,7 @@ angular.module('ngSharePoint').directive('spfield',
 							// If there aren't classes after the removal, skips the 'class' attribute.
 							if (valueAttr === '') continue;
 
-							cssClasses.push(valueAttr.trim());
+							cssClasses.push(valueAttr);
 
 							// Leave the 'class' attribute just in the main element (field wrapper) 
 							// and do not propagate the attribute to child elements.

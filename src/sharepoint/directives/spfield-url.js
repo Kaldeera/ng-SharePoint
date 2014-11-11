@@ -51,11 +51,11 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 					parserFn: function(viewValue) {
 						
 						// Required validity
-						$scope.modelCtrl.$setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
+						directive.setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
 						
 						// Url validity
 						var validUrlRegExp = new RegExp('^http://');
-						$scope.modelCtrl.$setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
+						directive.setValidity('url', ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
 						
 						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
 

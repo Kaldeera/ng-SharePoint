@@ -1,6 +1,6 @@
 <div ng-switch="schema.EditFormat">
 
-	<select ng-switch-when="0" ng-model="$parent.value" ng-options="option for option in choices" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ></select>
+	<select ng-switch-when="0" ng-model="$parent.value" data-spfield-focus-element="true" ng-options="option for option in choices" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ></select>
 
 	<table ng-switch-when="1" cellpadding="0" cellspacing="1">
 		<tbody>

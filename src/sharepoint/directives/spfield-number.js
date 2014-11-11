@@ -54,7 +54,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 					parserFn: function(viewValue) {
 						
 						// Number validity
-						$scope.modelCtrl.$setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
+						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
 
 						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
 
