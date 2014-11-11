@@ -311,24 +311,34 @@ angular.module('ngSharePoint').factory('SPList',
         //              http://msdn.microsoft.com/en-us/library/office/dn292553(v=office.15).aspx
         // @returns: Promise with the result of the REST query.
         //
-        SPListObj.prototype.getListItems = function(query) {
+        SPListObj.prototype.getListItems = function(query, resetPagination) {
 
             var self = this;
             var def = $q.defer();
             var executor = new SP.RequestExecutor(self.web.url);
             var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+            var urlParams = '';
 
-            if (query) {
-                query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+            if (this.$skiptoken !== void 0 && !resetPagination) {
+
+                urlParams = '?' + this.$skiptoken;
+
             } else {
-                query = { 
-                    $expand: defaultExpandProperties
-                };
+
+                if (query) {
+                    query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+                } else {
+                    query = { 
+                        $expand: defaultExpandProperties
+                    };
+                }
+
+                urlParams = utils.parseQuery(query);
             }
 
             executor.executeAsync({
 
-                url: self.apiUrl + '/Items' + utils.parseQuery(query),
+                url: self.apiUrl + '/Items' + urlParams,
                 method: 'GET', 
                 headers: { 
                     "Accept": "application/json; odata=verbose"
@@ -342,6 +352,16 @@ angular.module('ngSharePoint').factory('SPList',
                         var spListItem = new SPListItem(self, item);
                         items.push(spListItem);
                     });
+
+                    // If pagination is present, save for futher function calls
+                    if (data.statusCode != 204 && data.body) {
+
+                        var responseBody = angular.fromJson(data.body || '{ "d": {} }').d;
+
+                        if (responseBody.__next) {
+                            self.$skiptoken = '$' + responseBody.__next.substring(responseBody.__next.indexOf('skiptoken'));
+                        }
+                    }
 
                     // Returns an array of initialized 'SPListItem' objects.
                     def.resolve(items);
