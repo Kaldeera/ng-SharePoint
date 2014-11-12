@@ -50,7 +50,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			// Init folderProperties (if exists)
 			if (folderProperties !== void 0) {
-				angular.extend(this, folderProperties);
+				angular.extend(this, utils.cleanDeferredProperties(folderProperties));
 			}
 		};
 
@@ -79,6 +79,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				success: function(data) {
 
+					utils.cleanDeferredProperties(data);
 					var d = utils.parseSPResponse(data);
 					
 					angular.extend(self, d);
@@ -132,6 +133,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(file) {
 
+						utils.cleanDeferredProperties(file);
 						files.push(file);
 
 					});

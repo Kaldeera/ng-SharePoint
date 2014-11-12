@@ -72,6 +72,7 @@ angular.module('ngSharePoint').factory('SPList',
 
             // Init listProperties (if exists)
             if (listProperties !== void 0) {
+                utils.cleanDeferredProperties(listProperties);
                 angular.extend(this, listProperties);
             }
         };
@@ -148,7 +149,7 @@ angular.module('ngSharePoint').factory('SPList',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
-                    delete d.Fields;
+                    utils.cleanDeferredProperties(data);
 
                     angular.extend(self, d);
 

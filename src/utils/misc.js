@@ -253,6 +253,30 @@ var utils = {
 
 
 
+    // ****************************************************************************
+    // cleanDeferredProperties
+    //
+    // Cleans undesirable object properties obtained form SharePoint.
+    //
+    // @returns: {SPListItem} The item itself to allow chaining calls.
+    //
+    cleanDeferredProperties: function(spobject) {
+
+        var obj = spobject;
+
+        angular.forEach(spobject, function(value, key) {
+
+            if (typeof value === 'object' && value !== null) {
+                if (value.__deferred) {
+                    delete obj[key];
+                }
+            }
+
+        });
+    },
+
+
+
 	// ***************************************************************************
 	// getFunctionParameterNames
 	//
