@@ -149,7 +149,7 @@ angular.module('ngSharePoint').factory('SPList',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
-                    utils.cleanDeferredProperties(data);
+                    utils.cleanDeferredProperties(d);
 
                     angular.extend(self, d);
 
