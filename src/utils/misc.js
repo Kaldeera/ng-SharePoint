@@ -237,14 +237,15 @@ var utils = {
 				d = d.results;
 			}
 
-			// If a new REQUESTDIGEST value was received in the last server call,
-			// update the __REQUESTDIGEST form control with the new value.
-			if (response.headers['X-REQUESTDIGEST']) {
+		}
+		
+		// If a new REQUESTDIGEST value was received in the last server call,
+		// update the __REQUESTDIGEST form control with the new value.
+		if (response.headers['X-REQUESTDIGEST']) {
 
-				var requestDigest = document.getElementById('__REQUESTDIGEST');
-				if (requestDigest !== null) {
-					requestDigest.value = response.headers['X-REQUESTDIGEST'];
-				}
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				requestDigest.value = response.headers['X-REQUESTDIGEST'];
 			}
 		}
 
@@ -269,6 +270,8 @@ var utils = {
             if (typeof value === 'object' && value !== null) {
                 if (value.__deferred) {
                     delete obj[key];
+                } else {
+                	utils.cleanDeferredProperties(value);
                 }
             }
 
