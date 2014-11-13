@@ -387,6 +387,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				context.executeQueryAsync(function() {
 
+					self.Name = newName;
 					def.resolve();
 
 				}, function(sender, args) {
@@ -408,42 +409,22 @@ angular.module('ngSharePoint').factory('SPFolder',
 			});
 
 
-
-				// success: function(data) {
-
-				// 	var d = utils.parseSPResponse(data);
-				// 	utils.cleanDeferredProperties(d);
-				// 	angular.extend(self, d);
-				// 	def.resolve(self);
-				// },
-
-
-				// error: function(data, errorCode, errorMessage) {
-
-				// 	var err = utils.parseError({
-				// 		data: data,
-				// 		errorCode: errorCode,
-				// 		errorMessage: errorMessage
-				// 	});
-
-				// 	def.reject(err);
-				// }
-
 			return def.promise;
 
-		};	// renameFolder
+		};	// rename
 
 
 
 		// ****************************************************************************
-		// deleteFolder
+		// removeFolder
 		//
 		// Delete the specified folder under the current folder
 		//
 		// @folderName: The name of the folder to remove
+		// @permanent: Indicates if the folder is recycled or removed permanently
 		// @returns: Promise with the new SPFolder object.
 		//
-		SPFolderObj.prototype.deleteFolder = function(folder) {
+		SPFolderObj.prototype.removeFolder = function(folder, permament) {
 
 			var self = this;
 			var def = $q.defer();
@@ -459,7 +440,11 @@ angular.module('ngSharePoint').factory('SPFolder',
 				folderPath = folder.ServerRelativeUrl;
 			}
 
-			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
+			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')/recycle';
+
+			if (permament === true) {
+				url = url.rtrim('/recycle');
+			}
 
 			var executor = new SP.RequestExecutor(self.web.url);
 
@@ -467,7 +452,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				url: url,
 				method: 'POST',
-				headers: { "X-HTTP-Method":"DELETE" },
+//				headers: { "X-HTTP-Method":"DELETE" },
 
 				success: function() {
 
@@ -489,7 +474,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			return def.promise;
 
-		};	// deleteFolder
+		};	// removeFolder
 
 
 
