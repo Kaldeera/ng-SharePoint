@@ -16,15 +16,15 @@
 
 angular.module('ngSharePoint').service('SPExpressionResolver', 
 
-    ['$q', 'SharePoint',
+    ['$q', 'SharePoint', '$parse',
 
-    function SPExpressionResolver_Factory($q, SharePoint) {
+    function SPExpressionResolver_Factory($q, SharePoint, $parse) {
 
         'use strict';
 
 
         //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
-        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}(?!})/g; //-> Faster but less accurate
+        var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g; //-> Faster but less accurate
         //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
         var PARTS_REGEXP = /[\[./]([\w )]+)/g;
 
@@ -65,6 +65,11 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 case 'currentUser':
                     expressionPromise = resolveCurrentUserExpression(expression);
                     break;
+
+                case 'fn':
+                    var functionExpression = /\W(.*)/.exec(expression)[1];
+                    expressionPromise = resolveFunctionExpression(functionExpression, scope);
+                    break;
             }
 
 
@@ -73,6 +78,12 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 // Sets the resolved value for the current expression
                 expressionsArray[index - 1] = result;
 
+                // Resolve next expression
+                resolveExpression(expressionsArray, scope, index, deferred);
+            }, function(result) {
+
+                expressionsArray[index - 1] = result;
+                
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
             });
@@ -131,6 +142,13 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                     });
                 });
             });
+        }
+
+
+
+        function resolveFunctionExpression(functionExpression, scope) {
+
+            return scope.$eval($parse(functionExpression));
         }
 
 

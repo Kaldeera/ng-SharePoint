@@ -1,89 +1,121 @@
 /*
-	SPFormToolbar - directive
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+    SPFormToolbar - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
-	Copyright (c) 2014
-	Licensed under the MIT License
+    Copyright (c) 2014
+    Licensed under the MIT License
 */
 
 
 
 ///////////////////////////////////////
-//	SPFormToolbar
+//  SPFormToolbar
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').directive('spformToolbar', 
 
-	['$compile', '$templateCache', '$http', 'SPUtils',
+    ['$compile', 'SPUtils',
 
-	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
+    function spformToolbar_DirectiveFactory($compile, SPUtils) {
 
-		var spformToolbarDirectiveDefinitionObject = {
+        var spformToolbarDirectiveDefinitionObject = {
 
-			restrict: 'EA',
-			require: '^spform',
-			replace: true,
-			templateUrl: 'templates/form-templates/spform-toolbar.html',
-
-
-			link: function($scope, $element, $attrs, spformController) {
+            restrict: 'EA',
+            templateUrl: 'templates/form-templates/spform-toolbar.html',
+            require: '^spform',
+            replace: true,
+            transclude: true,
 
 
-				$scope.isInDesignMode = SPUtils.inDesignMode();
-				$scope.status = spformController.status;
+            controller: function spformToolbarController($scope) {
 
-				SPUtils.SharePointReady().then(function() {
-					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
-					$scope.SaveButtonCaption = STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
-					$scope.CancelButtonCaption = STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
-				});
+                this.getFormCtrl = function() {
 
+                    return $scope.formCtrl;
 
+                };
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(spformController.getFormMode, function(newValue) {
-					$scope.mode = newValue;
-				});
+            },
 
 
 
-				// ****************************************************************************
-				// Watch for form status changes.
-				//
-				$scope.$watch(spformController.getFormStatus, function(newValue) {
-					$scope.formStatus = newValue;
-				});
+            link: function($scope, $element, $attrs, spformController, transcludeFn) {
+
+                $scope.formCtrl = spformController;
 
 
 
-				// ****************************************************************************
-				// Public methods
-				//
+                // ****************************************************************************
+                // Watch for form mode changes.
+                //
+                $scope.$watch(spformController.getFormMode, function(newValue, oldValue) {
 
-				$scope.saveForm = function() {
+                    $scope.currentMode = newValue;
+                    processToolbar();
 
-					spformController.save();
-
-				};
-
-
-				$scope.cancelForm = function() {
-
-					spformController.cancel();
-
-				};
-
-			} // link
-
-		}; // Directive definition object
+                });
 
 
-		return spformToolbarDirectiveDefinitionObject;
 
-	} // Directive factory
+                function processToolbar() {
+
+                    // Compila el contenido en el scope correcto.
+                    var transcludeElement = $element.find('[sp-transclude]');
+
+
+                    // Ensure 'transclusion' element.
+                    if (transcludeElement === void 0 || transcludeElement.length === 0) {
+                        transcludeElement = $element;
+                    }
+
+
+                    transcludeFn($scope, function(clone) {
+                        
+                        // Empty the contents
+                        transcludeElement.empty();
+
+                        // Iterate over clone elements to remove comments
+                        angular.forEach(clone, function(elem){
+
+                            if (elem.nodeType !== elem.COMMENT_NODE) {
+
+                                transcludeElement.append(elem);
+
+                            }
+
+                        });
+
+                    });
+
+
+                    // Checks if there are content to transclude
+                    if (transcludeElement.contents().length === 0) {
+
+                        // Append default toolbar buttons
+                        switch($scope.currentMode) {
+
+                            case 'display':
+                                transcludeElement.append($compile('<spform-toolbar-button action="close"></spform-toolbar-button>')($scope));
+                                break;
+
+                            case 'edit':
+                                transcludeElement.append($compile('<spform-toolbar-button action="save"></spform-toolbar-button>')($scope));
+                                transcludeElement.append($compile('<spform-toolbar-button action="cancel"></spform-toolbar-button>')($scope));
+                                break;
+                        }
+                    }
+
+                }
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spformToolbarDirectiveDefinitionObject;
+
+    } // Directive factory
 
 ]);

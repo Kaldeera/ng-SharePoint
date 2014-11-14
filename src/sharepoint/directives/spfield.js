@@ -23,49 +23,66 @@ angular.module('ngSharePoint').directive('spfield',
 		var spfield_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
+			require: '^?spform',
 			template: '<div></div>',
 
-			link: function($scope, $element, $attrs) {
+			link: function($scope, $element, $attrs, spformController) {
 
-				$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
+				var name = ($attrs.name || $attrs.spfield);
+				var schema;
 
-					var originalAttrs = $element[0].attributes;
-					var elementAttributes = '';
-					var cssClasses = ['spfield-wrapper'];
+				if (spformController) schema = spformController.getFieldSchema(name);
+				
+				if (schema !== void 0) {
 
-					for (var i = 0; i < originalAttrs.length; i++) {
-                        
-						var nameAttr = originalAttrs.item(i).nodeName;
-						var valueAttr = originalAttrs.item(i).value;
+					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
-						if (nameAttr == 'ng-repeat') continue;
-						if (nameAttr == 'spfield') nameAttr = 'name';
-						if (nameAttr == 'class') {
-							// Removes AngularJS classes (ng-*)
-							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
+						var originalAttrs = $element[0].attributes;
+						var elementAttributes = '';
+						var cssClasses = ['spfield-wrapper'];
 
-							// If there aren't classes after the removal, skips the 'class' attribute.
-							if (valueAttr === '') continue;
+						for (var i = 0; i < originalAttrs.length; i++) {
+	                        
+							var nameAttr = originalAttrs.item(i).nodeName;
+							var valueAttr = originalAttrs.item(i).value;
 
-							cssClasses.push(valueAttr);
+							if (nameAttr == 'ng-repeat') continue;
+							if (nameAttr == 'spfield') nameAttr = 'name';
+							if (nameAttr == 'class') {
+								// Removes AngularJS classes (ng-*)
+								valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
-							// Leave the 'class' attribute just in the main element (field wrapper) 
-							// and do not propagate the attribute to child elements.
-							continue;
+								// If there aren't classes after the removal, skips the 'class' attribute.
+								if (valueAttr === '') continue;
+
+								cssClasses.push(valueAttr);
+
+								// Leave the 'class' attribute just in the main element (field wrapper) 
+								// and do not propagate the attribute to child elements.
+								continue;
+							}
+
+							elementAttributes += nameAttr + '="' + valueAttr + '" ';
 						}
 
-						elementAttributes += nameAttr + '="' + valueAttr + '" ';
-					}
 
+						html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
+						html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
+						
+	                    var newElement = $compile(html)($scope);
+						$element.replaceWith(newElement);
+						$element = newElement;
 
-					html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
-					html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
-					
-                    var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
+					});
 
-				});
+				} else {
+
+					console.error('Unknown field "' + $attrs.name + '"');
+
+					var emptyElement = '';
+					$element.replaceWith(emptyElement);
+					$element = emptyElement;
+				}
 
 			} // link
 

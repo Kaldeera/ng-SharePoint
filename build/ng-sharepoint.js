@@ -1097,15 +1097,15 @@ angular.module('ngSharePoint').provider('SPConfig',
 
 angular.module('ngSharePoint').service('SPExpressionResolver', 
 
-    ['$q', 'SharePoint',
+    ['$q', 'SharePoint', '$parse',
 
-    function SPExpressionResolver_Factory($q, SharePoint) {
+    function SPExpressionResolver_Factory($q, SharePoint, $parse) {
 
         'use strict';
 
 
         //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
-        var EXPRESSION_REGEXP = /{(\w+\W[\w\s./\[\]]+)}(?!})/g; //-> Faster but less accurate
+        var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g; //-> Faster but less accurate
         //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
         var PARTS_REGEXP = /[\[./]([\w )]+)/g;
 
@@ -1146,6 +1146,11 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 case 'currentUser':
                     expressionPromise = resolveCurrentUserExpression(expression);
                     break;
+
+                case 'fn':
+                    var functionExpression = /\W(.*)/.exec(expression)[1];
+                    expressionPromise = resolveFunctionExpression(functionExpression, scope);
+                    break;
             }
 
 
@@ -1154,6 +1159,12 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 // Sets the resolved value for the current expression
                 expressionsArray[index - 1] = result;
 
+                // Resolve next expression
+                resolveExpression(expressionsArray, scope, index, deferred);
+            }, function(result) {
+
+                expressionsArray[index - 1] = result;
+                
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
             });
@@ -1212,6 +1223,13 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                     });
                 });
             });
+        }
+
+
+
+        function resolveFunctionExpression(functionExpression, scope) {
+
+            return scope.$eval($parse(functionExpression));
         }
 
 
@@ -1739,6 +1757,133 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getFolders
+
+
+		// ****************************************************************************
+		// addFolder
+		//
+		// Create a new folder under the current folder
+		//
+		// @folderName: The name of the new folder
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.addFolder = function(folderName) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath = self.ServerRelativeUrl + '/' + folderName;
+			var url = self.apiUrl + '/folders';
+
+			var headers = {
+				'Accept': 'application/json; odata=verbose',
+				"content-type": "application/json;odata=verbose"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			// Set the contents for the REST API call.
+			// ----------------------------------------------------------------------------
+			var body = {
+				__metadata: {
+					type: 'SP.Folder'
+				},
+				ServerRelativeUrl: folderPath
+			};
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+				headers: headers,
+				body: angular.toJson(body),
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					var newFolder = new SPFolderObj(self.web, folderPath, data);
+					def.resolve(newFolder);
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		};	// addFolder
+
+
+
+		// ****************************************************************************
+		// deleteFolder
+		//
+		// Delete the specified folder under the current folder
+		//
+		// @folderName: The name of the folder to remove
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.deleteFolder = function(folder) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath;
+
+			if (typeof folder === 'string') {
+
+				var folderName = folder;
+				folderPath = self.ServerRelativeUrl + '/' + folderName;
+
+			} else if (typeof folder === 'object') {
+
+				folderPath = folder.ServerRelativeUrl;
+			}
+
+			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+				headers: { "X-HTTP-Method":"DELETE" },
+
+				success: function() {
+
+					def.resolve();
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		};	// deleteFolder
+
 
 
  		// Returns the SPFolderObj class
@@ -4323,6 +4468,407 @@ angular.module('ngSharePoint').factory('SPWeb',
 ]);
 
 /*
+    SPAction - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPAction
+///////////////////////////////////////
+/*
+angular.module('ngSharePoint').directive('spAction', 
+
+    ['$compile', '$q', 'SPUtils',
+
+    function spAction_DirectiveFactory($compile, $q, SPUtils) {
+
+        var spAction_DirectiveDefinitionObject = {
+
+            restrict: 'A',
+            require: '^spformToolbar',
+            replace: false,
+            priority: 1000,
+            terminal: true,
+            scope: {
+                spAction: '&',
+                redirectUrl: '@'
+            },
+
+            link: function($scope, $element, $attrs, spformToolbarController) {
+
+                $scope.formCtrl = spformToolbarController.getFormCtrl();
+                $scope.isInDesignMode = SPUtils.inDesignMode();
+                $scope.status = $scope.formCtrl.status;
+
+                //var spAction = $attrs.spAction;
+                var ngClick = $attrs.ngClick;
+                var redirectUrl = $attrs.redirectUrl;
+
+                $element.removeAttr('sp-action');
+                $element.attr('ng-click', 'makeAction();' + ngClick);
+                $element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+
+
+                // Checks for pre-defined buttons actions (i.e., save, cancel and close)
+                switch($attrs.spAction.toLowerCase()) {
+
+                    case 'save':
+                        $scope.action = save;
+                        redirectUrl = redirectUrl || 'default';
+                        break;
+                    
+                    case 'cancel':
+                        $scope.action = cancel;
+                        redirectUrl = redirectUrl || 'default';
+                        break;
+
+                    case 'close':
+                        $scope.action = cancel;
+                        redirectUrl = redirectUrl || 'default';
+                        break;
+
+                    default:
+                        $scope.action = $scope.spAction;
+                }
+
+
+
+                // ****************************************************************************
+                // Private methods
+                //
+
+                // Default SAVE form action
+                function save() {
+
+                    return $scope.formCtrl.save(redirectUrl);
+
+                }
+
+
+
+                // Default CANCEL form action
+                function cancel() {
+
+                    return $scope.formCtrl.cancel(redirectUrl);
+
+                }
+
+
+                // ****************************************************************************
+                // Public methods
+                //
+                $scope.makeAction = function() {
+
+                    $scope.formCtrl.setFormStatus($scope.status.PROCESSING);
+
+                    $q.when($scope.action()).then(function(result) {
+
+                        if (result !== false) {
+
+                            if (redirectUrl) {
+
+                                //var redirectUrl = $scope.redirectUrl;
+
+                                // Checks for pre-defined values in the redirect url.
+                                switch(redirectUrl.toLowerCase()) {
+
+                                    case 'display':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
+                                        // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
+                                        //       puede ser '.../lo-que-sea.aspx'.
+                                        // TODO: Get the right default 'DispForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'display' form.
+                                        break;
+
+
+                                    case 'edit':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
+                                        // TODO: Get the right default 'EditForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'edit' form.
+                                        break;
+
+
+                                    case 'new':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
+                                        // TODO: Get the right default 'NewForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'new' form.
+                                        break;
+
+
+                                    case 'default':
+                                        redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+                                        break;
+
+                                }
+                                
+                                window.location = redirectUrl;
+                            }
+
+                        }
+
+                        // Action resolved
+                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+
+                    }, function() {
+
+                        // Action rejected
+                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+
+                    });
+
+                }; // makeAction
+
+
+                $compile($element)($scope);
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spAction_DirectiveDefinitionObject;
+    }
+
+]);
+*/
+
+
+(function() {
+    'use strict';
+
+    angular
+        .module('ngSharePoint')
+        .directive('spAction', spAction);
+
+    /* @ngInject */
+    function spAction($compile, $q, SPUtils) {
+
+        var directive = {
+
+            restrict: 'A',
+            require: '^spformToolbar',
+            replace: false,
+            priority: 1000,
+            terminal: true,
+            scope: {
+                spAction: '&',
+                redirectUrl: '@'
+            },            
+            link: link,
+        };
+        return directive;
+
+        function link(scope, element, attrs, spformToolbarController) {
+
+            // Public properties
+            scope.formCtrl = spformToolbarController.getFormCtrl();
+            scope.isInDesignMode = SPUtils.inDesignMode();
+            scope.status = scope.formCtrl.status;
+
+            // Public methods
+            scope.makeAction = makeAction;
+
+
+            ///////////////////////////////////////
+
+
+            //var spAction = attrs.spAction;
+            var ngClick = attrs.ngClick;
+            var redirectUrl = attrs.redirectUrl;
+
+            element.removeAttr('sp-action');
+            element.attr('ng-click', 'makeAction();' + ngClick);
+            element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+
+
+            // Checks for pre-defined buttons actions (i.e., save, cancel and close)
+            switch(attrs.spAction.toLowerCase()) {
+
+                case 'save':
+                    scope.action = save;
+                    redirectUrl = redirectUrl || 'default';
+                    break;
+                
+                case 'cancel':
+                    scope.action = cancel;
+                    redirectUrl = redirectUrl || 'default';
+                    break;
+
+                case 'close':
+                    scope.action = cancel;
+                    redirectUrl = redirectUrl || 'default';
+                    break;
+
+                default:
+                    scope.action = scope.spAction;
+            }
+
+
+
+            // ****************************************************************************
+            // Private methods
+            //
+
+            // Default SAVE form action
+            function save() {
+
+                return scope.formCtrl.save(redirectUrl);
+
+            }
+
+
+
+            // Default CANCEL form action
+            function cancel() {
+
+                return scope.formCtrl.cancel(redirectUrl);
+
+            }
+
+
+            // ****************************************************************************
+            // Public methods
+            //
+            function makeAction() {
+
+                scope.formCtrl.setFormStatus(scope.status.PROCESSING);
+
+                $q.when(scope.action()).then(function(result) {
+
+                    if (result !== false) {
+
+                        if (redirectUrl) {
+
+                            //var redirectUrl = scope.redirectUrl;
+
+                            // Checks for pre-defined values in the redirect url.
+                            switch(redirectUrl.toLowerCase()) {
+
+                                case 'display':
+                                    redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
+                                    // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
+                                    //       puede ser '.../lo-que-sea.aspx'.
+                                    // TODO: Get the right default 'DispForm' url.
+                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                    //       Use CSOM to get the default 'display' form.
+                                    break;
+
+
+                                case 'edit':
+                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
+                                    // TODO: Get the right default 'EditForm' url.
+                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                    //       Use CSOM to get the default 'edit' form.
+                                    break;
+
+
+                                case 'new':
+                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
+                                    // TODO: Get the right default 'NewForm' url.
+                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                    //       Use CSOM to get the default 'new' form.
+                                    break;
+
+
+                                case 'default':
+                                    redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+                                    break;
+
+                            }
+                            
+                            window.location = redirectUrl;
+                        }
+
+                    }
+
+                    // Action resolved
+                    scope.formCtrl.setFormStatus(scope.status.IDLE);
+
+                }, function() {
+
+                    // Action rejected
+                    scope.formCtrl.setFormStatus(scope.status.IDLE);
+
+                });
+
+            } // makeAction
+
+
+            $compile(element)(scope);
+
+        } // link
+
+    } // Directive factory function
+
+})();
+
+/*
+  SPIf - directive
+  
+  Pau Codina (pau.codina@kaldeera.com)
+  Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+  Copyright (c) 2014
+  Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPIf
+///////////////////////////////////////
+angular.module('ngSharePoint').directive('spIf',
+
+    ['$compile', 'SPExpressionResolver',
+
+    function spIf_DirectiveFactory($compile, SPExpressionResolver) {
+
+        var spIfDirectiveDefinitionObject = {
+
+            restrict: 'A',
+            terminal: true,
+            priority: 600,
+
+
+            link: function ($scope, $element, $attrs) {
+
+                SPExpressionResolver.resolve($attrs.spIf, $scope).then(function(result) {
+
+                    if (!$scope.$eval(result)) {
+
+                        $element.remove();
+                        $element = null;
+
+                    } else {
+
+                        $element.removeAttr('sp-if');
+                        $element = $compile($element, 600)($scope);
+
+                    }
+
+                });
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spIfDirectiveDefinitionObject;
+
+    } // Directive factory
+
+]);
+/*
 	SPFieldAttachments - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -4841,6 +5387,10 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					$element.replaceWith(errorElement);
 					$element = errorElement;
 					*/
+					
+					var emptyElement = '';
+					$element.replaceWith(emptyElement);
+					$element = emptyElement;
 				}
 
 			} // link
@@ -7295,49 +7845,66 @@ angular.module('ngSharePoint').directive('spfield',
 		var spfield_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
+			require: '^?spform',
 			template: '<div></div>',
 
-			link: function($scope, $element, $attrs) {
+			link: function($scope, $element, $attrs, spformController) {
 
-				$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
+				var name = ($attrs.name || $attrs.spfield);
+				var schema;
 
-					var originalAttrs = $element[0].attributes;
-					var elementAttributes = '';
-					var cssClasses = ['spfield-wrapper'];
+				if (spformController) schema = spformController.getFieldSchema(name);
+				
+				if (schema !== void 0) {
 
-					for (var i = 0; i < originalAttrs.length; i++) {
-                        
-						var nameAttr = originalAttrs.item(i).nodeName;
-						var valueAttr = originalAttrs.item(i).value;
+					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
-						if (nameAttr == 'ng-repeat') continue;
-						if (nameAttr == 'spfield') nameAttr = 'name';
-						if (nameAttr == 'class') {
-							// Removes AngularJS classes (ng-*)
-							valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
+						var originalAttrs = $element[0].attributes;
+						var elementAttributes = '';
+						var cssClasses = ['spfield-wrapper'];
 
-							// If there aren't classes after the removal, skips the 'class' attribute.
-							if (valueAttr === '') continue;
+						for (var i = 0; i < originalAttrs.length; i++) {
+	                        
+							var nameAttr = originalAttrs.item(i).nodeName;
+							var valueAttr = originalAttrs.item(i).value;
 
-							cssClasses.push(valueAttr);
+							if (nameAttr == 'ng-repeat') continue;
+							if (nameAttr == 'spfield') nameAttr = 'name';
+							if (nameAttr == 'class') {
+								// Removes AngularJS classes (ng-*)
+								valueAttr = valueAttr.replace(/ng-[\w-]*/g, '').trim();
 
-							// Leave the 'class' attribute just in the main element (field wrapper) 
-							// and do not propagate the attribute to child elements.
-							continue;
+								// If there aren't classes after the removal, skips the 'class' attribute.
+								if (valueAttr === '') continue;
+
+								cssClasses.push(valueAttr);
+
+								// Leave the 'class' attribute just in the main element (field wrapper) 
+								// and do not propagate the attribute to child elements.
+								continue;
+							}
+
+							elementAttributes += nameAttr + '="' + valueAttr + '" ';
 						}
 
-						elementAttributes += nameAttr + '="' + valueAttr + '" ';
-					}
 
+						html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
+						html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
+						
+	                    var newElement = $compile(html)($scope);
+						$element.replaceWith(newElement);
+						$element = newElement;
 
-					html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
-					html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
-					
-                    var newElement = $compile(html)($scope);
-					$element.replaceWith(newElement);
-					$element = newElement;
+					});
 
-				});
+				} else {
+
+					console.error('Unknown field "' + $attrs.name + '"');
+
+					var emptyElement = '';
+					$element.replaceWith(emptyElement);
+					$element = emptyElement;
+				}
 
 			} // link
 
@@ -7420,92 +7987,298 @@ angular.module('ngSharePoint').directive('spformRule',
 ]);
 
 /*
-	SPFormToolbar - directive
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+    SPFormToolbarButton - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
-	Copyright (c) 2014
-	Licensed under the MIT License
+    Copyright (c) 2014
+    Licensed under the MIT License
 */
 
 
 
 ///////////////////////////////////////
-//	SPFormToolbar
+//  SPFormToolbarButton
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spformToolbarButton', 
+
+    ['SPUtils', '$q',
+
+    function spformToolbarButton_DirectiveFactory(SPUtils, $q) {
+
+        var spformToolbarButton_DirectiveDefinitionObject = {
+
+            restrict: 'EA',
+            require: '^spformToolbar',
+            replace: true,
+            templateUrl: 'templates/form-templates/spform-toolbar-button.html',
+            scope: {
+                action: '&',
+                redirectUrl: '@',
+                text: '@'
+            },
+
+
+            link: function($scope, $element, $attrs, spformToolbarController) {
+
+                $scope.formCtrl = spformToolbarController.getFormCtrl();
+                $scope.isInDesignMode = SPUtils.inDesignMode();
+                $scope.status = $scope.formCtrl.status;
+
+
+                // Sets the button 'text' and 'action'.
+                // Also checks for pre-defined buttons (i.e., save, cancel and close)
+                SPUtils.SharePointReady().then(function() {
+
+                    switch($attrs.action.toLowerCase()) {
+
+                        case 'save':
+                            $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
+                            $scope.action = save;
+                            $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            break;
+                        
+                        case 'cancel':
+                            $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
+                            $scope.action = cancel;
+                            $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            break;
+
+                        case 'close':
+                            $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
+                            $scope.action = cancel;
+                            $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            break;
+
+                        default:
+                            $scope.text = $scope.text || '';
+                    }
+
+                });
+
+
+
+                // ****************************************************************************
+                // Private methods
+                //
+
+                // Default SAVE form action
+                function save() {
+
+                    return $scope.formCtrl.save($scope.redirectUrl);
+
+                }
+
+
+
+                // Default CANCEL form action
+                function cancel() {
+
+                    return $scope.formCtrl.cancel($scope.redirectUrl);
+
+                }
+
+
+                // ****************************************************************************
+                // Public methods
+                //
+                $scope.makeAction = function() {
+
+                    $scope.formCtrl.setFormStatus($scope.status.PROCESSING);
+
+                    $q.when($scope.action()).then(function(result) {
+
+                        if (result !== false) {
+
+                            if ($scope.redirectUrl) {
+
+                                var redirectUrl = $scope.redirectUrl;
+
+                                // Checks for pre-defined values in the redirect url.
+                                switch(redirectUrl.toLowerCase()) {
+
+                                    case 'display':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
+                                        // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
+                                        //       puede ser '.../lo-que-sea.aspx'.
+                                        // TODO: Get the right default 'DispForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'display' form.
+                                        break;
+
+
+                                    case 'edit':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
+                                        // TODO: Get the right default 'EditForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'edit' form.
+                                        break;
+
+
+                                    case 'new':
+                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
+                                        // TODO: Get the right default 'NewForm' url.
+                                        //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
+                                        //       Use CSOM to get the default 'new' form.
+                                        break;
+
+
+                                    case 'default':
+                                        redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+                                        break;
+
+                                }
+                                
+                                window.location = redirectUrl;
+                            }
+
+                        }
+
+                        // Action resolved
+                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+
+                    }, function() {
+
+                        // Action rejected
+                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+
+                    });
+
+                };
+
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spformToolbarButton_DirectiveDefinitionObject;
+
+    } // Directive factory
+
+]);
+
+/*
+    SPFormToolbar - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPFormToolbar
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').directive('spformToolbar', 
 
-	['$compile', '$templateCache', '$http', 'SPUtils',
+    ['$compile', 'SPUtils',
 
-	function spformToolbar_DirectiveFactory($compile, $templateCache, $http, SPUtils) {
+    function spformToolbar_DirectiveFactory($compile, SPUtils) {
 
-		var spformToolbarDirectiveDefinitionObject = {
+        var spformToolbarDirectiveDefinitionObject = {
 
-			restrict: 'EA',
-			require: '^spform',
-			replace: true,
-			templateUrl: 'templates/form-templates/spform-toolbar.html',
-
-
-			link: function($scope, $element, $attrs, spformController) {
+            restrict: 'EA',
+            templateUrl: 'templates/form-templates/spform-toolbar.html',
+            require: '^spform',
+            replace: true,
+            transclude: true,
 
 
-				$scope.isInDesignMode = SPUtils.inDesignMode();
-				$scope.status = spformController.status;
+            controller: function spformToolbarController($scope) {
 
-				SPUtils.SharePointReady().then(function() {
-					$scope.CloseButtonCaption = STSHtmlEncode(Strings.STS.L_CloseButtonCaption);
-					$scope.SaveButtonCaption = STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
-					$scope.CancelButtonCaption = STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
-				});
+                this.getFormCtrl = function() {
 
+                    return $scope.formCtrl;
 
+                };
 
-				// ****************************************************************************
-				// Watch for form mode changes.
-				//
-				$scope.$watch(spformController.getFormMode, function(newValue) {
-					$scope.mode = newValue;
-				});
+            },
 
 
 
-				// ****************************************************************************
-				// Watch for form status changes.
-				//
-				$scope.$watch(spformController.getFormStatus, function(newValue) {
-					$scope.formStatus = newValue;
-				});
+            link: function($scope, $element, $attrs, spformController, transcludeFn) {
+
+                $scope.formCtrl = spformController;
 
 
 
-				// ****************************************************************************
-				// Public methods
-				//
+                // ****************************************************************************
+                // Watch for form mode changes.
+                //
+                $scope.$watch(spformController.getFormMode, function(newValue, oldValue) {
 
-				$scope.saveForm = function() {
+                    $scope.currentMode = newValue;
+                    processToolbar();
 
-					spformController.save();
-
-				};
-
-
-				$scope.cancelForm = function() {
-
-					spformController.cancel();
-
-				};
-
-			} // link
-
-		}; // Directive definition object
+                });
 
 
-		return spformToolbarDirectiveDefinitionObject;
 
-	} // Directive factory
+                function processToolbar() {
+
+                    // Compila el contenido en el scope correcto.
+                    var transcludeElement = $element.find('[sp-transclude]');
+
+
+                    // Ensure 'transclusion' element.
+                    if (transcludeElement === void 0 || transcludeElement.length === 0) {
+                        transcludeElement = $element;
+                    }
+
+
+                    transcludeFn($scope, function(clone) {
+                        
+                        // Empty the contents
+                        transcludeElement.empty();
+
+                        // Iterate over clone elements to remove comments
+                        angular.forEach(clone, function(elem){
+
+                            if (elem.nodeType !== elem.COMMENT_NODE) {
+
+                                transcludeElement.append(elem);
+
+                            }
+
+                        });
+
+                    });
+
+
+                    // Checks if there are content to transclude
+                    if (transcludeElement.contents().length === 0) {
+
+                        // Append default toolbar buttons
+                        switch($scope.currentMode) {
+
+                            case 'display':
+                                transcludeElement.append($compile('<spform-toolbar-button action="close"></spform-toolbar-button>')($scope));
+                                break;
+
+                            case 'edit':
+                                transcludeElement.append($compile('<spform-toolbar-button action="save"></spform-toolbar-button>')($scope));
+                                transcludeElement.append($compile('<spform-toolbar-button action="cancel"></spform-toolbar-button>')($scope));
+                                break;
+                        }
+                    }
+
+                }
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spformToolbarDirectiveDefinitionObject;
+
+    } // Directive factory
 
 ]);
 
@@ -7527,9 +8300,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', 'SPExpressionResolver',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, SPExpressionResolver) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -7678,6 +8451,17 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
+                this.setFormStatus = function(status) {
+
+                    $timeout(function() {
+
+                        $scope.formStatus = status;
+                        $scope.$apply();
+
+                    }, 0);
+                };
+
+
                 this.setFieldFocus = function(fieldName) {
 
                     var fieldFocused = false;
@@ -7725,6 +8509,7 @@ angular.module('ngSharePoint').directive('spform',
                 this.save = function(options) {
 
                     var self = this;
+                    var def = $q.defer();
                     var dlg;
 
 
@@ -7773,7 +8558,12 @@ angular.module('ngSharePoint').directive('spform',
 
                         });
 
-                        if (options.force !== true) return;
+                        if (options.force !== true) {
+
+                            def.reject();
+                            return def.promise;
+
+                        }
                     }
 
                     $scope.formStatus = this.status.PROCESSING;
@@ -7800,29 +8590,41 @@ angular.module('ngSharePoint').directive('spform',
                                     if (result !== false) {
 
                                         // Default 'post-save' action.
-                                        self.closeForm(options.redirectUrl);
+                                        //self.closeForm(options.redirectUrl);
+                                        def.resolve(result);
+
+                                    } else {
+
+                                        def.reject();
+
                                     }
 
                                     // Close the 'Working on it...' dialog.
                                     closeDialog();
-                                    $scope.formStatus = this.status.IDLE;
+                                    //$scope.formStatus = this.status.IDLE;
                                     
                                 }, function() {
 
+                                    // At this point, the 'OnPostSave' promise has been rejected 
+                                    // due to an exception or manually by the user.
+
                                     closeDialog();
-                                    $scope.formStatus = this.status.IDLE;
+                                    //$scope.formStatus = this.status.IDLE;
+                                    def.reject();
                                     
                                 });
 
                             }, function(err) {
 
-                                console.error(err);
+                                // At this point, the 'item.save' promise has been rejected 
+                                // due to an exception.
 
+                                console.error(err);
                                 closeDialog();
 
+                                // Shows a popup with the error details.
                                 var dom = document.createElement('div');
                                 dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
-
 
                                 SP.UI.ModalDialog.showModalDialog({
                                     title: SP.Res.dlgTitleError,
@@ -7830,8 +8632,9 @@ angular.module('ngSharePoint').directive('spform',
                                     showClose: true,
                                     autoSize: true,
                                     dialogReturnValueCallback: function() {
-                                        $scope.formStatus = self.status.IDLE;
-                                        $scope.$apply();
+                                        //$scope.formStatus = self.status.IDLE;
+                                        //$scope.$apply();
+                                        def.reject();
                                     }
                                 });
 
@@ -7839,18 +8642,29 @@ angular.module('ngSharePoint').directive('spform',
 
                         } else {
 
+                            // At this point, the 'OnPreSave' promise has been canceled 
+                            // by the user (By the 'onPreSave' method implemented by the user).
+
                             console.log('>>>> Save form was canceled!');
                             closeDialog();
-                            $scope.formStatus = this.status.IDLE;
+                            //$scope.formStatus = this.status.IDLE;
+                            def.reject();
+
                         }
                         
                     }, function() {
 
+                        // At this point, the 'OnPreSave' promise has been rejected 
+                        // due to an exception or manually by the user.
+
                         closeDialog();
-                        $scope.formStatus = this.status.IDLE;
+                        //$scope.formStatus = this.status.IDLE;
+                        def.reject();
 
                     });
-                        
+
+
+                    return def.promise;
 
                 };
 
@@ -7858,6 +8672,9 @@ angular.module('ngSharePoint').directive('spform',
                 this.cancel = function(redirectUrl) {
 
                     var self = this;
+                    var def = $q.defer();
+
+                    $scope.formStatus = this.status.PROCESSING;
 
                     // Invoke 'onCancel' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
@@ -7865,18 +8682,29 @@ angular.module('ngSharePoint').directive('spform',
                         if (result !== false) {
 
                             // Performs the default 'cancel' action.
-                            self.closeForm(redirectUrl);
+                            //self.closeForm(redirectUrl);
+                            $scope.item = angular.copy($scope.originalItem);
+                            def.resolve(result);
+
+                        } else {
+
+                            def.reject();
+
                         }
+
 
                     }, function() {
 
-                        // Performs the default 'cancel' action.
-                        self.closeForm(redirectUrl);
+                        // When error must close the form ?
+                        //self.closeForm(redirectUrl);
+                        def.reject();
                     });
+
+                    return def.promise;
                 };
 
 
-
+/*
                 this.closeForm = function(redirectUrl) {
 
                     if (redirectUrl !== void 0) {
@@ -7890,6 +8718,7 @@ angular.module('ngSharePoint').directive('spform',
                     }
 
                 };
+*/                
 
             }], // controller property
 
@@ -7990,6 +8819,13 @@ angular.module('ngSharePoint').directive('spform',
                                 }
                             });
 
+
+                            // Ensure 'transclusion' element.
+                            if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
+                                transclusionContainer = $element;
+                            }
+
+
                             // Remove the 'loading animation' element
                             var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
                             if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
@@ -8074,8 +8910,8 @@ angular.module('ngSharePoint').directive('spform',
                             }
 
 
-                            // Initialize the 'rulesApplied' array for debug purposes.
-                            $scope.rulesApplied = $scope.rulesApplied || [];
+                            // Initialize the 'rules' array for debug purposes.
+                            $scope.rules = $scope.rules || [];
 
 
                             // Check if 'elem' is a <spform-rule> element.
@@ -8126,12 +8962,14 @@ angular.module('ngSharePoint').directive('spform',
                                                     // Append the element to the final form template
                                                     targetElement.append(elem);
 
-                                                    // Add the rule applied to the 'rulesApplied' array for debug purposes.
-                                                    $scope.rulesApplied.push({
+
+                                                    // Add the rule to the 'rules' array for debug purposes.
+                                                    $scope.rules.push({
                                                         test: testExpression, 
                                                         testResolved: testResolved, 
                                                         terminal: terminalExpression, 
-                                                        terminalResolved: terminalResolved
+                                                        terminalResolved: terminalResolved,
+                                                        solved: true
                                                     });
 
 
@@ -8154,6 +8992,17 @@ angular.module('ngSharePoint').directive('spform',
                                                 elem.remove();
                                                 elem = null;
                                             }
+
+
+                                            // Add the rule to the 'rules' array for debug purposes.
+                                            $scope.rules.push({
+                                                test: testExpression, 
+                                                testResolved: testResolved,
+                                                terminal: terminalExpression, 
+                                                terminalResolved: 'n/a',
+                                                solved: false
+                                            });
+
 
                                             // Process the next element
                                             parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
@@ -8183,7 +9032,6 @@ angular.module('ngSharePoint').directive('spform',
 
                         } // parseRules private function
 
-
                     } // compile.post-link
 
                 }; // compile function return
@@ -8198,6 +9046,8 @@ angular.module('ngSharePoint').directive('spform',
     } // Directive factory function
 
 ]);
+
+
 /*
 	SPUser - directive
 	

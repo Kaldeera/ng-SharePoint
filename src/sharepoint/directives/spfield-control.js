@@ -108,6 +108,10 @@ angular.module('ngSharePoint').directive('spfieldControl',
 					$element.replaceWith(errorElement);
 					$element = errorElement;
 					*/
+					
+					var emptyElement = '';
+					$element.replaceWith(emptyElement);
+					$element = emptyElement;
 				}
 
 			} // link
