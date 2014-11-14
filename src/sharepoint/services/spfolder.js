@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
-	['$q', 
+	['SPObjectProvider', '$q', 
 
-	function SPFolder_Factory($q) {
+	function SPFolder_Factory(SPObjectProvider, $q) {
 
 		'use strict';
 
@@ -50,6 +50,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			// Init folderProperties (if exists)
 			if (folderProperties !== void 0) {
+				utils.cleanDeferredProperties(folderProperties);
 				angular.extend(this, folderProperties);
 			}
 		};
@@ -80,6 +81,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 
@@ -101,7 +103,6 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getProperties
-
 
 		// ****************************************************************************
 		// getFiles
@@ -132,6 +133,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(file) {
 
+						utils.cleanDeferredProperties(file);
 						files.push(file);
 
 					});
@@ -209,6 +211,84 @@ angular.module('ngSharePoint').factory('SPFolder',
 		}; // getFolders
 
 
+
+		// ****************************************************************************
+		// getList
+		//
+		// Gets the list that contains the curruent folder
+		//
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.getList = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.List === void 0) {
+
+				if (this.ListItemAllFields !== void 0) {
+
+					if (this.ListItemAllFields.ParentList !== void 0) {
+
+						var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+						this.List = list;
+					}
+				}
+			}
+
+			if (this.List !== void 0) {
+
+				def.resolve(this.List);
+
+			} else {
+
+				this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+
+					var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+					self.List = list;
+					def.resolve(list);
+				});
+			}
+
+			return def.promise;
+
+		};	// getList
+
+
+
+		// ****************************************************************************
+		// getFolderListItem
+		//
+		// Gets the list item object correspondig with the current folder
+		//
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.getFolderListItem = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.ListItem !== void 0) {
+
+				def.resolve(this.ListItem);
+
+			} else {
+
+				this.getList().then(function() {
+
+					self.ListItem = SPObjectProvider.getSPListItem(self.List, self.ListItemAllFields);
+					def.resolve(self.ListItem);
+				});
+
+			}
+
+			return def.promise;
+
+		};	// getFolderListItem
+
+
+
+
 		// ****************************************************************************
 		// addFolder
 		//
@@ -279,14 +359,72 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 		// ****************************************************************************
-		// deleteFolder
+		// rename
+		//
+		// Renames the current folder with the new name
+		//
+		// @folderName: The new name of the folder
+		// @returns: Promise with the result.
+		//
+		SPFolderObj.prototype.rename = function(newName) {
+
+			var self = this;
+			var def = $q.defer();
+
+			this.getFolderListItem().then(function() {
+
+				var listGuid = self.List.Id;
+				var itemId = self.ListItem.Id;
+
+				var context = new SP.ClientContext.get_current();
+				var web = context.get_web();
+				var list = web.get_lists().getById(listGuid);
+				self._folder = list.getItemById(itemId);
+				self._folder.set_item('FileLeafRef', newName);
+				self._folder.update();
+
+				context.load(self._folder);
+
+				context.executeQueryAsync(function() {
+
+					self.Name = newName;
+					def.resolve();
+
+				}, function(sender, args) {
+
+					var err = {
+						Code: args.get_errorCode(),
+						Details: args.get_errorDetails(),
+						TypeName: args.get_errorTypeName(),
+						Value: args.get_errorValue(),
+						message: args.get_message(),
+						request: args.get_request(),
+						stackTrace: args.get_stackTrace()
+					};
+
+					def.reject(err);
+
+				});
+
+			});
+
+
+			return def.promise;
+
+		};	// rename
+
+
+
+		// ****************************************************************************
+		// removeFolder
 		//
 		// Delete the specified folder under the current folder
 		//
 		// @folderName: The name of the folder to remove
+		// @permanent: Indicates if the folder is recycled or removed permanently
 		// @returns: Promise with the new SPFolder object.
 		//
-		SPFolderObj.prototype.deleteFolder = function(folder) {
+		SPFolderObj.prototype.removeFolder = function(folder, permament) {
 
 			var self = this;
 			var def = $q.defer();
@@ -302,7 +440,11 @@ angular.module('ngSharePoint').factory('SPFolder',
 				folderPath = folder.ServerRelativeUrl;
 			}
 
-			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
+			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')/recycle';
+
+			if (permament === true) {
+				url = url.rtrim('/recycle');
+			}
 
 			var executor = new SP.RequestExecutor(self.web.url);
 
@@ -310,7 +452,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				url: url,
 				method: 'POST',
-				headers: { "X-HTTP-Method":"DELETE" },
+//				headers: { "X-HTTP-Method":"DELETE" },
 
 				success: function() {
 
@@ -332,7 +474,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			return def.promise;
 
-		};	// deleteFolder
+		};	// removeFolder
 
 
 
