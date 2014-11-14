@@ -235,41 +235,6 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
 
-            parseQuery: function(query) {
-
-                var strQuery = '';
-
-                angular.forEach(query, function(value, key) {
-                    strQuery += (strQuery !== '' ? '&' : '?') + key + '=' + value;
-                });
-
-                return strQuery;
-            },
-
-
-
-            parseError: function(errorData) {
-
-                var errorObject = {
-                    code: errorData.errorCode,
-                    message: errorData.errorMessage
-                };
-
-                try {
-
-                    var body = angular.fromJson(data.body);
-
-                    errorObject.code = body.error.code;
-                    errorObject.message = body.error.message.value;
-
-                } catch(ex) {}
-
-                console.error(errorObject.message);
-                return errorObject;
-            },
-
-
-
             getRegionalSettings: function() {
 
                 var self = this;

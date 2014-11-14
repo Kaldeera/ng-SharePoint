@@ -58,6 +58,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 			// Init groupProperties (if exists)
 			if (groupProperties !== void 0) {
+				utils.cleanDeferredProperties(groupProperties);
 				angular.extend(this, groupProperties);
 			}
 		};
@@ -97,7 +98,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-					delete d.Users;
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 

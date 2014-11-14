@@ -63,6 +63,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			// Init userProperties (if exists)
 			if (userData !== void 0) {
+				utils.cleanDeferredProperties(userData);
 				angular.extend(this, userData);
 			}
 		};
@@ -92,7 +93,7 @@ angular.module('ngSharePoint').factory('SPUser',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-//					delete d.Fields;
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 

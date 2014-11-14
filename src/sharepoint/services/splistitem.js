@@ -45,8 +45,8 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                 if (typeof data === 'object' && data.concat === void 0) { //-> is object && not is array
 
+                    utils.cleanDeferredProperties(data);
                     angular.extend(this, data);
-                    this.clean();
 
                 } else {
 
@@ -76,31 +76,6 @@ angular.module('ngSharePoint').factory('SPListItem',
             return this.Id === void 0;
         };
 
-
-
-        // ****************************************************************************
-        // clean
-        //
-        // Cleans undesirable item properties obtained form SharePoint.
-        //
-        // @returns: {SPListItem} The item itself to allow chaining calls.
-        //
-        SPListItemObj.prototype.clean = function() {
-
-            var self = this;
-
-            angular.forEach(this, function(value, key) {
-
-                if (typeof value === 'object' && value !== null) {
-                    if (value.__deferred) {
-                        delete self[key];
-                    }
-                }
-
-            });
-
-            return this;
-        };
 
 
 
@@ -150,6 +125,9 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+
+                    utils.cleanDeferredProperties(d);
+                    angular.extend(self, d);
 
                     if (self.list.BaseType === 0) {
 
@@ -225,6 +203,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+                    utils.cleanDeferredProperties(d);
                     angular.extend(self, d);
 
                     def.resolve(d);
@@ -273,6 +252,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+                    utils.cleanDeferredProperties(d);
                     angular.extend(self, d);
 
                     def.resolve(d);
@@ -632,6 +612,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
+                        utils.cleanDeferredProperties(d);
                         angular.extend(self, d);
 
                         // After save, process the attachments.
