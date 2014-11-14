@@ -379,11 +379,11 @@ angular.module('ngSharePoint').factory('SPFolder',
 				var context = new SP.ClientContext.get_current();
 				var web = context.get_web();
 				var list = web.get_lists().getById(listGuid);
-				self.CSOMfolderItem = list.getItemById(itemId);
-				self.CSOMfolderItem.set_item('FileLeafRef', newName);
-				self.CSOMfolderItem.update();
+				self._folder = list.getItemById(itemId);
+				self._folder.set_item('FileLeafRef', newName);
+				self._folder.update();
 
-				context.load(self.CSOMfolderItem);
+				context.load(self._folder);
 
 				context.executeQueryAsync(function() {
 
