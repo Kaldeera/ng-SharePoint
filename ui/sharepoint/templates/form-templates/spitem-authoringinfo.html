@@ -1,0 +1,11 @@
+<div class="spform-item-info" style="float: left; display: inline-block; margin: 10px 0;">
+
+    <div class="ms-descriptiontext">
+        <span ng-bind="createdAtText"></span> <span ng-bind="createdDate | date: cultureInfo.dateTimeFormat.ShortDatePattern"></span> <span ng-bind="byText"></span> <a ng-href="{{authorLink}}" ng-bind="authorName"></a>
+    </div>
+
+    <div class="ms-descriptiontext">
+        <span ng-bind="lastModifiedText"></span> <span ng-bind="modifiedDate | date: cultureInfo.dateTimeFormat.ShortDatePattern"></span> <span ng-bind="byText"></span> <a ng-href="{{editorLink}}" ng-bind="editorName"></a>
+    </div>
+
+</div>

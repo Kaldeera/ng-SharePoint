@@ -143,7 +143,7 @@
 
                         scope.action = scope.spAction;
 
-                        if (attrs.showInRibbon === 'true') {
+                        if (attrs.showInRibbon === 'true' || (!angular.isDefined(attrs.showInRibbon) && spformToolbarController.showToolbarInRibbon())) {
 
                             SPRibbon.ready().then(function() {
 
