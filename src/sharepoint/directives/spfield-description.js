@@ -60,4 +60,4 @@ angular.module('ngSharePoint').directive('spfieldDescription',
 		
 	} // Directive factory
 
-]); 
+]);
