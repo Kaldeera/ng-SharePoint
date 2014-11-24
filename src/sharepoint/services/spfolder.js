@@ -385,19 +385,19 @@ angular.module('ngSharePoint').factory('SPFolder',
 			var folderPath = self.ServerRelativeUrl + '/' + fileName;
 			var url = self.apiUrl + '/files/add(url=\'' + fileName + '\',overwrite=true)';
 
-			var headers = {
-				'Accept': 'application/json; odata=verbose',
-				"content-type": "application/json;odata=verbose"
-			};
-
-			var requestDigest = document.getElementById('__REQUESTDIGEST');
-			if (requestDigest !== null) {
-				headers['X-RequestDigest'] = requestDigest.value;
-			}
-
 			var executor = new SP.RequestExecutor(self.web.url);
 
 			SPUtils.getFileBinary(file).then(function (binaryData) {
+
+				var headers = {
+					'Accept': 'application/json; odata=verbose',
+					"content-type": "application/json;odata=verbose"
+				};
+
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+				if (requestDigest !== null) {
+					headers['X-RequestDigest'] = requestDigest.value;
+				}
 
 				executor.executeAsync({
 
@@ -405,6 +405,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 					method: 'POST',
 					headers: headers,
 					body: binaryData,
+					binaryStringRequestBody: true,
 
 					success: function(data) {
 
@@ -434,10 +435,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 		};	// addFile
 
 
-
-
-
-		// ****************************************************************************
+		// ******************************************
 		// rename
 		//
 		// Renames the current folder with the new name
