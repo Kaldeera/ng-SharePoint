@@ -747,4 +747,3 @@ angular.module('ngSharePoint').directive('spform',
     } // Directive factory function
 
 ]);
-
