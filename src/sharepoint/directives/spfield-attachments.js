@@ -240,14 +240,14 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 
 
-			function fireAttachFile() {
-				$element.click();
-			}
-
-
             SPRibbon.ready().then(function() {
 
-                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Actions.AttachFile', fireAttachFile, true);
+            	SPRibbon.attachFileElement = $element;
+                SPRibbon.registerCommand(
+                	'Ribbon.ListForm.Edit.Actions.AttachFile', 
+                	function() {
+                		SPRibbon.attachFileElement.click();
+                	}, true);
 
             });
 

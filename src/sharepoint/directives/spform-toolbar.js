@@ -51,12 +51,15 @@ angular.module('ngSharePoint').directive('spformToolbar',
             link: function($scope, $element, $attrs, spformController, transcludeFn) {
 
                 $scope.formCtrl = spformController;
+                $scope.ribbonToolbar = null;
 
 
                 // ****************************************************************************
                 // Watch for form mode changes.
                 //
                 $scope.$watch(spformController.getFormMode, function(newValue, oldValue) {
+
+                    //if($scope.currentMode === newValue) return;
 
                     $scope.currentMode = newValue;
                     processToolbar();
@@ -65,12 +68,12 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
 
-                function isToolbarNeeded(clone) {
+                function isRibbonNeeded(clone) {
 
-                    var toolbarNeeded = false;
+                    var ribbonNeeded = false;
 
-                    // Check if the 'showInRibbon' attribute is not 'true' or 'undefined'.
-                    if (!angular.isDefined($attrs.showInRibbon) || $attrs.showInRibbon === 'true') {
+                    // Check if the 'showInRibbon' attribute is 'true'.
+                    //if ($attrs.showInRibbon === 'true') {
 
                         // Iterate over 'clone' elements to check if there are 'action' elements and are not the default actions.
                         for (var i = 0; i < clone.length; i++) {
@@ -79,46 +82,55 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                             if (elem.tagName !== void 0) {
 
-                                // Checks for '<spform-toolbar-action>' element
-                                if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+                                var showInRibbon = false;
 
-                                    var actionAttr = elem.getAttribute('action').toLowerCase();
-
-                                    // Checks if the action is a default action
-                                    if (actionAttr !== 'save' && actionAttr !== 'cancel' && actionAttr !== 'close') {
-
-                                        toolbarNeeded = true;
-                                        break;
-
-                                    }
-
+                                if (elem.hasAttribute('show-in-ribbon')) {
+                                    showInRibbon = (elem.getAttribute('show-in-ribbon').toLowerCase() === 'true');
                                 }
 
-                                // Checks for '<any sp-action="">' element
-                                if (elem.hasAttribute('sp-action')) {
+                                if (showInRibbon) {
 
-                                    var spActionAttr = elem.getAttribute('sp-action').toLowerCase();
+                                    // Checks for '<spform-toolbar-action>' element
+                                    if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
 
-                                    // Checks if the action is a default action
-                                    if (spActionAttr !== 'save' && spActionAttr !== 'cancel' && spActionAttr !== 'close') {
+                                        var actionAttr = elem.getAttribute('action').toLowerCase();
 
-                                        toolbarNeeded = true;
-                                        break;
+                                        // Checks if the action is a default action
+                                        if (actionAttr !== 'save' && actionAttr !== 'cancel' && actionAttr !== 'close') {
+
+                                            ribbonNeeded = true;
+                                            break;
+
+                                        }
 
                                     }
 
+                                    // Checks for '<any sp-action="">' element
+                                    if (elem.hasAttribute('sp-action')) {
+
+                                        var spActionAttr = elem.getAttribute('sp-action').toLowerCase();
+
+                                        // Checks if the action is a default action
+                                        if (spActionAttr !== 'save' && spActionAttr !== 'cancel' && spActionAttr !== 'close') {
+
+                                            ribbonNeeded = true;
+                                            break;
+
+                                        }
+
+                                    }
+                                    
                                 }
 
                             }
 
                         }
 
-                    }
+                    //}
 
-                    return toolbarNeeded;
+                    return ribbonNeeded;
 
                 }
-
 
 
                 function processToolbar() {
@@ -137,7 +149,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     transcludeFn($scope, function(clone) {
                         
                         // If there are elements to transclude, before process the ribbon.
-                        if (isToolbarNeeded(clone)) {
+                        if (isRibbonNeeded(clone)) {
 
                             SPRibbon.ready().then(function() {
 

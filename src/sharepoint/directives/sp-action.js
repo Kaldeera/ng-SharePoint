@@ -143,7 +143,7 @@
 
                         scope.action = scope.spAction;
 
-                        if (!angular.isDefined(attrs.showInRibbon) || attrs.showInRibbon === 'true') {
+                        if (attrs.showInRibbon === 'true') {
 
                             SPRibbon.ready().then(function() {
 
@@ -160,11 +160,6 @@
                         }
 
                 }
-
-
-                // Make available in the scope the 'redirectUrl' attribute after compile.
-                //element.attr('redirect-url', redirectUrl);
-                //scope.redirectUrl = redirectUrl;
 
 
                 // Compile the element with the new attributes and scope values

@@ -73,7 +73,7 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                         default:
                             $scope.text = $scope.text || '';
 
-                            if (!angular.isDefined($attrs.showInRibbon) || $attrs.showInRibbon === 'true') {
+                            if ($attrs.showInRibbon === 'true') {
 
                                 SPRibbon.ready().then(function() {
 
@@ -178,8 +178,6 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                     });
 
                 };
-
-                $compile($element)($scope);
 
             } // link
 
