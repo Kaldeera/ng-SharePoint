@@ -13,6 +13,7 @@
 ///////////////////////////////////////
 //  SPIf
 ///////////////////////////////////////
+
 angular.module('ngSharePoint').directive('spIf',
 
     ['$compile', 'SPExpressionResolver',

@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver', 'SPRibbon',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver, SPRibbon) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -419,23 +419,6 @@ angular.module('ngSharePoint').directive('spform',
                     return def.promise;
                 };
 
-
-/*
-                this.closeForm = function(redirectUrl) {
-
-                    if (redirectUrl !== void 0) {
-
-                        window.location = redirectUrl;
-
-                    } else {
-                        
-                        window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
-
-                    }
-
-                };
-*/                
-
             }], // controller property
 
 
@@ -468,6 +451,7 @@ angular.module('ngSharePoint').directive('spform',
                         if ($scope.isInDesignMode) return;
 
 
+
                         // Watch for form mode changes
                         $scope.$watch(function() {
 
@@ -488,6 +472,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             }
                         });
+
 
 
                         // Watch for item changes

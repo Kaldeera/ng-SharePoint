@@ -24,7 +24,7 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "					<span ng-if=\"!file.ServerRelativeUrl\" ng-bind=\"file.FileName\"></span>\n" +
     "				</td>\n" +
     "				<td class=\"ms-propertysheet\" style=\"white-space: nowrap; padding-left: 20px;\">\n" +
-    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">&nbsp;{{DeleteAttachmentText}}</a>\n" +
+    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">{{DeleteAttachmentText}}</a>\n" +
     "				</td>\n" +
     "			</tr>\n" +
     "		</tbody>\n" +

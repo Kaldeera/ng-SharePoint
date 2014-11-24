@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spformToolbarButton', 
 
-    ['SPUtils', '$q',
+    ['SPUtils', '$q', 'SPRibbon', '$compile',
 
-    function spformToolbarButton_DirectiveFactory(SPUtils, $q) {
+    function spformToolbarButton_DirectiveFactory(SPUtils, $q, SPRibbon, $compile) {
 
         var spformToolbarButton_DirectiveDefinitionObject = {
 
@@ -50,12 +50,18 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
                             $scope.action = save;
                             $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            SPRibbon.ready().then(function() {
+                                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Publish', $scope.makeAction, true);
+                            });
                             break;
                         
                         case 'cancel':
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
                             $scope.action = cancel;
                             $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            SPRibbon.ready().then(function() {
+                                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Cancel', $scope.makeAction, true);
+                            });
                             break;
 
                         case 'close':
@@ -66,6 +72,19 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
                         default:
                             $scope.text = $scope.text || '';
+
+                            if (!angular.isDefined($attrs.showInRibbon) || $attrs.showInRibbon === 'true') {
+
+                                SPRibbon.ready().then(function() {
+
+                                    var toolbar = spformToolbarController.getRibbonToolbar();
+                                    if (toolbar) {
+                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description);
+                                    }
+
+                                });
+
+                            }
                     }
 
                 });
@@ -160,6 +179,7 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
                 };
 
+                $compile($element)($scope);
 
             } // link
 

@@ -1154,6 +1154,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             }
 
 
+            // Resolve/Reject the current expression promise
             $q.when(expressionPromise).then(function(result) {
 
                 // Sets the resolved value for the current expression
@@ -1161,17 +1162,21 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
+
             }, function(result) {
 
+                // Even with a promise rejection, sets the result in the current expression
                 expressionsArray[index - 1] = result;
                 
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
+
             });
 
 
             return deferred.promise;
         }
+
 
 
         function getExpressionParts(text) {
@@ -1189,6 +1194,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         }
 
 
+
         function resolveItemExpression(expression, scope) {
 
             var queryParts = getExpressionParts(expression);
@@ -1203,6 +1209,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             });
             
         }
+
 
 
         function resolveCurrentUserExpression(expression) {
@@ -1230,6 +1237,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         function resolveFunctionExpression(functionExpression, scope) {
 
             return scope.$eval($parse(functionExpression));
+
         }
 
 
@@ -1257,19 +1265,21 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 }
 
                 return '{e:' + pos + '}';
+
             });
 
 
             // Resolve the 'expressionsArray' with promises
             resolveExpression(expressionsArray, scope).then(function() {
 
-                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expression value.
+                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expressions values.
                 for (var i = 0; i < expressionsArray.length; i++) {
                     text = text.replace(new RegExp('{e:' + i + '}', 'g'), expressionsArray[i]);
                 }
 
                 // Resolve the main promise
                 deferred.resolve(text);
+
             });
 
 
@@ -1278,6 +1288,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         }; // resolve method
 
     } // SPExpressionResolver factory
+
 ]);
 /*
     SPFieldDirective - Service
@@ -3528,6 +3539,651 @@ angular.module('ngSharePoint').factory('SPListItem',
     }
 ]);
 /*
+    SPRibbon - factory
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPRibbon
+///////////////////////////////////////
+
+(function() {
+    
+    'use strict';
+
+    angular
+        .module('ngSharePoint')
+        .factory('SPRibbon', SPRibbon);
+
+
+    SPRibbon.$inject = ['$q', '$timeout'];
+
+
+    /* @ngInject */
+    function SPRibbon($q, $timeout) {
+
+        var pageManager, ribbon, commandDispatcher;
+        var ribbonDeferred = $q.defer();
+        var toolbarSequence = 1;
+        var buttonSequence = 1;
+
+
+        var spRibbonService = {
+
+            ready                       : ready,
+            addTab                      : addTab,
+            getTab                      : getTab,
+            getEditTab                  : getEditTab,
+            getDefaultTab               : getDefaultTab,
+            addGroupToTab               : addGroupToTab,
+            addLayoutToGroup            : addLayoutToGroup,
+            addSectionToLayout          : addSectionToLayout,
+            addButtonToSection          : addButtonToSection,
+            registerComponentCommands   : registerComponentCommands,
+            unregisterComponentCommands : unregisterComponentCommands,
+            getStructure                : getStructure,
+            createToolbar               : createToolbar,
+            addButtonToToolbar          : addButtonToToolbar,
+            registerCommand             : registerCommand
+
+        };
+
+
+        return spRibbonService;
+
+
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+
+
+        function onRibbonInited() {
+
+            ribbon = pageManager.get_ribbon();
+            commandDispatcher = pageManager.get_commandDispatcher();
+
+            ribbonDeferred.resolve();
+
+        } // onRibbonInited
+
+
+
+        function ready() {
+
+            // Initialize ribbon
+            SP.SOD.executeOrDelayUntilScriptLoaded(function () {
+
+                pageManager = SP.Ribbon.PageManager.get_instance();
+
+                // Adds a new event handler for the page manager 'RibbonInited' event.
+                pageManager.add_ribbonInited(onRibbonInited);
+
+                // Try to get the ribbon
+                try {
+
+                    ribbon = pageManager.get_ribbon();
+
+                }
+                catch (e) { }
+
+
+                if (!ribbon) {
+
+                    if (typeof (_ribbonStartInit) == "function") {
+
+                        _ribbonStartInit(_ribbon.initialTabId, false, null);
+
+                    }
+
+                } else {
+
+                    onRibbonInited();
+
+                }
+
+            }, "sp.ribbon.js");
+
+
+            return ribbonDeferred.promise;
+
+        } // ready
+
+
+
+        function addTab(id, title, description, commandId, hidden, contextualGroupId, cssClass) {
+
+            var tab = new CUI.Tab(ribbon, id, title, description, commandId, hidden || false, contextualGroupId || '', cssClass || null);
+            ribbon.addChild(tab);
+            ribbon.refresh();
+
+            return tab;
+
+        } // addTab
+
+
+
+        function getTab(id) {
+
+            // Gets tab by id
+            var tab = ribbon.getChild(id);
+
+            if (tab === null) {
+
+                // Gets tab by title
+                tab = ribbon.getChildByTitle(id);
+
+            }
+
+            return tab;
+
+        } // getTab
+
+
+
+        function getEditTab() {
+
+            var editTab = ribbon.getChild('Ribbon.ListForm.Edit');
+
+            if (editTab === null) {
+                // Try with Document library edit tab
+                editTab = ribbon.getChild('Ribbon.DocLibListForm.Edit');
+            }
+
+
+            if (editTab === null) {
+                // Try with Posts list edit tab
+                editTab = ribbon.getChild('Ribbon.PostListForm.Edit');
+            }
+
+            return editTab;
+
+        } // getEditTab
+
+
+
+        function getDefaultTab() {
+
+            return ribbon.getChild(ribbon.get_selectedTabId());
+
+        } // getDefaultTab
+
+
+
+        function addGroupToTab(tabId, id, title, description, commandId) {
+
+            var tab = ribbon.getChild(tabId);
+            var group, layout, section;
+
+            if (tab !== null) {
+
+                group = new CUI.Group(ribbon, id, title, description, commandId, null);
+                tab.addChild(group);
+
+                layout = addLayoutToGroup(group);
+                section = addSectionToLayout(layout);
+                ribbon.refresh();
+
+            }
+
+            return {
+                group: group,
+                layout: layout,
+                section: section
+            };
+
+        } // addGroupToTab
+
+
+
+        function addLayoutToGroup(group) {
+
+            var layoutId = group.get_id() + '.Layout';
+            var layout = new CUI.Layout(ribbon, layoutId, layoutId);
+            group.addChild(layout);
+            //group.selectLayout(layoutId);
+
+            return layout;
+
+        } // addLayoutToGroup
+
+
+
+        function addSectionToLayout(layout) {
+
+            var sectionId = layout.get_id() + '.Section';
+            var section = new CUI.Section(ribbon, sectionId, 2, 'Top'); //-> Type = 2 = One row
+            /*
+                The 'Type' argument in the CUI.Section constructor can be one of the following values:
+
+                    1: The section will be a vertical separator and can't add other elements inside.
+                    2: The section will have one row (1)
+                    3: The section will have two rows (1 and 2)
+                    4: The section will have three rows (1, 2 and 3)
+            */
+            layout.addChild(section);
+
+            return section;
+
+        } // addSectionToLayout
+
+
+
+        function createButtonProperties(id, label, tooltip, description) {
+
+            var controlProperties = new CUI.ControlProperties();
+
+            controlProperties.Command = id;// + '.Command';
+            controlProperties.Id = id + '.ControlProperties';
+            controlProperties.TemplateAlias = 'o1';
+            /*
+                Property: TemplateAlias
+                The TemplateAlias property is used to specify which template alias to use from 
+                the Group Template Layout. That is how the control is positioned, which section 
+                or row. This property must be a string value corresponding to one of the aliases 
+                defined in the group template layout.
+
+                See 'RibbonTemplates' at the end of the file 'CMDUI.XML' (<15_deep>\TEMPLATE\GLOBAL\CMDUI.XML).
+                Also see these recomendations: http://www.andrewconnell.com/blog/Always-Create-Your-Own-Group-Templates-with-SharePoint-Ribbon-Customizations
+            */
+            controlProperties.Image32by32 = '_layouts/15/images/placeholder32x32.png';
+            controlProperties.ToolTipTitle = tooltip || label;
+            controlProperties.ToolTipDescription = description || tooltip || '';
+            controlProperties.LabelText = label;
+
+            return controlProperties;
+
+        } // createButtonProperties
+
+
+
+        function addButtonToSection(section, id, label, tooltip, description) {
+
+            var button = new CUI.Controls.Button(ribbon, id, createButtonProperties(id, label, tooltip, description));
+            var controlComponent = button.createComponentForDisplayMode('Large'); //-> 'Large', 'Medium', 'Small', 'Menu|Menu16', 'Menu32', ''
+            var row = section.getRow(1); // Assumes section of type 2 (one row). It could also be type 3 or 4 and in this case always use the row 1.
+            row.addChild(controlComponent);
+
+        } // addButtonToSection
+
+
+
+        function showEditingTools() {
+
+            var commandId = 'CommandContextChanged';
+            var properties = new CUI.CommandContextSwitchCommandProperties();
+
+            properties.ChangedByUser = false;
+            properties.NewContextComand = 'CPEditTab';
+            properties.NewContextId = 'Ribbon.EditingTools.CPEditTab';
+            properties.OldContextCommand = 'Ribbon.ListForm.Edit';
+            properties.OldContextId = 'Ribbon.ListForm.Edit';
+
+            return commandDispatcher.executeCommand(commandId, properties);
+
+        } // showEditingTools
+
+
+
+        function _validateCommands(commands) {
+
+            if (!angular.isArray(commands)) {
+
+                if (angular.isString(commands)) {
+
+                    commands = [commands];
+
+                } else {
+
+                    // No valid commands specified
+                    return false;
+
+                }
+            }
+
+            return commands;
+
+        } // _validateCommands
+
+
+
+        function registerComponentCommands(componentId, commands) {
+
+            var cmds = _validateCommands(commands);
+            var component = pageManager.getPageComponentById(componentId);
+
+            if (component && cmds) {
+
+                commandDispatcher.registerMultipleCommandHandler(component, cmds);
+                ribbon.refresh();
+                return true;
+
+            }
+
+            return false;
+
+        } // registerComponentCommands
+
+
+
+        function unregisterComponentCommands(componentId, commands) {
+
+            var cmds = _validateCommands(commands);
+            var component = pageManager.getPageComponentById(componentId);
+
+            if (component && cmds) {
+
+                commandDispatcher.unregisterMultipleCommandHandler(component, cmds);
+                ribbon.refresh();
+                return true;
+
+            }
+
+            return false;
+
+        } // unregisterComponentCommands
+
+
+
+        function _getRibbonStructure(fromNode) {
+
+            var structure = {};
+            var items = fromNode.$6_0;
+
+            if (items) {
+
+                var enumerator = items.getEnumerator();
+
+                while (enumerator.moveNext()) {
+                    
+                    var item = enumerator.get_current();
+
+                    // TODO: Si el item es un 'CUI_Tab', acceder al tab para inicializarlo antes de obtener su estructura.
+                    //       De lo contrario estará vacío si no se ha accedido anteriormente :(
+
+                    structure[item.get_id()] = item;
+                    angular.extend(structure[item.get_id()], _getRibbonStructure(item));
+
+                }
+
+            }
+
+            return structure;
+
+        } // _getRibbonStructure
+
+
+
+        function getStructure() {
+
+            // Gets the current selected tab id
+            var selectedTabId = ribbon.get_selectedTabId();
+
+            // Gets the ribbon structure
+            var ribbonStructure = _getRibbonStructure(ribbon);
+
+            // Restore selected tab
+            ribbon.selectTabById(selectedTabId);
+
+            return ribbonStructure;
+
+        } // getStructure
+
+
+
+        function createToolbar(name, targetTab) {
+
+            var groupName = name || 'Toolbar ' + _getNextToolbarSequence();
+            var groupId = 'Ribbon.ngSharePoint.' + groupName.replace(/ /g, '-');
+            var groupCommandId = groupId + '.Command';
+            var tab, toolbar;
+
+
+            // Checks for 'targetTab'
+            if (targetTab) {
+
+                tab = getTab(targetTab);
+
+                // If specified tab do not exists, creates a new one.
+                if (tab === null) {
+
+                    // Creates a new tab
+                    var tabId = 'Ribbon.ngSharePoint.' + targetTab.replace(/ /g, '-');
+                    tab = addTab(tabId, targetTab, '', tabId + '.Command');
+
+                }
+
+            } else {
+
+                // Gets the default selected tab (View|Edit).
+                tab = getDefaultTab();
+
+            }
+
+
+            // Adds the toolbar as a new group in the tab.
+            toolbar = addGroupToTab(tab.get_id(), groupId, groupName, groupCommandId);
+            registerCommand(groupCommandId, angular.noop, true);
+
+            return toolbar;
+
+        } // createToolbar
+
+
+
+        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description) {
+
+            var buttonId = toolbar.group.get_id() + '.Button-' + _getNextButtonSequence();
+
+            addButtonToSection(toolbar.section, buttonId, label, tooltip, description);
+            toolbar.group.selectLayout(toolbar.layout.get_id());
+            registerCommand(buttonId, handlerFn, true);
+
+        } // addButtonToToolbar
+
+
+
+        function _getNextToolbarSequence() {
+
+            return toolbarSequence++;
+
+        } // _getNextToolbarSequence
+
+
+
+        function _getNextButtonSequence() {
+
+            return buttonSequence++;
+
+        } // _getNextButtonSequence
+
+
+
+        function registerCommand(commandId, handlerFn, canHandle) {
+
+            var component = pageManager.getPageComponentById('ngSharePointPageComponent');
+
+            if (!component) {
+
+                component = registerPageComponent();
+
+            }
+
+            // Adds the command to the 'ngSharePointPageComponent' component.
+            if (component.addCommand(commandId, handlerFn, canHandle)) {
+
+                // Register the command in the CommandDispatcher of the CUI.Page.PageComponent
+                registerComponentCommands(component.getId(), commandId);
+
+            }
+
+        } // registerCommand
+
+
+
+        function registerPageComponent() {
+
+            // Register tye type 'ngSharePointPageComponent'.
+            Type.registerNamespace('ngSharePointPageComponent');
+
+
+            // Initialize the 'ngSharePointPageComponent' members
+            ngSharePointPageComponent = function() {
+
+                ngSharePointPageComponent.initializeBase(this);
+
+            };
+
+
+            ngSharePointPageComponent.initializePageComponent = function() {
+
+                var instance = ngSharePointPageComponent.get_instance();
+
+                pageManager.addPageComponent(instance);
+
+                return instance;
+
+            };
+
+
+            ngSharePointPageComponent.get_instance = function() {
+
+                if (!angular.isDefined(ngSharePointPageComponent.instance)) {
+
+                    ngSharePointPageComponent.instance = new ngSharePointPageComponent();
+
+                }
+
+                return ngSharePointPageComponent.instance;
+
+            };
+
+
+            ngSharePointPageComponent.prototype = {
+
+                // Create an array of handled commands with handler methods
+                init: function() {
+
+                    this._commands = [];
+                    this._handledCommands = {};
+
+                },
+
+
+                getGlobalCommands: function() {
+
+                    return this._commands;
+
+                },
+
+
+                getFocusedCommands: function() {
+
+                    return [];
+
+                },
+
+
+                handleCommand: function(commandId, properties, sequence) {
+
+                    return this._handledCommands[commandId].handle(commandId, properties, sequence);
+
+                },
+
+
+                canHandleCommand: function(commandId) {
+
+                    var canHandle = this._handledCommands[commandId].enabled;
+
+                    if (angular.isFunction(canHandle)) {
+
+                        return canHandle();
+
+                    }
+
+                    return canHandle;
+
+                },
+
+
+                isFocusable: function() {
+
+                    return false;
+
+                },
+
+
+                receiveFocus: function() {
+
+                    return true;
+
+                },
+
+
+                yieldFocus: function() {
+
+                    return false;
+
+                },
+
+
+                getId: function() {
+
+                    return 'ngSharePointPageComponent';
+
+                },
+
+
+                addCommand: function(commandId, handlerFn, canHandle) {
+
+                    if (!CUI.ScriptUtility.isNullOrUndefined(commandId) && !CUI.ScriptUtility.isNullOrUndefined(handlerFn) && !Array.contains(this._commands, commandId)) {
+
+                        this._handledCommands[commandId] = {
+
+                            handle: handlerFn,
+                            enabled: canHandle || true
+
+                        };
+
+                        this._commands.push(commandId);
+
+                        return true;
+
+                    }
+
+                    return false;
+
+                }
+
+            };
+
+
+            // Unregister default save and cancel commands
+            unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Publish');
+            unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Cancel');
+            unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Actions.AttachFile');
+
+
+            // Register classes and initialize page component
+            ngSharePointPageComponent.registerClass('ngSharePointPageComponent', CUI.Page.PageComponent);
+            var instance = ngSharePointPageComponent.initializePageComponent();
+
+
+            // Returns the component instance
+            return instance;
+
+        } // registerPageComponent
+
+    } // SPRibbon factory
+
+})();
+/*
 	SPUser - factory
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -4482,99 +5138,235 @@ angular.module('ngSharePoint').factory('SPWeb',
 ///////////////////////////////////////
 //  SPAction
 ///////////////////////////////////////
-/*
-angular.module('ngSharePoint').directive('spAction', 
 
-    ['$compile', '$q', 'SPUtils',
+(function() {
+    
+    'use strict';
 
-    function spAction_DirectiveFactory($compile, $q, SPUtils) {
+    angular
+        .module('ngSharePoint')
+        .directive('spAction', spAction);
 
-        var spAction_DirectiveDefinitionObject = {
+
+    spAction.$inject = ['$compile', '$q', 'SPUtils', 'SPRibbon'];
+
+
+    /* @ngInject */
+    function spAction($compile, $q, SPUtils, SPRibbon) {
+
+        var directive = {
 
             restrict: 'A',
             require: '^spformToolbar',
-            replace: false,
             priority: 1000,
             terminal: true,
+
             scope: {
                 spAction: '&',
                 redirectUrl: '@'
             },
 
-            link: function($scope, $element, $attrs, spformToolbarController) {
+            link: postLink
 
-                $scope.formCtrl = spformToolbarController.getFormCtrl();
-                $scope.isInDesignMode = SPUtils.inDesignMode();
-                $scope.status = $scope.formCtrl.status;
+        };
 
-                //var spAction = $attrs.spAction;
-                var ngClick = $attrs.ngClick;
-                var redirectUrl = $attrs.redirectUrl;
+        return directive;
 
-                $element.removeAttr('sp-action');
-                $element.attr('ng-click', 'makeAction();' + ngClick);
-                $element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+        
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+
+
+        function postLink(scope, element, attrs, spformToolbarController) {
+
+            // Public properties
+            scope.formCtrl = spformToolbarController.getFormCtrl();
+            scope.isInDesignMode = SPUtils.inDesignMode();
+            scope.status = scope.formCtrl.status;
+
+
+            // Public methods
+            scope.makeAction = makeAction;
+
+
+            // Process attributes and compile
+            var redirectUrl = attrs.redirectUrl;
+            var ngClick = attrs.ngClick;
+            var tooltip = attrs.tooltip;
+            var description = attrs.description;
+
+            processAction();
+
+
+
+            // ****************************************************************************
+            // Private methods
+            //
+
+
+            function processAction() {
+
+
+                // Removes 'sp-action' attribute to avoid infinite loop when compile
+                element.removeAttr('sp-action');
+
+                // Sets the action click event
+                element.attr('ng-click', 'makeAction();' + attrs.ngClick);
+
+                // Sets the logic for 'ng-disabled' attribute
+                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+
+                // Sets css classes
+                element.addClass('spform-toolbar-element spform-toolbar-action');
 
 
                 // Checks for pre-defined buttons actions (i.e., save, cancel and close)
-                switch($attrs.spAction.toLowerCase()) {
+                switch(attrs.spAction.toLowerCase()) {
 
+                    // Default save action
                     case 'save':
-                        $scope.action = save;
+
+                        scope.action = save;
                         redirectUrl = redirectUrl || 'default';
+
+                        SPRibbon.ready().then(function() {
+
+                            SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Publish', makeAction, true);
+
+                        });
+
                         break;
                     
+
+                    // Default cancel action
                     case 'cancel':
-                        $scope.action = cancel;
+
+                        scope.action = cancel;
                         redirectUrl = redirectUrl || 'default';
+
+                        SPRibbon.ready().then(function() {
+
+                            SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Cancel', makeAction, true);
+
+                        });
+
                         break;
 
+
+                    // Default close action
                     case 'close':
-                        $scope.action = cancel;
+
+                        scope.action = cancel;
                         redirectUrl = redirectUrl || 'default';
+
                         break;
 
+
+                    // Custom action
                     default:
-                        $scope.action = $scope.spAction;
-                }
 
+                        scope.action = scope.spAction;
 
+                        if (!angular.isDefined(attrs.showInRibbon) || attrs.showInRibbon === 'true') {
 
-                // ****************************************************************************
-                // Private methods
-                //
+                            SPRibbon.ready().then(function() {
 
-                // Default SAVE form action
-                function save() {
+                                var toolbar = spformToolbarController.getRibbonToolbar();
 
-                    return $scope.formCtrl.save(redirectUrl);
+                                if (toolbar) {
 
-                }
+                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description);
 
+                                }
 
+                            });
 
-                // Default CANCEL form action
-                function cancel() {
-
-                    return $scope.formCtrl.cancel(redirectUrl);
+                        }
 
                 }
 
 
-                // ****************************************************************************
-                // Public methods
-                //
-                $scope.makeAction = function() {
+                // Make available in the scope the 'redirectUrl' attribute after compile.
+                //element.attr('redirect-url', redirectUrl);
+                //scope.redirectUrl = redirectUrl;
 
-                    $scope.formCtrl.setFormStatus($scope.status.PROCESSING);
 
-                    $q.when($scope.action()).then(function(result) {
+                // Compile the element with the new attributes and scope values
+                $compile(element)(scope);
+
+            }
+
+
+
+            // Gets the action text/label
+            function getLabel() {
+
+                var label = '';
+
+                if (element.get(0).tagName.toLowerCase() == 'input') {
+
+                    label = element.val();
+
+                } else {
+
+                    label = element.text();
+
+                }
+
+
+                return label;
+
+            }
+
+
+
+            // Default SAVE form action
+            function save() {
+
+                return scope.formCtrl.save(redirectUrl);
+
+            }
+
+
+
+            // Default CANCEL form action
+            function cancel() {
+
+                return scope.formCtrl.cancel(redirectUrl);
+
+            }
+
+
+
+
+            // ****************************************************************************
+            // Public methods
+            //
+            function makeAction() {
+
+                scope.formCtrl.setFormStatus(scope.status.PROCESSING);
+
+                var safeActionFn = function() {
+                    try {
+                        return scope.action();
+                    } catch(e) {
+                        console.error('>>>> ngSharePoint: sp-action "' + getLabel() + '" rejected automatically due to an unhandled exception.');
+                        return $q.reject(e);
+                    }
+                };
+
+
+
+                $q.when(safeActionFn())
+
+                    .then(function(result) {
 
                         if (result !== false) {
 
-                            if (redirectUrl) {
+                            //var redirectUrl = scope.redirectUrl;
 
-                                //var redirectUrl = $scope.redirectUrl;
+                            if (redirectUrl) {
 
                                 // Checks for pre-defined values in the redirect url.
                                 switch(redirectUrl.toLowerCase()) {
@@ -4611,204 +5403,38 @@ angular.module('ngSharePoint').directive('spAction',
 
                                 }
                                 
+
+                                // Redirects to the correct url
                                 window.location = redirectUrl;
+
                             }
 
                         }
 
-                        // Action resolved
-                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+                    }, function(err) {
 
-                    }, function() {
+                        if (err) {
 
-                        // Action rejected
-                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+                            // Show error details in the console.
+                            console.error(err);
+
+                        }
+
+                    })
+
+                    .finally(function() {
+
+                        // Sets the form in its IDLE state.
+                        scope.formCtrl.setFormStatus(scope.status.IDLE);
 
                     });
 
-                }; // makeAction
-
-
-                $compile($element)($scope);
-
-            } // link
-
-        }; // Directive definition object
-
-
-        return spAction_DirectiveDefinitionObject;
-    }
-
-]);
-*/
-
-
-(function() {
-    'use strict';
-
-    angular
-        .module('ngSharePoint')
-        .directive('spAction', spAction);
-
-    /* @ngInject */
-    function spAction($compile, $q, SPUtils) {
-
-        var directive = {
-
-            restrict: 'A',
-            require: '^spformToolbar',
-            replace: false,
-            priority: 1000,
-            terminal: true,
-            scope: {
-                spAction: '&',
-                redirectUrl: '@'
-            },            
-            link: link,
-        };
-        return directive;
-
-        function link(scope, element, attrs, spformToolbarController) {
-
-            // Public properties
-            scope.formCtrl = spformToolbarController.getFormCtrl();
-            scope.isInDesignMode = SPUtils.inDesignMode();
-            scope.status = scope.formCtrl.status;
-
-            // Public methods
-            scope.makeAction = makeAction;
-
-
-            ///////////////////////////////////////
-
-
-            //var spAction = attrs.spAction;
-            var ngClick = attrs.ngClick;
-            var redirectUrl = attrs.redirectUrl;
-
-            element.removeAttr('sp-action');
-            element.attr('ng-click', 'makeAction();' + ngClick);
-            element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
-
-
-            // Checks for pre-defined buttons actions (i.e., save, cancel and close)
-            switch(attrs.spAction.toLowerCase()) {
-
-                case 'save':
-                    scope.action = save;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-                
-                case 'cancel':
-                    scope.action = cancel;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-
-                case 'close':
-                    scope.action = cancel;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-
-                default:
-                    scope.action = scope.spAction;
-            }
-
-
-
-            // ****************************************************************************
-            // Private methods
-            //
-
-            // Default SAVE form action
-            function save() {
-
-                return scope.formCtrl.save(redirectUrl);
-
-            }
-
-
-
-            // Default CANCEL form action
-            function cancel() {
-
-                return scope.formCtrl.cancel(redirectUrl);
-
-            }
-
-
-            // ****************************************************************************
-            // Public methods
-            //
-            function makeAction() {
-
-                scope.formCtrl.setFormStatus(scope.status.PROCESSING);
-
-                $q.when(scope.action()).then(function(result) {
-
-                    if (result !== false) {
-
-                        if (redirectUrl) {
-
-                            //var redirectUrl = scope.redirectUrl;
-
-                            // Checks for pre-defined values in the redirect url.
-                            switch(redirectUrl.toLowerCase()) {
-
-                                case 'display':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
-                                    // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
-                                    //       puede ser '.../lo-que-sea.aspx'.
-                                    // TODO: Get the right default 'DispForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'display' form.
-                                    break;
-
-
-                                case 'edit':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
-                                    // TODO: Get the right default 'EditForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'edit' form.
-                                    break;
-
-
-                                case 'new':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
-                                    // TODO: Get the right default 'NewForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'new' form.
-                                    break;
-
-
-                                case 'default':
-                                    redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
-                                    break;
-
-                            }
-                            
-                            window.location = redirectUrl;
-                        }
-
-                    }
-
-                    // Action resolved
-                    scope.formCtrl.setFormStatus(scope.status.IDLE);
-
-                }, function() {
-
-                    // Action rejected
-                    scope.formCtrl.setFormStatus(scope.status.IDLE);
-
-                });
-
             } // makeAction
-
-
-            $compile(element)(scope);
 
         } // link
 
     } // Directive factory function
+
 
 })();
 
@@ -4827,6 +5453,7 @@ angular.module('ngSharePoint').directive('spAction',
 ///////////////////////////////////////
 //  SPIf
 ///////////////////////////////////////
+
 angular.module('ngSharePoint').directive('spIf',
 
     ['$compile', 'SPExpressionResolver',
@@ -5028,13 +5655,15 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 angular.module('ngSharePoint').directive('fileSelect', 
 
-	['$parse', '$timeout', 
+	['$parse', '$timeout', 'SPRibbon', 
 
-	function fileSelect_DirectiveFactory($parse, $timeout) {
+	function fileSelect_DirectiveFactory($parse, $timeout, SPRibbon) {
 
 		var fileSelect_DirectiveDefinitionObject = function($scope, $element, $attrs) {
 
 			var fn = $parse($attrs.fileSelect);
+			$element.removeAttr('file-select');
+			
 
 			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase() !== 'file')) {
 
@@ -5105,6 +5734,20 @@ angular.module('ngSharePoint').directive('fileSelect',
 				});
 
 			});
+
+
+
+			function fireAttachFile() {
+				$element.click();
+			}
+
+
+            SPRibbon.ready().then(function() {
+
+                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Actions.AttachFile', fireAttachFile, true);
+
+            });
+
 
 		}; // Directive definition object/function
 
@@ -5278,129 +5921,130 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 ]);
 /*
-	SPFieldControl - directive
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+    SPFieldControl - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
-	Copyright (c) 2014
-	Licensed under the MIT License
+    Copyright (c) 2014
+    Licensed under the MIT License
 */
 
 
 
 ///////////////////////////////////////
-//	SPFieldControl
+//  SPFieldControl
 ///////////////////////////////////////
 
 angular.module('ngSharePoint').directive('spfieldControl', 
 
-	['$compile', '$templateCache', '$http',
+    ['$compile', '$templateCache', '$http',
 
-	function spfieldControl_DirectiveFactory($compile, $templateCache, $http) {
+    function spfieldControl_DirectiveFactory($compile, $templateCache, $http) {
 
-		var spfieldControl_DirectiveDefinitionObject = {
+        var spfieldControl_DirectiveDefinitionObject = {
 
-			restrict: 'EA',
-			require: '^spform',
-			replace: true,
-			templateUrl: 'templates/form-templates/spfield-control.html',
-
-
-			link: function($scope, $element, $attrs, spformController) {
-
-				var name = ($attrs.name || $attrs.spfieldControl);
-				var schema = spformController.getFieldSchema(name);
-				
-				if (schema !== void 0) {
-
-					// Sets the default value for the field
-					spformController.initField(name);
-
-					// NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize the field with it's default value.
-					if ($attrs.mode == 'hidden') {
-						$element.addClass('ng-hide');
- 						return;
-					}
-
-					// Gets the field type
-					var fieldType = schema.TypeAsString;
-					if (fieldType === 'UserMulti') fieldType = 'User';
-
-					// Gets the field name
-					var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
-
-					// Adjust the field name if necessary.
-					// This is for additional read-only fields attached to Lookup and LookupMulti field types.
-					if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
-
-						var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
-
-						if (primaryFieldSchema !== void 0) {
-							fieldName = primaryFieldSchema.InternalName + 'Id';
-						}
-					}
-
-					// Mount field attributes
-					var ngModelAttr = ' ng-model="item.' + fieldName + '"';
-					var nameAttr = ' name="' + name + '"';
-					var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
-					var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
-					var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
-					var validationAttributes = ' ng-required="' + schema.Required + '"';
-					
-					// Specific field type validation attributes
-					switch(schema.TypeAsString) {
-
-						case 'Text':
-						case 'Note':
-							validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
-							break;
-					}
+            restrict: 'EA',
+            require: '^spform',
+            replace: true,
+            templateUrl: 'templates/form-templates/spfield-control.html',
 
 
-					// Check for 'render-as' attribute
-					if ($attrs.renderAs) {
-						fieldType = $attrs.renderAs;
-					}
+            link: function($scope, $element, $attrs, spformController) {
+
+                var name = ($attrs.name || $attrs.spfieldControl);
+                var schema = spformController.getFieldSchema(name);
+                
+                if (schema !== void 0) {
+
+                    // Sets the default value for the field
+                    spformController.initField(name);
+
+                    // NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize 
+                    //       the field with it's default value, but without showing it up in the form.
+                    if ($attrs.mode == 'hidden') {
+                        $element.addClass('ng-hide');
+                        return;
+                    }
+
+                    // Gets the field type
+                    var fieldType = schema.TypeAsString;
+                    if (fieldType === 'UserMulti') fieldType = 'User';
+
+                    // Gets the field name
+                    var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+
+                    // Adjust the field name if necessary.
+                    // This is for additional read-only fields attached to Lookup and LookupMulti field types.
+                    if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
+
+                        var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
+
+                        if (primaryFieldSchema !== void 0) {
+                            fieldName = primaryFieldSchema.InternalName + 'Id';
+                        }
+                    }
+
+                    // Mount field attributes
+                    var ngModelAttr = ' ng-model="item.' + fieldName + '"';
+                    var nameAttr = ' name="' + name + '"';
+                    var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
+                    var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
+                    var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
+                    var validationAttributes = ' ng-required="' + schema.Required + '"';
+                    
+                    // Specific field type validation attributes
+                    switch(schema.TypeAsString) {
+
+                        case 'Text':
+                        case 'Note':
+                            validationAttributes += ' ng-maxlength="' + schema.MaxLength + '"';
+                            break;
+                    }
 
 
-					// Check for 'require' attribute (Force required)
-					if ($attrs.required) {
-						schema.Required = $attrs.required == 'true';
-					}
-					
-
-					// Mount the field directive HTML
-					var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
-					var newElement = $compile(fieldControlHTML)($scope);
-
-					$element.replaceWith(newElement);
-					$element = newElement;
-
-				} else {
-
-					console.error('Unknown field "' + $attrs.name + '"');
-
-					/*
-					var errorElement = '<span class="ms-formvalidation ms-csrformvalidation">Unknown field "' + $attrs.name + '"</span>';
-					$element.replaceWith(errorElement);
-					$element = errorElement;
-					*/
-					
-					var emptyElement = '';
-					$element.replaceWith(emptyElement);
-					$element = emptyElement;
-				}
-
-			} // link
-
-		}; // Directive definition object
+                    // Check for 'render-as' attribute
+                    if ($attrs.renderAs) {
+                        fieldType = $attrs.renderAs;
+                    }
 
 
-		return spfieldControl_DirectiveDefinitionObject;
+                    // Check for 'require' attribute (Force required)
+                    if ($attrs.required) {
+                        schema.Required = $attrs.required == 'true';
+                    }
+                    
 
-	} // Directive factory
+                    // Mount the field directive HTML
+                    var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
+                    var newElement = $compile(fieldControlHTML)($scope);
+
+                    $element.replaceWith(newElement);
+                    $element = newElement;
+
+                } else {
+
+                    console.error('Unknown field "' + $attrs.name + '"');
+
+                    /*
+                    var errorElement = '<span class="ms-formvalidation ms-csrformvalidation">Unknown field "' + $attrs.name + '"</span>';
+                    $element.replaceWith(errorElement);
+                    $element = errorElement;
+                    */
+                    
+                    var emptyElement = '';
+                    $element.replaceWith(emptyElement);
+                    $element = emptyElement;
+                }
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spfieldControl_DirectiveDefinitionObject;
+
+    } // Directive factory
 
 ]);
 
@@ -8004,9 +8648,9 @@ angular.module('ngSharePoint').directive('spformRule',
 
 angular.module('ngSharePoint').directive('spformToolbarButton', 
 
-    ['SPUtils', '$q',
+    ['SPUtils', '$q', 'SPRibbon', '$compile',
 
-    function spformToolbarButton_DirectiveFactory(SPUtils, $q) {
+    function spformToolbarButton_DirectiveFactory(SPUtils, $q, SPRibbon, $compile) {
 
         var spformToolbarButton_DirectiveDefinitionObject = {
 
@@ -8038,12 +8682,18 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
                             $scope.action = save;
                             $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            SPRibbon.ready().then(function() {
+                                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Publish', $scope.makeAction, true);
+                            });
                             break;
                         
                         case 'cancel':
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_CancelButtonCaption);
                             $scope.action = cancel;
                             $scope.redirectUrl = $scope.redirectUrl || 'default';
+                            SPRibbon.ready().then(function() {
+                                SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Cancel', $scope.makeAction, true);
+                            });
                             break;
 
                         case 'close':
@@ -8054,6 +8704,19 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
                         default:
                             $scope.text = $scope.text || '';
+
+                            if (!angular.isDefined($attrs.showInRibbon) || $attrs.showInRibbon === 'true') {
+
+                                SPRibbon.ready().then(function() {
+
+                                    var toolbar = spformToolbarController.getRibbonToolbar();
+                                    if (toolbar) {
+                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description);
+                                    }
+
+                                });
+
+                            }
                     }
 
                 });
@@ -8148,6 +8811,7 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
                 };
 
+                $compile($element)($scope);
 
             } // link
 
@@ -8178,9 +8842,9 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
 angular.module('ngSharePoint').directive('spformToolbar', 
 
-    ['$compile', 'SPUtils',
+    ['$compile', 'SPUtils', 'SPRibbon',
 
-    function spformToolbar_DirectiveFactory($compile, SPUtils) {
+    function spformToolbar_DirectiveFactory($compile, SPUtils, SPRibbon) {
 
         var spformToolbarDirectiveDefinitionObject = {
 
@@ -8199,6 +8863,13 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                 };
 
+
+                this.getRibbonToolbar = function() {
+
+                    return $scope.ribbonToolbar;
+
+                };
+
             },
 
 
@@ -8206,7 +8877,6 @@ angular.module('ngSharePoint').directive('spformToolbar',
             link: function($scope, $element, $attrs, spformController, transcludeFn) {
 
                 $scope.formCtrl = spformController;
-
 
 
                 // ****************************************************************************
@@ -8218,6 +8888,62 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     processToolbar();
 
                 });
+
+
+
+                function isToolbarNeeded(clone) {
+
+                    var toolbarNeeded = false;
+
+                    // Check if the 'showInRibbon' attribute is not 'true' or 'undefined'.
+                    if (!angular.isDefined($attrs.showInRibbon) || $attrs.showInRibbon === 'true') {
+
+                        // Iterate over 'clone' elements to check if there are 'action' elements and are not the default actions.
+                        for (var i = 0; i < clone.length; i++) {
+
+                            var elem = clone[i];
+
+                            if (elem.tagName !== void 0) {
+
+                                // Checks for '<spform-toolbar-action>' element
+                                if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+
+                                    var actionAttr = elem.getAttribute('action').toLowerCase();
+
+                                    // Checks if the action is a default action
+                                    if (actionAttr !== 'save' && actionAttr !== 'cancel' && actionAttr !== 'close') {
+
+                                        toolbarNeeded = true;
+                                        break;
+
+                                    }
+
+                                }
+
+                                // Checks for '<any sp-action="">' element
+                                if (elem.hasAttribute('sp-action')) {
+
+                                    var spActionAttr = elem.getAttribute('sp-action').toLowerCase();
+
+                                    // Checks if the action is a default action
+                                    if (spActionAttr !== 'save' && spActionAttr !== 'cancel' && spActionAttr !== 'close') {
+
+                                        toolbarNeeded = true;
+                                        break;
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    return toolbarNeeded;
+
+                }
 
 
 
@@ -8233,12 +8959,28 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     }
 
 
+                    // Makes the transclusion
                     transcludeFn($scope, function(clone) {
                         
+                        // If there are elements to transclude, before process the ribbon.
+                        if (isToolbarNeeded(clone)) {
+
+                            SPRibbon.ready().then(function() {
+
+                                $scope.ribbonToolbar = SPRibbon.createToolbar($attrs.name, $attrs.tabTitle);
+
+                            });
+
+                        } else {
+
+                            $scope.ribbonToolbar = null;
+                            
+                        }
+
                         // Empty the contents
                         transcludeElement.empty();
 
-                        // Iterate over clone elements to remove comments
+                        // Iterate over clone elements and appends them to 'transcludeElement' unless the comments.
                         angular.forEach(clone, function(elem){
 
                             if (elem.nodeType !== elem.COMMENT_NODE) {
@@ -8252,7 +8994,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     });
 
 
-                    // Checks if there are content to transclude
+                    // Checks if there are transcluded content
                     if (transcludeElement.contents().length === 0) {
 
                         // Append default toolbar buttons
@@ -8267,9 +9009,10 @@ angular.module('ngSharePoint').directive('spformToolbar',
                                 transcludeElement.append($compile('<spform-toolbar-button action="cancel"></spform-toolbar-button>')($scope));
                                 break;
                         }
+
                     }
 
-                }
+                } // processToolbar
 
             } // link
 
@@ -8300,9 +9043,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver', 'SPRibbon',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver, SPRibbon) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -8703,23 +9446,6 @@ angular.module('ngSharePoint').directive('spform',
                     return def.promise;
                 };
 
-
-/*
-                this.closeForm = function(redirectUrl) {
-
-                    if (redirectUrl !== void 0) {
-
-                        window.location = redirectUrl;
-
-                    } else {
-                        
-                        window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
-
-                    }
-
-                };
-*/                
-
             }], // controller property
 
 
@@ -8752,6 +9478,7 @@ angular.module('ngSharePoint').directive('spform',
                         if ($scope.isInDesignMode) return;
 
 
+
                         // Watch for form mode changes
                         $scope.$watch(function() {
 
@@ -8772,6 +9499,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             }
                         });
+
 
 
                         // Watch for item changes

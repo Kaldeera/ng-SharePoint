@@ -13,99 +13,235 @@
 ///////////////////////////////////////
 //  SPAction
 ///////////////////////////////////////
-/*
-angular.module('ngSharePoint').directive('spAction', 
 
-    ['$compile', '$q', 'SPUtils',
+(function() {
+    
+    'use strict';
 
-    function spAction_DirectiveFactory($compile, $q, SPUtils) {
+    angular
+        .module('ngSharePoint')
+        .directive('spAction', spAction);
 
-        var spAction_DirectiveDefinitionObject = {
+
+    spAction.$inject = ['$compile', '$q', 'SPUtils', 'SPRibbon'];
+
+
+    /* @ngInject */
+    function spAction($compile, $q, SPUtils, SPRibbon) {
+
+        var directive = {
 
             restrict: 'A',
             require: '^spformToolbar',
-            replace: false,
             priority: 1000,
             terminal: true,
+
             scope: {
                 spAction: '&',
                 redirectUrl: '@'
             },
 
-            link: function($scope, $element, $attrs, spformToolbarController) {
+            link: postLink
 
-                $scope.formCtrl = spformToolbarController.getFormCtrl();
-                $scope.isInDesignMode = SPUtils.inDesignMode();
-                $scope.status = $scope.formCtrl.status;
+        };
 
-                //var spAction = $attrs.spAction;
-                var ngClick = $attrs.ngClick;
-                var redirectUrl = $attrs.redirectUrl;
+        return directive;
 
-                $element.removeAttr('sp-action');
-                $element.attr('ng-click', 'makeAction();' + ngClick);
-                $element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+        
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+
+
+        function postLink(scope, element, attrs, spformToolbarController) {
+
+            // Public properties
+            scope.formCtrl = spformToolbarController.getFormCtrl();
+            scope.isInDesignMode = SPUtils.inDesignMode();
+            scope.status = scope.formCtrl.status;
+
+
+            // Public methods
+            scope.makeAction = makeAction;
+
+
+            // Process attributes and compile
+            var redirectUrl = attrs.redirectUrl;
+            var ngClick = attrs.ngClick;
+            var tooltip = attrs.tooltip;
+            var description = attrs.description;
+
+            processAction();
+
+
+
+            // ****************************************************************************
+            // Private methods
+            //
+
+
+            function processAction() {
+
+
+                // Removes 'sp-action' attribute to avoid infinite loop when compile
+                element.removeAttr('sp-action');
+
+                // Sets the action click event
+                element.attr('ng-click', 'makeAction();' + attrs.ngClick);
+
+                // Sets the logic for 'ng-disabled' attribute
+                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+
+                // Sets css classes
+                element.addClass('spform-toolbar-element spform-toolbar-action');
 
 
                 // Checks for pre-defined buttons actions (i.e., save, cancel and close)
-                switch($attrs.spAction.toLowerCase()) {
+                switch(attrs.spAction.toLowerCase()) {
 
+                    // Default save action
                     case 'save':
-                        $scope.action = save;
+
+                        scope.action = save;
                         redirectUrl = redirectUrl || 'default';
+
+                        SPRibbon.ready().then(function() {
+
+                            SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Publish', makeAction, true);
+
+                        });
+
                         break;
                     
+
+                    // Default cancel action
                     case 'cancel':
-                        $scope.action = cancel;
+
+                        scope.action = cancel;
                         redirectUrl = redirectUrl || 'default';
+
+                        SPRibbon.ready().then(function() {
+
+                            SPRibbon.registerCommand('Ribbon.ListForm.Edit.Commit.Cancel', makeAction, true);
+
+                        });
+
                         break;
 
+
+                    // Default close action
                     case 'close':
-                        $scope.action = cancel;
+
+                        scope.action = cancel;
                         redirectUrl = redirectUrl || 'default';
+
                         break;
 
+
+                    // Custom action
                     default:
-                        $scope.action = $scope.spAction;
-                }
 
+                        scope.action = scope.spAction;
 
+                        if (!angular.isDefined(attrs.showInRibbon) || attrs.showInRibbon === 'true') {
 
-                // ****************************************************************************
-                // Private methods
-                //
+                            SPRibbon.ready().then(function() {
 
-                // Default SAVE form action
-                function save() {
+                                var toolbar = spformToolbarController.getRibbonToolbar();
 
-                    return $scope.formCtrl.save(redirectUrl);
+                                if (toolbar) {
 
-                }
+                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description);
 
+                                }
 
+                            });
 
-                // Default CANCEL form action
-                function cancel() {
-
-                    return $scope.formCtrl.cancel(redirectUrl);
+                        }
 
                 }
 
 
-                // ****************************************************************************
-                // Public methods
-                //
-                $scope.makeAction = function() {
+                // Make available in the scope the 'redirectUrl' attribute after compile.
+                //element.attr('redirect-url', redirectUrl);
+                //scope.redirectUrl = redirectUrl;
 
-                    $scope.formCtrl.setFormStatus($scope.status.PROCESSING);
 
-                    $q.when($scope.action()).then(function(result) {
+                // Compile the element with the new attributes and scope values
+                $compile(element)(scope);
+
+            }
+
+
+
+            // Gets the action text/label
+            function getLabel() {
+
+                var label = '';
+
+                if (element.get(0).tagName.toLowerCase() == 'input') {
+
+                    label = element.val();
+
+                } else {
+
+                    label = element.text();
+
+                }
+
+
+                return label;
+
+            }
+
+
+
+            // Default SAVE form action
+            function save() {
+
+                return scope.formCtrl.save(redirectUrl);
+
+            }
+
+
+
+            // Default CANCEL form action
+            function cancel() {
+
+                return scope.formCtrl.cancel(redirectUrl);
+
+            }
+
+
+
+
+            // ****************************************************************************
+            // Public methods
+            //
+            function makeAction() {
+
+                scope.formCtrl.setFormStatus(scope.status.PROCESSING);
+
+                var safeActionFn = function() {
+                    try {
+                        return scope.action();
+                    } catch(e) {
+                        console.error('>>>> ngSharePoint: sp-action "' + getLabel() + '" rejected automatically due to an unhandled exception.');
+                        return $q.reject(e);
+                    }
+                };
+
+
+
+                $q.when(safeActionFn())
+
+                    .then(function(result) {
 
                         if (result !== false) {
 
-                            if (redirectUrl) {
+                            //var redirectUrl = scope.redirectUrl;
 
-                                //var redirectUrl = $scope.redirectUrl;
+                            if (redirectUrl) {
 
                                 // Checks for pre-defined values in the redirect url.
                                 switch(redirectUrl.toLowerCase()) {
@@ -142,203 +278,37 @@ angular.module('ngSharePoint').directive('spAction',
 
                                 }
                                 
+
+                                // Redirects to the correct url
                                 window.location = redirectUrl;
+
                             }
 
                         }
 
-                        // Action resolved
-                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+                    }, function(err) {
 
-                    }, function() {
+                        if (err) {
 
-                        // Action rejected
-                        $scope.formCtrl.setFormStatus($scope.status.IDLE);
+                            // Show error details in the console.
+                            console.error(err);
+
+                        }
+
+                    })
+
+                    .finally(function() {
+
+                        // Sets the form in its IDLE state.
+                        scope.formCtrl.setFormStatus(scope.status.IDLE);
 
                     });
 
-                }; // makeAction
-
-
-                $compile($element)($scope);
-
-            } // link
-
-        }; // Directive definition object
-
-
-        return spAction_DirectiveDefinitionObject;
-    }
-
-]);
-*/
-
-
-(function() {
-    'use strict';
-
-    angular
-        .module('ngSharePoint')
-        .directive('spAction', spAction);
-
-    /* @ngInject */
-    function spAction($compile, $q, SPUtils) {
-
-        var directive = {
-
-            restrict: 'A',
-            require: '^spformToolbar',
-            replace: false,
-            priority: 1000,
-            terminal: true,
-            scope: {
-                spAction: '&',
-                redirectUrl: '@'
-            },            
-            link: link,
-        };
-        return directive;
-
-        function link(scope, element, attrs, spformToolbarController) {
-
-            // Public properties
-            scope.formCtrl = spformToolbarController.getFormCtrl();
-            scope.isInDesignMode = SPUtils.inDesignMode();
-            scope.status = scope.formCtrl.status;
-
-            // Public methods
-            scope.makeAction = makeAction;
-
-
-            ///////////////////////////////////////
-
-
-            //var spAction = attrs.spAction;
-            var ngClick = attrs.ngClick;
-            var redirectUrl = attrs.redirectUrl;
-
-            element.removeAttr('sp-action');
-            element.attr('ng-click', 'makeAction();' + ngClick);
-            element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
-
-
-            // Checks for pre-defined buttons actions (i.e., save, cancel and close)
-            switch(attrs.spAction.toLowerCase()) {
-
-                case 'save':
-                    scope.action = save;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-                
-                case 'cancel':
-                    scope.action = cancel;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-
-                case 'close':
-                    scope.action = cancel;
-                    redirectUrl = redirectUrl || 'default';
-                    break;
-
-                default:
-                    scope.action = scope.spAction;
-            }
-
-
-
-            // ****************************************************************************
-            // Private methods
-            //
-
-            // Default SAVE form action
-            function save() {
-
-                return scope.formCtrl.save(redirectUrl);
-
-            }
-
-
-
-            // Default CANCEL form action
-            function cancel() {
-
-                return scope.formCtrl.cancel(redirectUrl);
-
-            }
-
-
-            // ****************************************************************************
-            // Public methods
-            //
-            function makeAction() {
-
-                scope.formCtrl.setFormStatus(scope.status.PROCESSING);
-
-                $q.when(scope.action()).then(function(result) {
-
-                    if (result !== false) {
-
-                        if (redirectUrl) {
-
-                            //var redirectUrl = scope.redirectUrl;
-
-                            // Checks for pre-defined values in the redirect url.
-                            switch(redirectUrl.toLowerCase()) {
-
-                                case 'display':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
-                                    // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
-                                    //       puede ser '.../lo-que-sea.aspx'.
-                                    // TODO: Get the right default 'DispForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'display' form.
-                                    break;
-
-
-                                case 'edit':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
-                                    // TODO: Get the right default 'EditForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'edit' form.
-                                    break;
-
-
-                                case 'new':
-                                    redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
-                                    // TODO: Get the right default 'NewForm' url.
-                                    //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
-                                    //       Use CSOM to get the default 'new' form.
-                                    break;
-
-
-                                case 'default':
-                                    redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
-                                    break;
-
-                            }
-                            
-                            window.location = redirectUrl;
-                        }
-
-                    }
-
-                    // Action resolved
-                    scope.formCtrl.setFormStatus(scope.status.IDLE);
-
-                }, function() {
-
-                    // Action rejected
-                    scope.formCtrl.setFormStatus(scope.status.IDLE);
-
-                });
-
             } // makeAction
-
-
-            $compile(element)(scope);
 
         } // link
 
     } // Directive factory function
+
 
 })();

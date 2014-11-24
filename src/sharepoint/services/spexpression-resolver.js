@@ -73,6 +73,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             }
 
 
+            // Resolve/Reject the current expression promise
             $q.when(expressionPromise).then(function(result) {
 
                 // Sets the resolved value for the current expression
@@ -80,17 +81,21 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
+
             }, function(result) {
 
+                // Even with a promise rejection, sets the result in the current expression
                 expressionsArray[index - 1] = result;
                 
                 // Resolve next expression
                 resolveExpression(expressionsArray, scope, index, deferred);
+
             });
 
 
             return deferred.promise;
         }
+
 
 
         function getExpressionParts(text) {
@@ -108,6 +113,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         }
 
 
+
         function resolveItemExpression(expression, scope) {
 
             var queryParts = getExpressionParts(expression);
@@ -122,6 +128,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             });
             
         }
+
 
 
         function resolveCurrentUserExpression(expression) {
@@ -149,6 +156,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         function resolveFunctionExpression(functionExpression, scope) {
 
             return scope.$eval($parse(functionExpression));
+
         }
 
 
@@ -176,19 +184,21 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
                 }
 
                 return '{e:' + pos + '}';
+
             });
 
 
             // Resolve the 'expressionsArray' with promises
             resolveExpression(expressionsArray, scope).then(function() {
 
-                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expression value.
+                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expressions values.
                 for (var i = 0; i < expressionsArray.length; i++) {
                     text = text.replace(new RegExp('{e:' + i + '}', 'g'), expressionsArray[i]);
                 }
 
                 // Resolve the main promise
                 deferred.resolve(text);
+
             });
 
 
@@ -197,4 +207,5 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
         }; // resolve method
 
     } // SPExpressionResolver factory
+
 ]);
