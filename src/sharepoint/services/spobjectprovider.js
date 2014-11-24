@@ -42,11 +42,16 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
         		return new service(list, data);
         	},
 
-        	getSPFolder: function(web, path, folderProperties) {
+            getSPFolder: function(web, path, folderProperties) {
 
-        		var service = $injector.get('SPFolder');
-        		return new service(web, path, folderProperties);
-        	},
+                var service = $injector.get('SPFolder');
+                return new service(web, path, folderProperties);
+            },
+
+            getSPFile: function(web, path, fileProperties) {
+                var service = $injector.get('SPFile');
+                return new service(web, path, fileProperties);
+            },
 
         	getSPGroup: function(web, groupName, groupProperties) {
 
