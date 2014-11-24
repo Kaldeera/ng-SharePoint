@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
-	['SPObjectProvider', '$q', 
+	['SPObjectProvider', 'SPUtils', '$q', 
 
-	function SPFolder_Factory(SPObjectProvider, $q) {
+	function SPFolder_Factory(SPObjectProvider, SPUtils, $q) {
 
 		'use strict';
 
@@ -104,6 +104,8 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 		}; // getProperties
 
+
+
 		// ****************************************************************************
 		// getFiles
 		//
@@ -133,8 +135,12 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(file) {
 
-						utils.cleanDeferredProperties(file);
-						files.push(file);
+						var newFile = SPObjectProvider.getSPFile(self.web, file.ServerRelativeUrl, file);
+						if (self.List != void 0) {
+							newFile.List = self.List;
+						}
+						
+						files.push(newFile);
 
 					});
 
@@ -156,6 +162,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getFiles
+
 
 
 		// ****************************************************************************
@@ -187,7 +194,13 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(folder) {
 
-						folders.push(new SPFolderObj(self.web, folder.ServerRelativeUrl, folder));
+						var newFolder = new SPFolderObj(self.web, folder.ServerRelativeUrl, folder);
+						if (self.List !== void 0) {
+							newFolder.List = self.List;
+						}
+
+						folders.push(newFolder);
+
 
 					});
 
@@ -288,7 +301,6 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-
 		// ****************************************************************************
 		// addFolder
 		//
@@ -335,8 +347,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-					var newFolder = new SPFolderObj(self.web, folderPath, data);
-					def.resolve(newFolder);
+					var newFolder = new SPFolderObj(self.web, folderPath, d); def.resolve(newFolder);
 				},
 
 
@@ -355,6 +366,74 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		};	// addFolder
+
+
+
+		// ****************************************************************************
+		// addFile
+		//
+		// Uploads a new binary file to current folder
+		//
+		// @fileName: The name of the new file to upload
+		// @file: A file object to upload
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.addFile = function(fileName, file) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath = self.ServerRelativeUrl + '/' + fileName;
+			var url = self.apiUrl + '/files/add(url=\'' + fileName + '\',overwrite=true)';
+
+			var headers = {
+				'Accept': 'application/json; odata=verbose',
+				"content-type": "application/json;odata=verbose"
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			SPUtils.getFileBinary(file).then(function (binaryData) {
+
+				executor.executeAsync({
+
+					url: url,
+					method: 'POST',
+					headers: headers,
+					body: binaryData,
+
+					success: function(data) {
+
+						var d = utils.parseSPResponse(data);
+						var newFile = SPObjectProvider.getSPFile(self.web, d.ServerRelativeUrl, d);
+						newFile.List = self.List;
+
+						def.resolve(newFile);
+					},
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+
+			});
+
+			return def.promise;
+
+		};	// addFile
+
+
 
 
 
@@ -452,7 +531,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				url: url,
 				method: 'POST',
-//				headers: { "X-HTTP-Method":"DELETE" },
+				// headers: { "X-HTTP-Method":"DELETE" },
 
 				success: function() {
 

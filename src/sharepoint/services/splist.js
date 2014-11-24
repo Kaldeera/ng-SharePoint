@@ -250,15 +250,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             if (this.RootFolder !== void 0) {
 
-                if (this.RootFolder.__deferred !== void 0) {
-                    
-                    delete this.RootFolder;
-                }
-            }
-
-
-            if (this.RootFolder !== void 0) {
-
                 def.resolve(this.RootFolder);
 
             } else {
@@ -277,6 +268,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                         var d = utils.parseSPResponse(data);
                         this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
+                        this.RootFolder.List = self;
 
                         def.resolve(this.RootFolder);
                     }, 
