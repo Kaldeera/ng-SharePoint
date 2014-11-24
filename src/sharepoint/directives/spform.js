@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', 'SPExpressionResolver',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, SPExpressionResolver) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -167,6 +167,17 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
+                this.setFormStatus = function(status) {
+
+                    $timeout(function() {
+
+                        $scope.formStatus = status;
+                        $scope.$apply();
+
+                    }, 0);
+                };
+
+
                 this.setFieldFocus = function(fieldName) {
 
                     var fieldFocused = false;
@@ -214,6 +225,7 @@ angular.module('ngSharePoint').directive('spform',
                 this.save = function(options) {
 
                     var self = this;
+                    var def = $q.defer();
                     var dlg;
 
 
@@ -262,7 +274,12 @@ angular.module('ngSharePoint').directive('spform',
 
                         });
 
-                        if (options.force !== true) return;
+                        if (options.force !== true) {
+
+                            def.reject();
+                            return def.promise;
+
+                        }
                     }
 
                     $scope.formStatus = this.status.PROCESSING;
@@ -289,29 +306,41 @@ angular.module('ngSharePoint').directive('spform',
                                     if (result !== false) {
 
                                         // Default 'post-save' action.
-                                        self.closeForm(options.redirectUrl);
+                                        //self.closeForm(options.redirectUrl);
+                                        def.resolve(result);
+
+                                    } else {
+
+                                        def.reject();
+
                                     }
 
                                     // Close the 'Working on it...' dialog.
                                     closeDialog();
-                                    $scope.formStatus = this.status.IDLE;
+                                    //$scope.formStatus = this.status.IDLE;
                                     
                                 }, function() {
 
+                                    // At this point, the 'OnPostSave' promise has been rejected 
+                                    // due to an exception or manually by the user.
+
                                     closeDialog();
-                                    $scope.formStatus = this.status.IDLE;
+                                    //$scope.formStatus = this.status.IDLE;
+                                    def.reject();
                                     
                                 });
 
                             }, function(err) {
 
-                                console.error(err);
+                                // At this point, the 'item.save' promise has been rejected 
+                                // due to an exception.
 
+                                console.error(err);
                                 closeDialog();
 
+                                // Shows a popup with the error details.
                                 var dom = document.createElement('div');
                                 dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
-
 
                                 SP.UI.ModalDialog.showModalDialog({
                                     title: SP.Res.dlgTitleError,
@@ -319,8 +348,9 @@ angular.module('ngSharePoint').directive('spform',
                                     showClose: true,
                                     autoSize: true,
                                     dialogReturnValueCallback: function() {
-                                        $scope.formStatus = self.status.IDLE;
-                                        $scope.$apply();
+                                        //$scope.formStatus = self.status.IDLE;
+                                        //$scope.$apply();
+                                        def.reject();
                                     }
                                 });
 
@@ -328,18 +358,29 @@ angular.module('ngSharePoint').directive('spform',
 
                         } else {
 
+                            // At this point, the 'OnPreSave' promise has been canceled 
+                            // by the user (By the 'onPreSave' method implemented by the user).
+
                             console.log('>>>> Save form was canceled!');
                             closeDialog();
-                            $scope.formStatus = this.status.IDLE;
+                            //$scope.formStatus = this.status.IDLE;
+                            def.reject();
+
                         }
                         
                     }, function() {
 
+                        // At this point, the 'OnPreSave' promise has been rejected 
+                        // due to an exception or manually by the user.
+
                         closeDialog();
-                        $scope.formStatus = this.status.IDLE;
+                        //$scope.formStatus = this.status.IDLE;
+                        def.reject();
 
                     });
-                        
+
+
+                    return def.promise;
 
                 };
 
@@ -347,6 +388,9 @@ angular.module('ngSharePoint').directive('spform',
                 this.cancel = function(redirectUrl) {
 
                     var self = this;
+                    var def = $q.defer();
+
+                    $scope.formStatus = this.status.PROCESSING;
 
                     // Invoke 'onCancel' function and pass the 'item' and the 'originalItem' as arguments.
                     $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
@@ -354,30 +398,25 @@ angular.module('ngSharePoint').directive('spform',
                         if (result !== false) {
 
                             // Performs the default 'cancel' action.
-                            self.closeForm(redirectUrl);
+                            //self.closeForm(redirectUrl);
+                            $scope.item = angular.copy($scope.originalItem);
+                            def.resolve(result);
+
+                        } else {
+
+                            def.reject();
+
                         }
+
 
                     }, function() {
 
-                        // Performs the default 'cancel' action.
-                        self.closeForm(redirectUrl);
+                        // When error must close the form ?
+                        //self.closeForm(redirectUrl);
+                        def.reject();
                     });
-                };
 
-
-
-                this.closeForm = function(redirectUrl) {
-
-                    if (redirectUrl !== void 0) {
-
-                        window.location = redirectUrl;
-
-                    } else {
-                        
-                        window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
-
-                    }
-
+                    return def.promise;
                 };
 
             }], // controller property
@@ -412,6 +451,7 @@ angular.module('ngSharePoint').directive('spform',
                         if ($scope.isInDesignMode) return;
 
 
+
                         // Watch for form mode changes
                         $scope.$watch(function() {
 
@@ -432,6 +472,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             }
                         });
+
 
 
                         // Watch for item changes
@@ -478,6 +519,13 @@ angular.module('ngSharePoint').directive('spform',
                                     transclusionContainer = angular.element(elem);
                                 }
                             });
+
+
+                            // Ensure 'transclusion' element.
+                            if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
+                                transclusionContainer = $element;
+                            }
+
 
                             // Remove the 'loading animation' element
                             var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
@@ -563,8 +611,8 @@ angular.module('ngSharePoint').directive('spform',
                             }
 
 
-                            // Initialize the 'rulesApplied' array for debug purposes.
-                            $scope.rulesApplied = $scope.rulesApplied || [];
+                            // Initialize the 'rules' array for debug purposes.
+                            $scope.rules = $scope.rules || [];
 
 
                             // Check if 'elem' is a <spform-rule> element.
@@ -615,12 +663,14 @@ angular.module('ngSharePoint').directive('spform',
                                                     // Append the element to the final form template
                                                     targetElement.append(elem);
 
-                                                    // Add the rule applied to the 'rulesApplied' array for debug purposes.
-                                                    $scope.rulesApplied.push({
+
+                                                    // Add the rule to the 'rules' array for debug purposes.
+                                                    $scope.rules.push({
                                                         test: testExpression, 
                                                         testResolved: testResolved, 
                                                         terminal: terminalExpression, 
-                                                        terminalResolved: terminalResolved
+                                                        terminalResolved: terminalResolved,
+                                                        solved: true
                                                     });
 
 
@@ -643,6 +693,17 @@ angular.module('ngSharePoint').directive('spform',
                                                 elem.remove();
                                                 elem = null;
                                             }
+
+
+                                            // Add the rule to the 'rules' array for debug purposes.
+                                            $scope.rules.push({
+                                                test: testExpression, 
+                                                testResolved: testResolved,
+                                                terminal: terminalExpression, 
+                                                terminalResolved: 'n/a',
+                                                solved: false
+                                            });
+
 
                                             // Process the next element
                                             parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
@@ -672,7 +733,6 @@ angular.module('ngSharePoint').directive('spform',
 
                         } // parseRules private function
 
-
                     } // compile.post-link
 
                 }; // compile function return
@@ -687,3 +747,4 @@ angular.module('ngSharePoint').directive('spform',
     } // Directive factory function
 
 ]);
+

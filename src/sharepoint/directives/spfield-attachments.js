@@ -158,13 +158,15 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 angular.module('ngSharePoint').directive('fileSelect', 
 
-	['$parse', '$timeout', 
+	['$parse', '$timeout', 'SPRibbon', 
 
-	function fileSelect_DirectiveFactory($parse, $timeout) {
+	function fileSelect_DirectiveFactory($parse, $timeout, SPRibbon) {
 
 		var fileSelect_DirectiveDefinitionObject = function($scope, $element, $attrs) {
 
 			var fn = $parse($attrs.fileSelect);
+			$element.removeAttr('file-select');
+			
 
 			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase() !== 'file')) {
 
@@ -235,6 +237,20 @@ angular.module('ngSharePoint').directive('fileSelect',
 				});
 
 			});
+
+
+
+            SPRibbon.ready().then(function() {
+
+            	SPRibbon.attachFileElement = $element;
+                SPRibbon.registerCommand(
+                	'Ribbon.ListForm.Edit.Actions.AttachFile', 
+                	function() {
+                		SPRibbon.attachFileElement.click();
+                	}, true);
+
+            });
+
 
 		}; // Directive definition object/function
 
