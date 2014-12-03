@@ -35,6 +35,22 @@ angular.module('ngSharePoint').directive('spfieldControl',
                 
                 if (schema !== void 0) {
 
+                    // Checks if attachments are enabled in the list when process the 'Attachments' field.
+                    if (name === 'Attachments') {
+
+                        var item = spformController.getItem();
+
+                        if (item !== void 0 && item.list !== void 0 && item.list.EnableAttachments === false) {
+
+                            console.error('Can\'t add "Attachments" field because the attachments are disabled in the list.');
+                            setEmptyElement();
+                            return;
+
+                        }
+
+                    }
+                    
+
                     // Sets the default value for the field
                     spformController.initField(name);
 

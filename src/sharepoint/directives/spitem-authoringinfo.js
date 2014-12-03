@@ -51,6 +51,13 @@
             scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
             // Init localized texts
+
+            scope.contentTypeText = 'Content Type';
+            // NOTA: El ContentType únicamente se muestra cuando está activa la administración de tipos de contenido en la lista.
+
+            scope.versionText = SP.Res.storefront_AppDetails_Version;
+            // NOTA: La versión únicamente se muestra cuando está activo en control de versiones en la lista.
+
             scope.createdAtText = 'Created at';
             scope.lastModifiedText = 'Last modified at';
             scope.byText = 'by';
@@ -59,7 +66,10 @@
             //       The strings are located at wss.resx that currently can't load dinamically.
 
 
-            if (scope.item) {
+            scope.isNewItem = scope.item.isNew();
+
+
+            if (scope.item && !scope.isNewItem) {
 
                 // Gets the item info
                 scope.createdDate = scope.item.Created;
@@ -70,7 +80,7 @@
                 // Gets 'Author' properties
                 scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
 
-                    scope.authorName = author.Name;
+                    scope.authorName = author.Title;
                     scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
 
                 });
@@ -78,12 +88,25 @@
                 // Gets 'Editor' properties
                 scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
 
-                    scope.editorName = editor.Name;
+                    scope.editorName = editor.Title;
                     scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
 
                 });
 
             }
+
+
+            // Try to get original generated authoring info
+            scope.originalAuthoringInfoFound = false;
+            var originalAuthoringInfoElement = document.getElementById('ngsharepoint-formbinder-authoringinfo');
+
+            if (originalAuthoringInfoElement) {
+
+                element.append(originalAuthoringInfoElement);
+                originalAuthoringInfoElement.style.display = 'block';
+                scope.originalAuthoringInfoFound = true;
+            }
+
 
         } // postLink
 

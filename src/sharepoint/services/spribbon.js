@@ -235,7 +235,7 @@
 
 
 
-        function createButtonProperties(id, label, tooltip, description) {
+        function createButtonProperties(id, label, tooltip, description, btnImage) {
 
             var controlProperties = new CUI.ControlProperties();
 
@@ -252,7 +252,7 @@
                 See 'RibbonTemplates' at the end of the file 'CMDUI.XML' (<15_deep>\TEMPLATE\GLOBAL\CMDUI.XML).
                 Also see these recomendations: http://www.andrewconnell.com/blog/Always-Create-Your-Own-Group-Templates-with-SharePoint-Ribbon-Customizations
             */
-            controlProperties.Image32by32 = '_layouts/15/images/placeholder32x32.png';
+            controlProperties.Image32by32 = btnImage || '_layouts/15/images/placeholder32x32.png';
             controlProperties.ToolTipTitle = tooltip || label;
             controlProperties.ToolTipDescription = description || tooltip || '';
             controlProperties.LabelText = label;
@@ -263,9 +263,9 @@
 
 
 
-        function addButtonToSection(section, id, label, tooltip, description) {
+        function addButtonToSection(section, id, label, tooltip, description, btnImage) {
 
-            var button = new CUI.Controls.Button(ribbon, id, createButtonProperties(id, label, tooltip, description));
+            var button = new CUI.Controls.Button(ribbon, id, createButtonProperties(id, label, tooltip, description, btnImage));
             var controlComponent = button.createComponentForDisplayMode('Large'); //-> 'Large', 'Medium', 'Small', 'Menu|Menu16', 'Menu32', ''
             var row = section.getRow(1); // Assumes section of type 2 (one row). It could also be type 3 or 4 and in this case always use the row 1.
             row.addChild(controlComponent);
@@ -416,6 +416,7 @@
                     // Creates a new tab
                     var tabId = 'Ribbon.ngSharePoint.' + targetTab.replace(/ /g, '-');
                     tab = addTab(tabId, targetTab, '', tabId + '.Command');
+                    registerCommand(tabId + '.Command', angular.noop, true);
 
                 }
 
@@ -437,13 +438,13 @@
 
 
 
-        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description) {
+        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, canHandle, btnImage) {
 
             var buttonId = toolbar.group.get_id() + '.Button-' + _getNextButtonSequence();
 
-            addButtonToSection(toolbar.section, buttonId, label, tooltip, description);
+            addButtonToSection(toolbar.section, buttonId, label, tooltip, description, btnImage);
             toolbar.group.selectLayout(toolbar.layout.get_id());
-            registerCommand(buttonId, handlerFn, true);
+            registerCommand(buttonId, handlerFn, canHandle);
 
         } // addButtonToToolbar
 

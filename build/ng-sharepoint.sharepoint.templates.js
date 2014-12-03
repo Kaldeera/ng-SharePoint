@@ -1,4 +1,4 @@
-angular.module('ngSharePoint.templates', ['templates/error.html', 'templates/form-templates/spfield-attachments-display.html', 'templates/form-templates/spfield-attachments-edit.html', 'templates/form-templates/spfield-boolean-display.html', 'templates/form-templates/spfield-boolean-edit.html', 'templates/form-templates/spfield-choice-display.html', 'templates/form-templates/spfield-choice-edit.html', 'templates/form-templates/spfield-control-loading.html', 'templates/form-templates/spfield-control.html', 'templates/form-templates/spfield-currency-display.html', 'templates/form-templates/spfield-currency-edit.html', 'templates/form-templates/spfield-datetime-display.html', 'templates/form-templates/spfield-datetime-edit.html', 'templates/form-templates/spfield-description.html', 'templates/form-templates/spfield-label.html', 'templates/form-templates/spfield-lookup-display.html', 'templates/form-templates/spfield-lookup-edit.html', 'templates/form-templates/spfield-lookupmulti-display.html', 'templates/form-templates/spfield-lookupmulti-edit.html', 'templates/form-templates/spfield-multichoice-display.html', 'templates/form-templates/spfield-multichoice-edit.html', 'templates/form-templates/spfield-note-display.html', 'templates/form-templates/spfield-note-edit.html', 'templates/form-templates/spfield-number-display.html', 'templates/form-templates/spfield-number-edit.html', 'templates/form-templates/spfield-text-display.html', 'templates/form-templates/spfield-text-edit.html', 'templates/form-templates/spfield-url-display.html', 'templates/form-templates/spfield-url-edit.html', 'templates/form-templates/spfield-user-display.html', 'templates/form-templates/spfield-user-edit.html', 'templates/form-templates/spfield-validation-messages.html', 'templates/form-templates/spfield.html', 'templates/form-templates/spform-default.html', 'templates/form-templates/spform-toolbar-button.html', 'templates/form-templates/spform-toolbar.html', 'templates/form-templates/spform.html', 'templates/scroll.html', 'templates/spworking-on-it.html']);
+angular.module('ngSharePoint.templates', ['templates/error.html', 'templates/form-templates/spfield-attachments-display.html', 'templates/form-templates/spfield-attachments-edit.html', 'templates/form-templates/spfield-boolean-display.html', 'templates/form-templates/spfield-boolean-edit.html', 'templates/form-templates/spfield-choice-display.html', 'templates/form-templates/spfield-choice-edit.html', 'templates/form-templates/spfield-control-loading.html', 'templates/form-templates/spfield-control.html', 'templates/form-templates/spfield-currency-display.html', 'templates/form-templates/spfield-currency-edit.html', 'templates/form-templates/spfield-datetime-display.html', 'templates/form-templates/spfield-datetime-edit.html', 'templates/form-templates/spfield-description.html', 'templates/form-templates/spfield-label.html', 'templates/form-templates/spfield-lookup-display.html', 'templates/form-templates/spfield-lookup-edit.html', 'templates/form-templates/spfield-lookupmulti-display.html', 'templates/form-templates/spfield-lookupmulti-edit.html', 'templates/form-templates/spfield-multichoice-display.html', 'templates/form-templates/spfield-multichoice-edit.html', 'templates/form-templates/spfield-note-display.html', 'templates/form-templates/spfield-note-edit.html', 'templates/form-templates/spfield-number-display.html', 'templates/form-templates/spfield-number-edit.html', 'templates/form-templates/spfield-text-display.html', 'templates/form-templates/spfield-text-edit.html', 'templates/form-templates/spfield-url-display.html', 'templates/form-templates/spfield-url-edit.html', 'templates/form-templates/spfield-user-display.html', 'templates/form-templates/spfield-user-edit.html', 'templates/form-templates/spfield-validation-messages.html', 'templates/form-templates/spfield.html', 'templates/form-templates/spform-default.html', 'templates/form-templates/spform-toolbar-button.html', 'templates/form-templates/spform-toolbar.html', 'templates/form-templates/spform.html', 'templates/form-templates/spitem-authoringinfo.html', 'templates/scroll.html', 'templates/spworking-on-it.html']);
 
 angular.module("templates/error.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/error.html",
@@ -10,7 +10,8 @@ angular.module("templates/form-templates/spfield-attachments-display.html", []).
   $templateCache.put("templates/form-templates/spfield-attachments-display.html",
     "<div ng-repeat=\"file in attachmentFiles\">\n" +
     "	<a ng-href=\"{{file.ServerRelativeUrl}}\" ng-bind=\"file.FileName\"></a>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-attachments-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -37,12 +38,14 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "		<span ng-bind=\"AttachFileText\"></span>\n" +
     "	</a>\n" +
     "</div>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-boolean-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-boolean-display.html",
-    "<div ng-bind=\"displayValue\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"displayValue\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-boolean-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -54,7 +57,8 @@ angular.module("templates/form-templates/spfield-boolean-edit.html", []).run(["$
 
 angular.module("templates/form-templates/spfield-choice-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-choice-display.html",
-    "<div ng-bind=\"value\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"value\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-choice-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -77,22 +81,26 @@ angular.module("templates/form-templates/spfield-choice-edit.html", []).run(["$t
     "	</table>\n" +
     "\n" +
     "</div>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-control-loading.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-control-loading.html",
-    "<div><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>");
+    "<div><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-control.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-control.html",
-    "<div dir=\"{{schema.Direction}}\"></div>");
+    "<div dir=\"{{schema.Direction}}\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-currency-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-display.html",
-    "<div ng-bind=\"value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -100,12 +108,14 @@ angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["
     "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
     "<span>&nbsp;{{cultureInfo.numberFormat.CurrencySymbol}}</span>\n" +
     "<br/>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-datetime-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-datetime-display.html",
-    "<div ng-bind=\"dateModel | date:cultureInfo.dateTimeFormat.ShortDatePattern + (schema.DisplayFormat == 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern)\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"dateModel | date:cultureInfo.dateTimeFormat.ShortDatePattern + (schema.DisplayFormat == 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern)\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -134,33 +144,39 @@ angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["
     "		</tr>\n" +
     "	</tbody>\n" +
     "</table>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-description.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-description.html",
-    "<span class=\"ms-metadata\" ng-bind-html=\"schema.Description | newlines\" ng-if=\"currentMode == 'edit'\"></span>");
+    "<span class=\"ms-metadata\" ng-bind-html=\"schema.Description | newlines\" ng-if=\"currentMode == 'edit'\"></span>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-label.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-label.html",
-    "<h3 class=\"ms-standardheader\"><nobr>{{label}}<span class=\"ms-accentText\" title=\"This is a required field.\" ng-show=\"schema.Required && currentMode == 'edit'\"> *</span></nobr></h3>");
+    "<h3 class=\"ms-standardheader\"><nobr>{{label}}<span class=\"ms-accentText\" title=\"This is a required field.\" ng-show=\"schema.Required && currentMode == 'edit'\"> *</span></nobr></h3>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-lookup-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-display.html",
-    "<a ng-href=\"{{lookupItem.url}}\" ng-bind=\"lookupItem.Title\"></a>");
+    "<a ng-href=\"{{lookupItem.url}}\" ng-bind=\"lookupItem.Title\"></a>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-lookup-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-edit.html",
     "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" data-spfield-focus-element=\"true\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-lookupmulti-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookupmulti-display.html",
-    "<div><span ng-repeat=\"item in selectedLookupItems\"><a ng-href=\"{{item.url}}\" ng-bind=\"item.Title\"></a>{{!$last ? '; ' : ''}}</span></div>");
+    "<div><span ng-repeat=\"item in selectedLookupItems\"><a ng-href=\"{{item.url}}\" ng-bind=\"item.Title\"></a>{{!$last ? '; ' : ''}}</span></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-lookupmulti-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -185,12 +201,14 @@ angular.module("templates/form-templates/spfield-lookupmulti-edit.html", []).run
     "		</tr>\n" +
     "	</tbody>\n" +
     "</table>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-multichoice-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-multichoice-display.html",
-    "<div ng-bind=\"value.results.join('; ')\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"value.results.join('; ')\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-multichoice-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -207,12 +225,14 @@ angular.module("templates/form-templates/spfield-multichoice-edit.html", []).run
     "		</tr>\n" +
     "	</tbody>\n" +
     "</table>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-note-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-note-display.html",
-    "<div ng-bind-html=\"value | unsafe\" class=\"field-display-value\"></div>");
+    "<div ng-bind-html=\"value | unsafe\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -230,7 +250,8 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
 
 angular.module("templates/form-templates/spfield-number-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-display.html",
-    "<div ng-bind=\"(schema.Percentage ? (value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"(schema.Percentage ? (value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -238,12 +259,14 @@ angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$t
     "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
     "<span ng-if=\"schema.Percentage\">&nbsp;{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
     "<br/>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-text-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-text-display.html",
-    "<div ng-bind=\"value\" class=\"field-display-value\"></div>");
+    "<div ng-bind=\"value\" class=\"field-display-value\"></div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-text-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -259,7 +282,8 @@ angular.module("templates/form-templates/spfield-url-display.html", []).run(["$t
     "<div>\n" +
     "	<a ng-href=\"{{value.Url}}\" ng-bind=\"value.Description\" target=\"_blank\" ng-if=\"schema.DisplayFormat == 0\"></a>\n" +
     "	<img ng-src=\"{{value.Url}}\" alt=\"{{value.Description}}\" ng-if=\"schema.DisplayFormat == 1\"/>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$templateCache", function($templateCache) {
@@ -271,7 +295,8 @@ angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$temp
     "	<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" ng-model=\"value.Description\" class=\"ms-long\">\n" +
     "	<input type=\"text\" ng-model=\"value.Description\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" class=\"ms-long\">\n" +
     "</div>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-user-display.html", []).run(["$templateCache", function($templateCache) {
@@ -298,13 +323,15 @@ angular.module("templates/form-templates/spfield-user-display.html", []).run(["$
     "	<div ng-if=\"schema.LookupField != 'ImnName'\">\n" +
     "		<span ng-repeat=\"item in selectedUserItems\"><a ng-href=\"{{item.url}}\" ng-bind=\"item.Title\"></a>{{!$last ? '; ' : ''}}</span>\n" +
     "	</div>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-user-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-user-edit.html",
     "<div id=\"{{idPrefix}}_$ClientPeoplePicker\"></div>\n" +
-    "<spfield-validation-messages></spfield-validation-messages>");
+    "<spfield-validation-messages></spfield-validation-messages>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield-validation-messages.html", []).run(["$templateCache", function($templateCache) {
@@ -314,7 +341,8 @@ angular.module("templates/form-templates/spfield-validation-messages.html", []).
     "    <span ng-show=\"modelCtrl.$error.url\" role=\"alert\">Url error.</span>\n" +
     "    <span ng-show=\"modelCtrl.$error.number\" role=\"alert\">Number error.</span>\n" +
     "    <span ng-show=\"modelCtrl.$error.unique\" role=\"alert\">Unique error.</span>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spfield.html", []).run(["$templateCache", function($templateCache) {
@@ -334,18 +362,20 @@ angular.module("templates/form-templates/spfield.html", []).run(["$templateCache
 angular.module("templates/form-templates/spform-default.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-default.html",
     "<div ng-repeat=\"field in fields\" spfield=\"{{field.InternalName}}\"></div>\n" +
+    "<spitem-authoringinfo></spitem-authoringinfo>\n" +
     "<spform-toolbar></spform-toolbar>\n" +
     "");
 }]);
 
 angular.module("templates/form-templates/spform-toolbar-button.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-toolbar-button.html",
-    "<input type=\"button\" class=\"spform-toolbar-element spform-toolbar-action ms-ButtonHeightWidth\" value=\"{{text}}\" ng-click=\"makeAction();\" ng-disabled=\"isInDesignMode || formCtrl.getFormStatus() != status.IDLE\" />");
+    "<input type=\"button\" class=\"spform-toolbar-element spform-toolbar-action ms-ButtonHeightWidth\" value=\"{{text}}\" ng-click=\"makeAction();\" ng-disabled=\"isInDesignMode || formCtrl.getFormStatus() != status.IDLE\" />\n" +
+    "");
 }]);
 
 angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-toolbar.html",
-    "<div class=\"spform-toolbar\" sp-transclude=\"true\" style=\"text-align: right; margin: 10px 0;\"></div>\n" +
+    "<div class=\"spform-toolbar\" sp-transclude=\"true\" style=\"text-align: right; margin: 10px 0; white-space: nowrap;\"></div>\n" +
     "");
 }]);
 
@@ -355,6 +385,32 @@ angular.module("templates/form-templates/spform.html", []).run(["$templateCache"
     "    <div id=\"form-loading-animation-wrapper-{{$id}}\" ng-show=\"!isInDesignMode\"><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>\n" +
     "    <div transclusion-container=\"\"></div>\n" +
     "</form>\n" +
+    "");
+}]);
+
+angular.module("templates/form-templates/spitem-authoringinfo.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("templates/form-templates/spitem-authoringinfo.html",
+    "<div class=\"spform-item-info\" style=\"float: left; display: inline-block; margin: 10px 0;\">\n" +
+    "\n" +
+    "    <div ng-if=\"!isNewItem && !originalAuthoringInfoFound\">\n" +
+    "        <div class=\"ms-descriptiontext\" ng-show=\"item.list.ContentTypesEnabled == true\">\n" +
+    "            <span ng-bind=\"contentTypeText\"></span>: <span ng-bind=\"item.ContentType.Name\"></span>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"ms-descriptiontext\" ng-show=\"item.list.EnableVersioning == true\">\n" +
+    "            <span ng-bind=\"versionText\"></span>: <span ng-bind=\"item.OData__UIVersionString\"></span>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"ms-descriptiontext\">\n" +
+    "            <span ng-bind=\"createdAtText\"></span> <span ng-bind=\"createdDate | date: cultureInfo.dateTimeFormat.ShortDatePattern + ' HH:mm'\"></span> <span ng-bind=\"byText\"></span> <a class=\"ms-peopleux-userdisplink ms-subtleLink\" ng-href=\"{{authorLink}}\" ng-bind=\"authorName\"></a>\n" +
+    "        </div>\n" +
+    "\n" +
+    "        <div class=\"ms-descriptiontext\">\n" +
+    "            <span ng-bind=\"lastModifiedText\"></span> <span ng-bind=\"modifiedDate | date: cultureInfo.dateTimeFormat.ShortDatePattern + ' HH:mm'\"></span> <span ng-bind=\"byText\"></span> <a class=\"ms-peopleux-userdisplink ms-subtleLink\" ng-href=\"{{editorLink}}\" ng-bind=\"editorName\"></a>\n" +
+    "        </div>\n" +
+    "    </div>\n" +
+    "\n" +
+    "</div>\n" +
     "");
 }]);
 
@@ -380,5 +436,6 @@ angular.module("templates/spworking-on-it.html", []).run(["$templateCache", func
     "			<span class=\"ms-loading-message\">Sorry to keep you waiting.</span>\n" +
     "		</span>\n" +
     "	</div>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);

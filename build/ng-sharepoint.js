@@ -207,7 +207,7 @@ var utils = {
 		}
 		catch(ex) { }
 
-		console.error(errObj.message, errObj);
+		//console.error(errObj.message, errObj);
 
 		return errObj;
 	},
@@ -236,10 +236,52 @@ var utils = {
 			if (d.results) {
 				d = d.results;
 			}
+
+		}
+		
+		// If a new REQUESTDIGEST value was received in the last server call,
+		// update the __REQUESTDIGEST form control with the new value.
+		if (response.headers['X-REQUESTDIGEST']) {
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				requestDigest.value = response.headers['X-REQUESTDIGEST'];
+			}
 		}
 
 		return d;
 	},
+
+
+
+    // ****************************************************************************
+    // cleanDeferredProperties
+    //
+    // Cleans undesirable object properties obtained form SharePoint.
+    //
+    // @returns: {SPListItem} The item itself to allow chaining calls.
+    //
+    cleanDeferredProperties: function(spobject) {
+
+        var obj = spobject;
+
+        angular.forEach(spobject, function(value, key) {
+
+            if (typeof value === 'object' && value !== null && key !== '__parent') {
+
+                if (value.__deferred) {
+
+                    delete obj[key];
+
+                } else {
+
+                	utils.cleanDeferredProperties(value);
+
+                }
+            }
+
+        });
+    },
 
 
 
@@ -263,8 +305,6 @@ var utils = {
 	}
 
 };
-
-
 
 /*
 	CamlHelper
@@ -1080,6 +1120,214 @@ angular.module('ngSharePoint').provider('SPConfig',
 ]);
 
 /*
+    SPContentType - factory
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPList
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPContentType', 
+
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 
+
+    function SPContentType_Factory($q, SPCache, SPFolder, SPListItem) {
+
+        'use strict';
+
+
+        // ****************************************************************************
+        // SPContentType constructor
+        //
+        // @parentObject: The object instance of the content type parent.
+        // @id: Name or Guid of the content type you want to instantiate.
+        // @data: Properties 
+        //
+        var SPContentTypeObj = function(parentObject, id, contentTypeProperties) {
+
+            if (parentObject === void 0) {
+                throw '@parentObject parameter not specified in SPContentType constructor.';
+            }
+
+            if (id === void 0) {
+                throw '@id parameter not specified in SPContentType constructor.';
+            }
+
+
+            // Sets the content type 'id'.
+            this.id = id;
+
+            // Sets the content type parent object
+            this.__parent = parentObject;
+
+            // Initializes the SharePoint API REST url for the ContentType.
+            this.apiUrl = this.__parent.apiUrl + '/ContentTypes(\'' + this.id + '\')';
+
+            // Gets the content type fields (Schema) from the cache if exists.
+            this.Fields = SPCache.getCacheValue('SPContentTypeFieldsCache', this.apiUrl);
+
+            // Init the content type properties (if exists)
+            if (contentTypeProperties !== void 0) {
+                utils.cleanDeferredProperties(contentTypeProperties);
+                angular.extend(this, contentTypeProperties);
+            }
+        };
+
+
+
+
+        // ****************************************************************************
+        // getFields
+        //
+        // Gets content type fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPContentTypeObj.prototype.getFields = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.Fields !== void 0) {
+
+                def.resolve(this.Fields);
+
+            } else {
+
+                var executor = new SP.RequestExecutor('/');
+
+                executor.executeAsync({
+
+                    url: self.apiUrl + '/Fields',
+                    method: 'GET',
+                    headers: {
+                        "Accept": "application/json; odata=verbose"
+                    },
+
+                    success: function(data) {
+
+                        var d = utils.parseSPResponse(data);
+                        var fields = {};
+
+                        angular.forEach(d, function(field) {
+                            fields[field.InternalName] = field;
+                        });
+
+                        self.Fields = fields;
+                        SPCache.setCacheValue('SPContentTypeFieldsCache', self.apiUrl, fields);
+
+                        def.resolve(fields);
+                        
+                    },
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+            }
+            
+            return def.promise;
+
+        }; // getFields
+
+
+
+        SPContentTypeObj.prototype.setJSLink = function(jsLinkUrl) {
+
+            var self = this;
+            var deferred = $q.defer();
+
+            var ctx = SP.ClientContext.get_current();
+            var web = ctx.get_web();
+            var list = web.get_lists().getByTitle(self.__parent.Title);
+            var contentTypes = list.get_contentTypes();
+            var ct = contentTypes.getById(self.id);
+
+            ct.set_jsLink(jsLinkUrl);
+            ct.update();
+
+            ctx.executeQueryAsync(function() {
+
+                deferred.resolve(ct);
+
+            }, function(sender, args) {
+
+                deferred.reject({ sender: sender, args: args });
+
+            });
+
+
+            return deferred.promise;
+
+        }; // setJSLink
+
+
+
+        SPContentTypeObj.prototype.getJSLink = function() {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor('/');
+
+            executor.executeAsync({
+
+                url: self.apiUrl + "/jsLink",
+                method: "GET",
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                },
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+
+                    def.resolve(d);
+
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+
+                }
+
+            });
+
+
+            return def.promise;
+
+        }; // getJSLink
+
+
+
+        // Returns the SPContentTypeObj class
+        return SPContentTypeObj;
+
+    }
+]);
+
+/*
     SPExpressionResolver - service
     
     Pau Codina (pau.codina@kaldeera.com)
@@ -1290,6 +1538,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
     } // SPExpressionResolver factory
 
 ]);
+
 /*
     SPFieldDirective - Service
     
@@ -1559,6 +1808,584 @@ angular.module('ngSharePoint').service('SPFieldDirective',
     } // SPFieldDirective factory
 
 ]);
+
+/*
+	SPFile - factory
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPFile
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPFile', 
+
+	['SPObjectProvider', '$q', '$http', 
+
+	function SPFile_Factory(SPObjectProvider, $q, $http) {
+
+		'use strict';
+
+
+		// ****************************************************************************
+		// SPFile constructor
+		//
+		// @web: SPWeb instance that contains the file in SharePoint.
+		// @path: Name the file you want to instantiate.
+		//
+		var SPFileObj = function(web, path, fileProperties) {
+
+			if (web === void 0) {
+				throw '@web parameter not specified in SPFile constructor.';
+			}
+
+			if (path === void 0) {
+				throw '@path parameter not specified in SPFile constructor.';
+			}
+
+
+			this.web = web;
+
+			this.apiUrl = '/GetfileByServerRelativeUrl(\'' + path + '\')';
+
+
+			// Initializes the SharePoint API REST url for the file.
+			this.apiUrl = web.apiUrl + this.apiUrl;
+
+			// Init the instance object with properties (if exists)
+			if (fileProperties !== void 0) {
+				utils.cleanDeferredProperties(fileProperties);
+				angular.extend(this, fileProperties);
+			}
+		};
+
+
+
+
+		// ****************************************************************************
+		// updateAPIUrlById
+		//
+		// When the file is moved or renamed, the internal apiUrl are changed.
+		// This internal function is used to update it with the pattern:
+		// 	list.apiUrl + '/GetItemById(itemId)/file'
+		//
+		SPFileObj.prototype.updateAPIUrlById = function(list, itemId) {
+
+			if (list === void 0) {
+				throw '@list parameter not specified in updateAPIUrlById.';
+			}
+
+			if (itemId === void 0) {
+				throw '@itemId parameter not specified in updateAPIUrlById.';
+			}
+
+			this.apiUrl = list.apiUrl + '/GetItemById(' + itemId + ')/file';
+
+		}; // getProperties
+
+
+
+
+
+		// ****************************************************************************
+		// getProperties
+		//
+		// Gets file properties and attach it to 'this' object.
+		//
+		// @returns: Promise with the result of the REST query.
+		//
+		SPFileObj.prototype.getProperties = function(query) {
+
+			var self = this;
+			var def = $q.defer();
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: self.apiUrl + utils.parseQuery(query),
+				method: 'GET', 
+				headers: { 
+					"Accept": "application/json; odata=verbose"
+				}, 
+
+				success: function(data) {
+
+					var d = utils.parseSPResponse(data);
+					utils.cleanDeferredProperties(d);
+					
+					angular.extend(self, d);
+
+					def.resolve(self);
+				}, 
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // getProperties
+
+
+
+		// ****************************************************************************
+		// getList
+		//
+		// Gets the list that contains the curruent file
+		//
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFileObj.prototype.getList = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.List === void 0) {
+
+				if (this.ListItemAllFields !== void 0) {
+
+					if (this.ListItemAllFields.ParentList !== void 0) {
+
+						var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+						this.List = list;
+					}
+				}
+			}
+
+			if (this.List !== void 0) {
+
+				def.resolve(this.List);
+
+			} else {
+
+				this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+
+					var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+					self.List = list;
+					def.resolve(list);
+				});
+			}
+
+			return def.promise;
+
+		};	// getList
+
+
+
+
+		// ****************************************************************************
+		// getFileListItem
+		//
+		// Gets the list item object correspondig with the current file
+		//
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.getFileListItem = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.ListItem !== void 0) {
+
+				def.resolve(this.ListItem);
+
+			} else {
+
+				if (this.List !== void 0) {
+
+					this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+
+						self.ListItem = SPObjectProvider.getSPListItem(self.List, self.ListItemAllFields);
+						self.updateAPIUrlById(self.List, self.ListItem.Id);
+
+						def.resolve(self.ListItem);
+					});
+
+				} else {
+
+					this.getList().then(function() {
+
+						self.ListItem = SPObjectProvider.getSPListItem(self.List, self.ListItemAllFields);
+						self.updateAPIUrlById(self.List, self.ListItem.Id);
+						def.resolve(self.ListItem);
+					});
+				}
+
+			}
+
+			return def.promise;
+
+		};	// getFileListItem
+
+
+
+
+
+		// ****************************************************************************
+		// rename
+		//
+		// Renames the current file with the new name
+		//
+		// @fileName: The new name of the file
+		// @returns: Promise with the result.
+		//
+		SPFileObj.prototype.rename = function(fileName) {
+
+			var self = this;
+			var def = $q.defer();
+
+			this.getFileListItem().then(function() {
+
+				var listGuid = self.List.Id;
+				var itemId = self.ListItem.Id;
+
+				var context = new SP.ClientContext.get_current();
+				var web = context.get_web();
+				var list = web.get_lists().getById(listGuid);
+				self._fileItem = list.getItemById(itemId);
+				self._fileItem.set_item('FileLeafRef', fileName);
+				self._fileItem.update();
+
+				context.load(self._fileItem);
+
+				context.executeQueryAsync(function() {
+
+					self.getProperties().then(function() {
+						def.resolve();
+					});
+
+				}, function(sender, args) {
+
+					var err = {
+						Code: args.get_errorCode(),
+						Details: args.get_errorDetails(),
+						TypeName: args.get_errorTypeName(),
+						Value: args.get_errorValue(),
+						message: args.get_message(),
+						request: args.get_request(),
+						stackTrace: args.get_stackTrace()
+					};
+
+					def.reject(err);
+
+				});
+
+			});
+
+
+			return def.promise;
+
+		};	// rename
+
+
+
+		// ****************************************************************************
+		// removeFile
+		//
+		// Delete the current file
+		//
+		// @permanent: Indicates if the folder is recycled or removed permanently
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.removeFile = function(permament) {
+
+			var self = this;
+			var def = $q.defer();
+			var headers = {
+				'Accept': 'application/json; odata=verbose'
+			};
+
+
+			var url = self.apiUrl + '/recycle';
+
+			if (permament === true) {
+				url = url.rtrim('/recycle');
+				headers['X-HTTP-Method'] = 'DELETE';
+			}
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+				headers: headers,
+
+				success: function() {
+
+					def.resolve();
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		};	// removeFile
+
+
+
+		// ****************************************************************************
+		// checkOut
+		//
+		// checkOut the current file
+		//
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.checkOut = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+			var url = self.apiUrl + '/checkout';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+
+				success: function() {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser, ModifiedBy'
+					}).then(function() {
+						def.resolve();
+					});
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser, ModifiedBy'
+					}).then(function() {
+						def.reject(err);
+					});
+				}
+			});
+
+			return def.promise;
+
+		};	// checkOut
+
+
+		// ****************************************************************************
+		// undoCheckOut
+		//
+		// undoCheckOut the current file
+		//
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.undoCheckOut = function() {
+
+			var self = this;
+			var def = $q.defer();
+
+			var url = self.apiUrl + '/undocheckout';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+
+				success: function() {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser, ModifiedBy'
+					}).then(function() {
+						delete self.CheckedOutByUser;
+						def.resolve();
+					});
+				},
+
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser, ModifiedBy'
+					}).then(function() {
+						def.reject(err);
+					});
+				}
+			});
+
+			return def.promise;
+
+		};	// undoCheckOut
+
+
+
+		// ****************************************************************************
+		// checkIn
+		//
+		// checkIn the current file
+		//
+		// @Comment: A comment for the check-in
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.checkIn = function(Comment) {
+
+			var self = this;
+			var def = $q.defer();
+
+			Comment = Comment || '';
+
+			self.getList().then(function() {
+
+				var listGuid = self.List.Id;
+				var itemId = self.ListItemAllFields.Id;
+
+				var context = new SP.ClientContext.get_current();
+				var web = context.get_web();
+				var list = web.get_lists().getById(listGuid);
+				var item = list.getItemById(itemId);
+				self._file = item.get_file();
+				self._file.checkIn(Comment, 1);
+
+				context.load(self._file);
+
+				context.executeQueryAsync(function() {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser,ModifiedBy'
+					}).then(function() {
+						delete self.CheckedOutByUser;
+						def.resolve();
+					});
+
+				}, function(sender, args) {
+
+					var err = {
+						Code: args.get_errorCode(),
+						Details: args.get_errorDetails(),
+						TypeName: args.get_errorTypeName(),
+						Value: args.get_errorValue(),
+						message: args.get_message(),
+						request: args.get_request(),
+						stackTrace: args.get_stackTrace()
+					};
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser,ModifiedBy'
+					}).then(function() {
+						def.reject(err);
+					});
+
+				});
+			});
+
+/*
+			var url = self.apiUrl + '/CheckIn(comment=\'' + Comment + '\', checkintype=0)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			$http({
+				url: url,
+				method: 'POST'
+			}).then(function() {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser'
+					}).then(function() {
+						delete self.CheckedOutByUser;
+						def.resolve();
+					});
+
+			}, function(err) {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser'
+					}).then(function() {
+						def.reject(err);
+					});
+			});
+
+			executor.executeAsync({
+
+				url: url,
+				method: 'POST',
+
+				success: function() {
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser'
+					}).then(function() {
+						delete self.CheckedOutByUser;
+						def.resolve();
+					});
+				},
+
+				error: function(data, errorCode, errorMessage) {
+
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					self.getProperties({
+						$expand: 'CheckedOutByUser'
+					}).then(function() {
+						def.reject(err);
+					});
+				}
+			});
+*/
+
+			return def.promise;
+
+		};	// checkIn
+
+
+
+
+		// Returns the SPFileObj class
+		return SPFileObj;
+
+	}
+]);
+
 /*
 	SPFolder - factory
 	
@@ -1577,9 +2404,9 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
-	['$q', 
+	['SPObjectProvider', 'SPUtils', '$q', 
 
-	function SPFolder_Factory($q) {
+	function SPFolder_Factory(SPObjectProvider, SPUtils, $q) {
 
 		'use strict';
 
@@ -1611,6 +2438,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			// Init folderProperties (if exists)
 			if (folderProperties !== void 0) {
+				utils.cleanDeferredProperties(folderProperties);
 				angular.extend(this, folderProperties);
 			}
 		};
@@ -1641,6 +2469,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 
@@ -1662,6 +2491,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getProperties
+
 
 
 		// ****************************************************************************
@@ -1693,7 +2523,12 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(file) {
 
-						files.push(file);
+						var newFile = SPObjectProvider.getSPFile(self.web, file.ServerRelativeUrl, file);
+						if (self.List != void 0) {
+							newFile.List = self.List;
+						}
+						
+						files.push(newFile);
 
 					});
 
@@ -1715,6 +2550,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getFiles
+
 
 
 		// ****************************************************************************
@@ -1746,7 +2582,13 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 					angular.forEach(d, function(folder) {
 
-						folders.push(new SPFolderObj(self.web, folder.ServerRelativeUrl, folder));
+						var newFolder = new SPFolderObj(self.web, folder.ServerRelativeUrl, folder);
+						if (self.List !== void 0) {
+							newFolder.List = self.List;
+						}
+
+						folders.push(newFolder);
+
 
 					});
 
@@ -1768,6 +2610,83 @@ angular.module('ngSharePoint').factory('SPFolder',
 			return def.promise;
 
 		}; // getFolders
+
+
+
+		// ****************************************************************************
+		// getList
+		//
+		// Gets the list that contains the curruent folder
+		//
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.getList = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.List === void 0) {
+
+				if (this.ListItemAllFields !== void 0) {
+
+					if (this.ListItemAllFields.ParentList !== void 0) {
+
+						var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+						this.List = list;
+					}
+				}
+			}
+
+			if (this.List !== void 0) {
+
+				def.resolve(this.List);
+
+			} else {
+
+				this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+
+					var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
+					self.List = list;
+					def.resolve(list);
+				});
+			}
+
+			return def.promise;
+
+		};	// getList
+
+
+
+		// ****************************************************************************
+		// getFolderListItem
+		//
+		// Gets the list item object correspondig with the current folder
+		//
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.getFolderListItem = function() {
+
+			var def = $q.defer();
+			var self = this;
+
+			if (this.ListItem !== void 0) {
+
+				def.resolve(this.ListItem);
+
+			} else {
+
+				this.getList().then(function() {
+
+					self.ListItem = SPObjectProvider.getSPListItem(self.List, self.ListItemAllFields);
+					def.resolve(self.ListItem);
+				});
+
+			}
+
+			return def.promise;
+
+		};	// getFolderListItem
+
 
 
 		// ****************************************************************************
@@ -1816,8 +2735,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-					var newFolder = new SPFolderObj(self.web, folderPath, data);
-					def.resolve(newFolder);
+					var newFolder = new SPFolderObj(self.web, folderPath, d); def.resolve(newFolder);
 				},
 
 
@@ -1840,14 +2758,138 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 		// ****************************************************************************
-		// deleteFolder
+		// addFile
+		//
+		// Uploads a new binary file to current folder
+		//
+		// @fileName: The name of the new file to upload
+		// @file: A file object to upload
+		// @returns: Promise with the new SPFolder object.
+		//
+		SPFolderObj.prototype.addFile = function(fileName, file) {
+
+			var self = this;
+			var def = $q.defer();
+			var folderPath = self.ServerRelativeUrl + '/' + fileName;
+			var url = self.apiUrl + '/files/add(url=\'' + fileName + '\',overwrite=true)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			SPUtils.getFileBinary(file).then(function (binaryData) {
+
+				var headers = {
+					'Accept': 'application/json; odata=verbose',
+					"content-type": "application/json;odata=verbose"
+				};
+
+				var requestDigest = document.getElementById('__REQUESTDIGEST');
+				if (requestDigest !== null) {
+					headers['X-RequestDigest'] = requestDigest.value;
+				}
+
+				executor.executeAsync({
+
+					url: url,
+					method: 'POST',
+					headers: headers,
+					body: binaryData,
+					binaryStringRequestBody: true,
+
+					success: function(data) {
+
+						var d = utils.parseSPResponse(data);
+						var newFile = SPObjectProvider.getSPFile(self.web, d.ServerRelativeUrl, d);
+						newFile.List = self.List;
+
+						def.resolve(newFile);
+					},
+
+					error: function(data, errorCode, errorMessage) {
+
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+
+			});
+
+			return def.promise;
+
+		};	// addFile
+
+
+		// ******************************************
+		// rename
+		//
+		// Renames the current folder with the new name
+		//
+		// @folderName: The new name of the folder
+		// @returns: Promise with the result.
+		//
+		SPFolderObj.prototype.rename = function(newName) {
+
+			var self = this;
+			var def = $q.defer();
+
+			this.getFolderListItem().then(function() {
+
+				var listGuid = self.List.Id;
+				var itemId = self.ListItem.Id;
+
+				var context = new SP.ClientContext.get_current();
+				var web = context.get_web();
+				var list = web.get_lists().getById(listGuid);
+				self._folder = list.getItemById(itemId);
+				self._folder.set_item('FileLeafRef', newName);
+				self._folder.update();
+
+				context.load(self._folder);
+
+				context.executeQueryAsync(function() {
+
+					self.Name = newName;
+					def.resolve();
+
+				}, function(sender, args) {
+
+					var err = {
+						Code: args.get_errorCode(),
+						Details: args.get_errorDetails(),
+						TypeName: args.get_errorTypeName(),
+						Value: args.get_errorValue(),
+						message: args.get_message(),
+						request: args.get_request(),
+						stackTrace: args.get_stackTrace()
+					};
+
+					def.reject(err);
+
+				});
+
+			});
+
+
+			return def.promise;
+
+		};	// rename
+
+
+
+		// ****************************************************************************
+		// removeFolder
 		//
 		// Delete the specified folder under the current folder
 		//
 		// @folderName: The name of the folder to remove
+		// @permanent: Indicates if the folder is recycled or removed permanently
 		// @returns: Promise with the new SPFolder object.
 		//
-		SPFolderObj.prototype.deleteFolder = function(folder) {
+		SPFolderObj.prototype.removeFolder = function(folder, permament) {
 
 			var self = this;
 			var def = $q.defer();
@@ -1863,7 +2905,11 @@ angular.module('ngSharePoint').factory('SPFolder',
 				folderPath = folder.ServerRelativeUrl;
 			}
 
-			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')';
+			var url = self.web.apiUrl + '/GetFolderByServerRelativeUrl(\'' + folderPath + '\')/recycle';
+
+			if (permament === true) {
+				url = url.rtrim('/recycle');
+			}
 
 			var executor = new SP.RequestExecutor(self.web.url);
 
@@ -1871,7 +2917,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 				url: url,
 				method: 'POST',
-				headers: { "X-HTTP-Method":"DELETE" },
+				// headers: { "X-HTTP-Method":"DELETE" },
 
 				success: function() {
 
@@ -1893,7 +2939,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			return def.promise;
 
-		};	// deleteFolder
+		};	// removeFolder
 
 
 
@@ -1963,6 +3009,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 			// Init groupProperties (if exists)
 			if (groupProperties !== void 0) {
+				utils.cleanDeferredProperties(groupProperties);
 				angular.extend(this, groupProperties);
 			}
 		};
@@ -2002,7 +3049,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-					delete d.Users;
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 
@@ -2114,9 +3161,9 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 angular.module('ngSharePoint').factory('SPList', 
 
-    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 
 
-    function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
+    function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType) {
 
         'use strict';
 
@@ -2170,6 +3217,7 @@ angular.module('ngSharePoint').factory('SPList',
 
             // Init listProperties (if exists)
             if (listProperties !== void 0) {
+                utils.cleanDeferredProperties(listProperties);
                 angular.extend(this, listProperties);
             }
         };
@@ -2246,7 +3294,7 @@ angular.module('ngSharePoint').factory('SPList',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
-                    delete d.Fields;
+                    utils.cleanDeferredProperties(d);
 
                     angular.extend(self, d);
 
@@ -2312,6 +3360,7 @@ angular.module('ngSharePoint').factory('SPList',
                         SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
 
                         def.resolve(fields);
+
                     },
 
                     error: function(data, errorCode, errorMessage) {
@@ -2333,6 +3382,127 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
+
+        // ****************************************************************************
+        // getContentTypes
+        //
+        // Gets the list content types
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getContentTypes = function() {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            // We don't cache the content types due to that the user can 
+            // change its order (the default content type) anytime.
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/ContentTypes',
+                method: 'GET',
+                headers: {
+                    "Accept": "application/json; odata=verbose"
+                },
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    var contentTypes = [];
+
+                    angular.forEach(d, function(contentType) {
+
+                        contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
+
+                    });
+
+                    self.ContentTypes = contentTypes;
+
+                    def.resolve(contentTypes);
+
+                },
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+
+            return def.promise;
+
+        }; // getContentTypes
+
+
+
+
+        // ****************************************************************************
+        // getContentType
+        //
+        // Gets a list content type by its ID.
+        //
+        // @contentTypeId: The ID of the content type to retrieve.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getContentType = function(contentTypeId) {
+
+            var self = this;
+            var def = $q.defer();
+
+            self.getContentTypes().then(function() {
+
+                var contentType = self.ContentTypes[0]; //-> Default content type
+
+                angular.forEach(self.ContentTypes, function(ct) {
+
+                    if (ct.Id === contentTypeId) {
+
+                        contentType = ct;
+
+                    }
+
+                });
+
+
+                def.resolve(contentType);
+
+            });
+
+
+            return def.promise;
+
+        }; // getContentType
+
+
+
+
+        // ****************************************************************************
+        // getSchema
+        //
+        // Gets list content type fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getSchema = function(contentTypeId) {
+
+            return this.getContentType().then(function(defaultContentType) {
+
+                return defaultContentType.getFields();
+
+            });
+
+        }; // getSchema
+
+
+
         // ****************************************************************************
         // getRootFolder
         //
@@ -2344,15 +3514,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-
-            if (this.RootFolder !== void 0) {
-
-                if (this.RootFolder.__deferred !== void 0) {
-                    
-                    delete this.RootFolder;
-                }
-            }
-
 
             if (this.RootFolder !== void 0) {
 
@@ -2374,6 +3535,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                         var d = utils.parseSPResponse(data);
                         this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
+                        this.RootFolder.List = self;
 
                         def.resolve(this.RootFolder);
                     }, 
@@ -2409,24 +3571,34 @@ angular.module('ngSharePoint').factory('SPList',
         //              http://msdn.microsoft.com/en-us/library/office/dn292553(v=office.15).aspx
         // @returns: Promise with the result of the REST query.
         //
-        SPListObj.prototype.getListItems = function(query) {
+        SPListObj.prototype.getListItems = function(query, resetPagination) {
 
             var self = this;
             var def = $q.defer();
             var executor = new SP.RequestExecutor(self.web.url);
             var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+            var urlParams = '';
 
-            if (query) {
-                query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+            if (this.$skiptoken !== void 0 && !resetPagination) {
+
+                urlParams = '?' + this.$skiptoken;
+
             } else {
-                query = { 
-                    $expand: defaultExpandProperties
-                };
+
+                if (query) {
+                    query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+                } else {
+                    query = { 
+                        $expand: defaultExpandProperties
+                    };
+                }
+
+                urlParams = utils.parseQuery(query);
             }
 
             executor.executeAsync({
 
-                url: self.apiUrl + '/Items' + utils.parseQuery(query),
+                url: self.apiUrl + '/Items' + urlParams,
                 method: 'GET', 
                 headers: { 
                     "Accept": "application/json; odata=verbose"
@@ -2440,6 +3612,16 @@ angular.module('ngSharePoint').factory('SPList',
                         var spListItem = new SPListItem(self, item);
                         items.push(spListItem);
                     });
+
+                    // If pagination is present, save for futher function calls
+                    if (data.statusCode != 204 && data.body) {
+
+                        var responseBody = angular.fromJson(data.body || '{ "d": {} }').d;
+
+                        if (responseBody.__next) {
+                            self.$skiptoken = '$' + responseBody.__next.substring(responseBody.__next.indexOf('skiptoken'));
+                        }
+                    }
 
                     // Returns an array of initialized 'SPListItem' objects.
                     def.resolve(items);
@@ -2520,7 +3702,7 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // getItemQueryById
         //
-        // Gets an item from the list by its ID. 
+        // Gets an item property value from the list by item ID. 
         //
         // @id: {Counter} The id of the item.
         // @query: {String} The REST query after '.../getItemById(<id>)/'
@@ -2840,7 +4022,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             var self = this;
 
             if (list === void 0) {
-                throw '@list parameter not specified in SPListItem constructor.';
+                throw 'Required @list parameter not specified in SPListItem constructor.';
             }
 
 
@@ -2851,8 +4033,8 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                 if (typeof data === 'object' && data.concat === void 0) { //-> is object && not is array
 
+                    utils.cleanDeferredProperties(data);
                     angular.extend(this, data);
-                    this.clean();
 
                 } else {
 
@@ -2862,11 +4044,12 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                     } else {
 
-                        throw 'Incorrect @data parameter in SPListItem constructor';
+                        throw 'Incorrect @data parameter in SPListItem constructor.';
                     }
                 }
 
             }
+
         };
 
 
@@ -2882,31 +4065,6 @@ angular.module('ngSharePoint').factory('SPListItem',
             return this.Id === void 0;
         };
 
-
-
-        // ****************************************************************************
-        // clean
-        //
-        // Cleans undesirable item properties obtained form SharePoint.
-        //
-        // @returns: {SPListItem} The item itself to allow chaining calls.
-        //
-        SPListItemObj.prototype.clean = function() {
-
-            var self = this;
-
-            angular.forEach(this, function(value, key) {
-
-                if (typeof value === 'object' && value !== null) {
-                    if (value.__deferred) {
-                        delete self[key];
-                    }
-                }
-
-            });
-
-            return this;
-        };
 
 
 
@@ -2956,6 +4114,9 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+
+                    utils.cleanDeferredProperties(d);
+                    angular.extend(self, d);
 
                     if (self.list.BaseType === 0) {
 
@@ -3031,6 +4192,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+                    utils.cleanDeferredProperties(d);
                     angular.extend(self, d);
 
                     def.resolve(d);
@@ -3079,6 +4241,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+                    utils.cleanDeferredProperties(d);
                     angular.extend(self, d);
 
                     def.resolve(d);
@@ -3438,6 +4601,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
+                        utils.cleanDeferredProperties(d);
                         angular.extend(self, d);
 
                         // After save, process the attachments.
@@ -3538,6 +4702,80 @@ angular.module('ngSharePoint').factory('SPListItem',
 
     }
 ]);
+
+/*
+    SPObjectProvider - factory
+
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPObjectProvider
+///////////////////////////////////////
+
+angular.module('ngSharePoint').factory('SPObjectProvider', 
+
+    ['$injector', 
+
+    function SPObjectProvider_Factory($injector) {
+
+        'use strict';
+
+        return {
+
+        	getSPWeb: function(url) {
+
+        		var service = $injector.get('SPWeb');
+        		return new service(url);
+        	},
+
+        	getSPList: function(web, listName, listProperties) {
+
+        		var service = $injector.get('SPList');
+        		return new service(web, listName, listProperties);
+        	},
+
+        	getSPListItem: function(list, data) {
+
+        		var service = $injector.get('SPListItem');
+        		return new service(list, data);
+        	},
+
+            getSPFolder: function(web, path, folderProperties) {
+
+                var service = $injector.get('SPFolder');
+                return new service(web, path, folderProperties);
+            },
+
+            getSPFile: function(web, path, fileProperties) {
+                var service = $injector.get('SPFile');
+                return new service(web, path, fileProperties);
+            },
+
+        	getSPGroup: function(web, groupName, groupProperties) {
+
+        		var service = $injector.get('SPGroup');
+        		return new service(web, groupName, groupProperties);
+        	},
+
+        	getSPUser: function(web, userId, userData) {
+
+        		var service = $injector.get('SPUser');
+        		return new service(web, userId, userData);
+        	}
+
+
+        };
+
+    }
+]);
+
 /*
     SPRibbon - factory
     
@@ -3775,7 +5013,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 
-        function createButtonProperties(id, label, tooltip, description) {
+        function createButtonProperties(id, label, tooltip, description, btnImage) {
 
             var controlProperties = new CUI.ControlProperties();
 
@@ -3792,7 +5030,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 See 'RibbonTemplates' at the end of the file 'CMDUI.XML' (<15_deep>\TEMPLATE\GLOBAL\CMDUI.XML).
                 Also see these recomendations: http://www.andrewconnell.com/blog/Always-Create-Your-Own-Group-Templates-with-SharePoint-Ribbon-Customizations
             */
-            controlProperties.Image32by32 = '_layouts/15/images/placeholder32x32.png';
+            controlProperties.Image32by32 = btnImage || '_layouts/15/images/placeholder32x32.png';
             controlProperties.ToolTipTitle = tooltip || label;
             controlProperties.ToolTipDescription = description || tooltip || '';
             controlProperties.LabelText = label;
@@ -3803,9 +5041,9 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 
-        function addButtonToSection(section, id, label, tooltip, description) {
+        function addButtonToSection(section, id, label, tooltip, description, btnImage) {
 
-            var button = new CUI.Controls.Button(ribbon, id, createButtonProperties(id, label, tooltip, description));
+            var button = new CUI.Controls.Button(ribbon, id, createButtonProperties(id, label, tooltip, description, btnImage));
             var controlComponent = button.createComponentForDisplayMode('Large'); //-> 'Large', 'Medium', 'Small', 'Menu|Menu16', 'Menu32', ''
             var row = section.getRow(1); // Assumes section of type 2 (one row). It could also be type 3 or 4 and in this case always use the row 1.
             row.addChild(controlComponent);
@@ -3956,6 +5194,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     // Creates a new tab
                     var tabId = 'Ribbon.ngSharePoint.' + targetTab.replace(/ /g, '-');
                     tab = addTab(tabId, targetTab, '', tabId + '.Command');
+                    registerCommand(tabId + '.Command', angular.noop, true);
 
                 }
 
@@ -3977,13 +5216,13 @@ angular.module('ngSharePoint').factory('SPListItem',
 
 
 
-        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description) {
+        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, canHandle, btnImage) {
 
             var buttonId = toolbar.group.get_id() + '.Button-' + _getNextButtonSequence();
 
-            addButtonToSection(toolbar.section, buttonId, label, tooltip, description);
+            addButtonToSection(toolbar.section, buttonId, label, tooltip, description, btnImage);
             toolbar.group.selectLayout(toolbar.layout.get_id());
-            registerCommand(buttonId, handlerFn, true);
+            registerCommand(buttonId, handlerFn, canHandle);
 
         } // addButtonToToolbar
 
@@ -4183,6 +5422,7 @@ angular.module('ngSharePoint').factory('SPListItem',
     } // SPRibbon factory
 
 })();
+
 /*
 	SPUser - factory
 	
@@ -4248,6 +5488,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			// Init userProperties (if exists)
 			if (userData !== void 0) {
+				utils.cleanDeferredProperties(userData);
 				angular.extend(this, userData);
 			}
 		};
@@ -4277,7 +5518,7 @@ angular.module('ngSharePoint').factory('SPUser',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-//					delete d.Fields;
+					utils.cleanDeferredProperties(d);
 					
 					angular.extend(self, d);
 
@@ -4372,17 +5613,17 @@ angular.module('ngSharePoint').factory('SPUtils',
                         loadScriptPromises.push(self.loadScript('SP.RequestExecutor.js', 'SP.RequestExecutor'));
 
                         // Shows current SPconfig settings.
-//                      console.info(SPConfig.options);
+                        // console.info(SPConfig.options);
 
 
                         if (SPConfig.options.loadMinimalSharePointInfraestructure === false) {
 
                             loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
                             loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
-                            loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
-                            loadScriptPromises.push(self.loadScript('clientforms.js', ''));
+                            loadScriptPromises.push(self.loadScript('clienttemplates.js', 'SPClientTemplates'));
+                            loadScriptPromises.push(self.loadScript('clientforms.js', 'SPClientForms'));
                             loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
-                            loadScriptPromises.push(self.loadScript('autofill.js', ''));
+                            loadScriptPromises.push(self.loadScript('autofill.js', 'SPClientAutoFill'));
                             loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
                             loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
                         }
@@ -4546,41 +5787,6 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
 
-            parseQuery: function(query) {
-
-                var strQuery = '';
-
-                angular.forEach(query, function(value, key) {
-                    strQuery += (strQuery !== '' ? '&' : '?') + key + '=' + value;
-                });
-
-                return strQuery;
-            },
-
-
-
-            parseError: function(errorData) {
-
-                var errorObject = {
-                    code: errorData.errorCode,
-                    message: errorData.errorMessage
-                };
-
-                try {
-
-                    var body = angular.fromJson(data.body);
-
-                    errorObject.code = body.error.code;
-                    errorObject.message = body.error.message.value;
-
-                } catch(ex) {}
-
-                console.error(errorObject.message);
-                return errorObject;
-            },
-
-
-
             getRegionalSettings: function() {
 
                 var self = this;
@@ -4609,6 +5815,34 @@ angular.module('ngSharePoint').factory('SPUtils',
                 return deferred.promise;
             },
 
+
+            refreshDigestValue: function() {
+
+                var self = this;
+                var deferred = $q.defer();
+
+                $http({
+
+                    url: _spPageContextInfo.webAbsoluteUrl + "/_api/contextinfo",
+                    method: "POST",
+                    headers: { "Accept": "application/json; odata=verbose"}
+
+                }).then(function (data) {
+
+                    var requestDigest = document.getElementById('__REQUESTDIGEST');
+                    if (requestDigest !== null) {
+                        requestDigest.value = data.data.d.GetContextWebInformation.FormDigestValue;
+                    }
+
+                    deferred.resolve(data.data.d.GetContextWebInformation.FormDigestValue);
+
+                }, function (data) {
+                    console.log(data.data);
+                    deferred.reject(data.data);
+                });
+
+                return deferred.promise;
+            },
 
             // TODA ESTA FUNCIONALIDAD DEBE ESTAR DENTRO DE UN SERVICIO SPUser (o algo asi)
             // O en todo caso, la llamada a getCurrentUser debe ser del SPWeb!!!
@@ -4948,6 +6182,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 					success: function(data) {
 
 						var d = utils.parseSPResponse(data);
+						utils.cleanDeferredProperties(d);
+						
 						angular.extend(self, d);
 						def.resolve(d);
 						
@@ -5212,7 +6448,7 @@ angular.module('ngSharePoint').factory('SPWeb',
                 element.removeAttr('sp-action');
 
                 // Sets the action click event
-                element.attr('ng-click', 'makeAction();' + attrs.ngClick);
+                element.attr('ng-click', 'makeAction();' + (attrs.ngClick || ''));
 
                 // Sets the logic for 'ng-disabled' attribute
                 element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
@@ -5268,7 +6504,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
                         scope.action = scope.spAction;
 
-                        if (attrs.showInRibbon === 'true') {
+                        if (attrs.showInRibbon === 'true' || (!angular.isDefined(attrs.showInRibbon) && spformToolbarController.showToolbarInRibbon())) {
 
                             SPRibbon.ready().then(function() {
 
@@ -5490,6 +6726,7 @@ angular.module('ngSharePoint').directive('spIf',
     } // Directive factory
 
 ]);
+
 /*
 	SPFieldAttachments - directive
 	
@@ -5814,6 +7051,7 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldCalculated - directive
 	
@@ -5854,6 +7092,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldChoice - directive
 	
@@ -5915,6 +7154,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 	} // Directive factory
 
 ]);
+
 /*
     SPFieldControl - directive
     
@@ -5951,6 +7191,22 @@ angular.module('ngSharePoint').directive('spfieldControl',
                 var schema = spformController.getFieldSchema(name);
                 
                 if (schema !== void 0) {
+
+                    // Checks if attachments are enabled in the list when process the 'Attachments' field.
+                    if (name === 'Attachments') {
+
+                        var item = spformController.getItem();
+
+                        if (item !== void 0 && item.list !== void 0 && item.list.EnableAttachments === false) {
+
+                            console.error('Can\'t add "Attachments" field because the attachments are disabled in the list.');
+                            setEmptyElement();
+                            return;
+
+                        }
+
+                    }
+                    
 
                     // Sets the default value for the field
                     spformController.initField(name);
@@ -6124,6 +7380,7 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldDateTime - directive
 	
@@ -6422,6 +7679,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldDescription - directive
 	
@@ -6484,7 +7742,8 @@ angular.module('ngSharePoint').directive('spfieldDescription',
 		
 	} // Directive factory
 
-]); 
+]);
+
 /*
     SPFieldFocusElement - directive
     
@@ -6529,6 +7788,7 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
     } // Directive factory
 
 ]);
+
 /*
 	SPFieldLabel - directive
 	
@@ -6605,6 +7865,7 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldLookup - directive
 	
@@ -6993,6 +8254,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldLookupMulti - directive
 	
@@ -7446,6 +8708,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldMultiChoice - directive
 	
@@ -7614,6 +8877,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldNumber - directive
 	SPNumber - directive
@@ -7750,6 +9014,7 @@ angular.module('ngSharePoint').directive('spPercentage',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldText - directive
 	
@@ -7806,6 +9071,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldUrl - directive
 	
@@ -7884,6 +9150,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 	} // Directive factory
 
 ]);
+
 /*
 	SPFieldUser - directive
 	
@@ -8085,6 +9352,20 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				}
 
 
+				// ****************************************************************************
+				// Gets an user item by ID from the users list.
+				//
+				function getUserItem(itemId) {
+
+					return getLookupList().then(function(list) {
+
+						return list.getItemById(itemId);
+
+					});
+
+				}
+
+
 
 				// ****************************************************************************
 				// Gets the user data for display mode.
@@ -8103,6 +9384,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.selectedUserItems = [];
 
 						// Gets the user items and populate the selected items array
+						/*
 						getUserItems().then(function(items) {
 
 							if ($scope.schema.AllowMultipleValues) {
@@ -8159,6 +9441,76 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						}, function() {
 							def.reject();
+						});
+						*/
+
+						var getUserItemsPromises = [];
+
+						if ($scope.schema.AllowMultipleValues) {
+
+							angular.forEach($scope.value.results, function(selectedItem) {
+
+								//var selectedUserItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
+								var userItemPromise = getUserItem(selectedItem).then(function(selectedUserItem) {
+
+									if (selectedUserItem !== void 0) {
+
+										var userItem = {
+											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
+											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
+											data: selectedUserItem
+										};
+
+										$scope.selectedUserItems.push(userItem);
+									}
+
+								});
+
+								getUserItemsPromises.push(userItemPromise);
+
+							});
+
+						} else {
+
+							// If no value returns an empty object for corrent binding
+							var userItem = {
+								Title: '',
+								url: '',
+								data: null
+							};
+
+
+							if ($scope.value === null || $scope.value === void 0) {
+
+								$scope.selectedUserItems.push(userItem);
+
+							} else {
+
+								//var selectedUserItem = $filter('filter')(items, { Id: $scope.value }, true)[0];
+								var userItemPromise = getUserItem($scope.value).then(function(selectedUserItem) {
+
+									if (selectedUserItem !== void 0) {
+
+										userItem = {
+											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
+											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
+											data: selectedUserItem
+										};
+
+										$scope.selectedUserItems.push(userItem);
+									}
+
+								});
+
+								getUserItemsPromises.push(userItemPromise);
+							}
+						}
+
+						// Resolves all 'getUserItem' promises
+						$q.all(getUserItemsPromises).then(function() {
+
+							def.resolve($scope.selectedUserItems);
+
 						});
 
 					}
@@ -8219,7 +9571,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    	EntitySeparator: ';',
 				    	PictureOnly: false,
 				    	PictureSize: null,
-				    	UserInfoListId: '{' + $scope.lookupList.Id + '}',
+				    	UserInfoListId: $scope.schema.LookupList,
 				    	SharePointGroupID: $scope.schema.SelectionGroup,
 				    	PrincipalAccountType: 'User,DL,SecGroup,SPGroup',
 				    	SearchPrincipalSource: 15,
@@ -8459,6 +9811,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
     }
 
 ]);
+
 /*
 	SPField - directive
 	
@@ -8493,8 +9846,25 @@ angular.module('ngSharePoint').directive('spfield',
 				var schema;
 
 				if (spformController) schema = spformController.getFieldSchema(name);
+
 				
 				if (schema !== void 0) {
+
+					// Checks if attachments are enabled in the list when process the 'Attachments' field.
+					if (name === 'Attachments') {
+
+						var item = spformController.getItem();
+
+						if (item !== void 0 && item.list !== void 0 && item.list.EnableAttachments === false) {
+
+							console.error('Can\'t add "Attachments" field because the attachments are disabled in the list.');
+							setEmptyElement();
+							return;
+
+						}
+
+					}
+
 
 					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
@@ -8539,11 +9909,19 @@ angular.module('ngSharePoint').directive('spfield',
 				} else {
 
 					console.error('Unknown field "' + $attrs.name + '"');
+					setEmptyElement();
+
+				}
+
+
+				function setEmptyElement() {
 
 					var emptyElement = '';
 					$element.replaceWith(emptyElement);
 					$element = emptyElement;
+
 				}
+
 
 			} // link
 
@@ -8700,7 +10078,7 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                         default:
                             $scope.text = $scope.text || '';
 
-                            if ($attrs.showInRibbon === 'true') {
+                            if ($attrs.showInRibbon === 'true' || (!angular.isDefined(attrs.showInRibbon) && spformToolbarController.showToolbarInRibbon())) {
 
                                 SPRibbon.ready().then(function() {
 
@@ -8863,6 +10241,13 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                 };
 
+
+                this.showToolbarInRibbon = function() {
+
+                    return $scope.showToolbarInRibbon;
+
+                };
+
             },
 
 
@@ -8890,66 +10275,70 @@ angular.module('ngSharePoint').directive('spformToolbar',
                 function isRibbonNeeded(clone) {
 
                     var ribbonNeeded = false;
+                    $scope.showToolbarInRibbon = ($attrs.showInRibbon === 'true');
 
-                    // Check if the 'showInRibbon' attribute is 'true'.
-                    //if ($attrs.showInRibbon === 'true') {
 
-                        // Iterate over 'clone' elements to check if there are 'action' elements and are not the default actions.
-                        for (var i = 0; i < clone.length; i++) {
+                    // Iterate over 'clone' elements to check if there are 'action' elements and are not the default actions.
+                    for (var i = 0; i < clone.length; i++) {
 
-                            var elem = clone[i];
+                        var elem = clone[i];
 
-                            if (elem.tagName !== void 0) {
+                        if (elem.tagName !== void 0) {
 
-                                var showInRibbon = false;
+                            var showInRibbon = false;
 
-                                if (elem.hasAttribute('show-in-ribbon')) {
-                                    showInRibbon = (elem.getAttribute('show-in-ribbon').toLowerCase() === 'true');
+                            if (elem.hasAttribute('show-in-ribbon')) {
+
+                                showInRibbon = (elem.getAttribute('show-in-ribbon').toLowerCase() === 'true');
+
+                            } else {
+
+                                showInRibbon = $scope.showToolbarInRibbon;
+
+                            }
+
+                            if (showInRibbon) {
+
+                                // Checks for '<spform-toolbar-action>' element
+                                if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+
+                                    var actionAttr = elem.getAttribute('action').toLowerCase();
+
+                                    // Checks if the action is a default action
+                                    if (actionAttr !== 'save' && actionAttr !== 'cancel' && actionAttr !== 'close') {
+
+                                        ribbonNeeded = true;
+                                        break;
+
+                                    }
+
                                 }
 
-                                if (showInRibbon) {
+                                // Checks for '<any sp-action="">' element
+                                if (elem.hasAttribute('sp-action')) {
 
-                                    // Checks for '<spform-toolbar-action>' element
-                                    if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+                                    var spActionAttr = elem.getAttribute('sp-action').toLowerCase();
 
-                                        var actionAttr = elem.getAttribute('action').toLowerCase();
+                                    // Checks if the action is a default action
+                                    if (spActionAttr !== 'save' && spActionAttr !== 'cancel' && spActionAttr !== 'close') {
 
-                                        // Checks if the action is a default action
-                                        if (actionAttr !== 'save' && actionAttr !== 'cancel' && actionAttr !== 'close') {
-
-                                            ribbonNeeded = true;
-                                            break;
-
-                                        }
+                                        ribbonNeeded = true;
+                                        break;
 
                                     }
 
-                                    // Checks for '<any sp-action="">' element
-                                    if (elem.hasAttribute('sp-action')) {
-
-                                        var spActionAttr = elem.getAttribute('sp-action').toLowerCase();
-
-                                        // Checks if the action is a default action
-                                        if (spActionAttr !== 'save' && spActionAttr !== 'cancel' && spActionAttr !== 'close') {
-
-                                            ribbonNeeded = true;
-                                            break;
-
-                                        }
-
-                                    }
-                                    
                                 }
-
+                                
                             }
 
                         }
 
-                    //}
+                    }
+
 
                     return ribbonNeeded;
 
-                }
+                } // isRibbonNeeded
 
 
                 function processToolbar() {
@@ -9048,9 +10437,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver', 'SPListItem',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver, SPListItem) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -9059,6 +10448,8 @@ angular.module('ngSharePoint').directive('spform',
             replace: true,
             scope: {
                 item: '=item',
+                mode: '=mode',
+                extendedSchema: '=',
                 onPreSave: '&',
                 onPostSave: '&',
                 onCancel: '&'
@@ -9173,7 +10564,13 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.getFormMode = function() {
 
-                    return $attrs.mode || 'display';
+                    return $scope.mode || 'display';
+                };
+
+
+                this.setFormMode = function(newMode) {
+
+                    $scope.mode = newMode;
                 };
 
 
@@ -9349,7 +10746,6 @@ angular.module('ngSharePoint').directive('spform',
 
                                     // Close the 'Working on it...' dialog.
                                     closeDialog();
-                                    //$scope.formStatus = this.status.IDLE;
                                     
                                 }, function() {
 
@@ -9357,7 +10753,6 @@ angular.module('ngSharePoint').directive('spform',
                                     // due to an exception or manually by the user.
 
                                     closeDialog();
-                                    //$scope.formStatus = this.status.IDLE;
                                     def.reject();
                                     
                                 });
@@ -9380,8 +10775,6 @@ angular.module('ngSharePoint').directive('spform',
                                     showClose: true,
                                     autoSize: true,
                                     dialogReturnValueCallback: function() {
-                                        //$scope.formStatus = self.status.IDLE;
-                                        //$scope.$apply();
                                         def.reject();
                                     }
                                 });
@@ -9393,9 +10786,7 @@ angular.module('ngSharePoint').directive('spform',
                             // At this point, the 'OnPreSave' promise has been canceled 
                             // by the user (By the 'onPreSave' method implemented by the user).
 
-                            console.log('>>>> Save form was canceled!');
                             closeDialog();
-                            //$scope.formStatus = this.status.IDLE;
                             def.reject();
 
                         }
@@ -9406,7 +10797,6 @@ angular.module('ngSharePoint').directive('spform',
                         // due to an exception or manually by the user.
 
                         closeDialog();
-                        //$scope.formStatus = this.status.IDLE;
                         def.reject();
 
                     });
@@ -9429,9 +10819,12 @@ angular.module('ngSharePoint').directive('spform',
 
                         if (result !== false) {
 
-                            // Performs the default 'cancel' action.
-                            //self.closeForm(redirectUrl);
-                            $scope.item = angular.copy($scope.originalItem);
+                            // Performs the default 'cancel' action...
+
+                            // Restore the item to its 'original' value.
+                            //$scope.item = angular.copy($scope.originalItem);
+                            $scope.item = new SPListItem($scope.originalItem.list, $scope.originalItem);
+
                             def.resolve(result);
 
                         } else {
@@ -9443,8 +10836,7 @@ angular.module('ngSharePoint').directive('spform',
 
                     }, function() {
 
-                        // When error must close the form ?
-                        //self.closeForm(redirectUrl);
+                        // When error, should close the form ?
                         def.reject();
                     });
 
@@ -9485,52 +10877,32 @@ angular.module('ngSharePoint').directive('spform',
 
 
                         // Watch for form mode changes
-                        $scope.$watch(function() {
+                        $scope.$watch('mode', function(newValue, oldValue) {
 
-                            return spformController.getFormMode();
+                            if (newValue === void 0 || newValue === oldValue) return;
 
-                        }, function(newMode) {
+                            loadItemTemplate();
 
-                            $scope.mode = newMode;
-
-                            if ($scope.item !== void 0) {
-
-                                $scope.item.list.getFields().then(function(fields) {
-
-                                    $scope.schema = fields;
-                                    loadItemTemplate();
-
-                                });
-
-                            }
                         });
 
 
 
                         // Watch for item changes
-                        $scope.$watch('item', function(newValue) {
+                        $scope.$watch('item', function(newValue, oldValue) {
 
                             // Checks if the item has a value
                             if (newValue === void 0) return;
 
-                            $scope.originalItem = angular.copy(newValue);
-                            $scope.item.clean();
+                            // Store a copy of the original item.
+                            // See 'onPreSave', 'onPostSave' and 'onCancel' callbacks in the controller's 'save' method.
 
-                            $scope.item.list.getFields().then(function(fields) {
+                            // Using the 'angular.copy' method, the objects __proto__ are different.
+                            //$scope.originalItem = angular.copy(newValue);
 
-                                // TODO: We need to get list properties to know if the list has 
-                                //       ContentTypesEnabled and, if so, get the schema from the
-                                //       ContentType instead.
-                                //       Also we need to know which is the default ContentType
-                                //       to get the correct schema (I don't know how).
-                                //
-                                //       If the above is not done, field properties like 'Required' will 
-                                //       have incorrect data when ContentTypes are enabled.
+                            // Instead, create a 'new SPListItem(@list, @data)' that use the 'angular.extend' method.
+                            $scope.originalItem = new SPListItem($scope.item.list, $scope.item);
 
-                                $scope.schema = fields;
-                                loadItemTemplate();
-
-                            });
+                            loadItemTemplate();
 
                         });
 
@@ -9538,89 +10910,144 @@ angular.module('ngSharePoint').directive('spform',
 
                         function loadItemTemplate() {
                             
+                            // Checks if the form is already being processed.
                             if ($scope.formStatus === spformController.status.PROCESSING) return;
 
-                            $scope.formStatus = spformController.status.PROCESSING;
+                            // Ensure item has a value
+                            if (!angular.isDefined($scope.item)) return;
 
-                            // Search for the 'transclusion-container' attribute in the 'spform' template elements.
-                            var elements = $element.find('*');
-                            var transclusionContainer;
+                            // Ensure mode has a value
+                            if (!angular.isDefined($scope.mode)) {
 
-                            angular.forEach(elements, function(elem) {
-                                if (elem.attributes['transclusion-container'] !== void 0) {
-                                    transclusionContainer = angular.element(elem);
-                                }
-                            });
+                                $scope.mode = spformController.getFormMode();
 
-
-                            // Ensure 'transclusion' element.
-                            if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
-                                transclusionContainer = $element;
                             }
 
 
-                            // Remove the 'loading animation' element
-                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
-                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                            // Update form status
+                            $scope.formStatus = spformController.status.PROCESSING;
 
 
-                            transclusionContainer.empty(); // Needed?
+                            // Gets the schema (fields) of the list.
+                            // Really, gets the fields of the list content type specified in the 
+                            // item or, if not specified, the default list content type.
+                            $scope.item.list.getFields().then(function(listFields) {
+
+                                $scope.item.list.getContentType($scope.item.ContentTypeId).then(function(contentType) {
+
+                                    contentType.getFields().then(function(ctFields) {
+
+                                        var fields = ctFields;
+
+                                        // Adds the 'Attachments' field, if needed.
+                                        if ($scope.item.list.EnableAttachments) {
+
+                                            fields.Attachments = listFields.Attachments;
+
+                                        }
+
+                                        // Sets the final schema
+                                        $scope.schema = fields;
 
 
-                            // Check for 'templateUrl' attribute
-                            if ($attrs.templateUrl) {
+                                        if (angular.isDefined($scope.extendedSchema)) {
 
-                                // Apply the 'templateUrl' attribute
-                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+                                            angular.forEach($scope.schema, function(field) {
 
-                                    parseRules(transclusionContainer, angular.element(html), false).then(function() {
+                                                var fieldExtendedSchema = $scope.extendedSchema.Fields[field.InternalName] || {};
+                                                angular.extend(field, fieldExtendedSchema);
 
-                                        $compile(transclusionContainer)($scope);
-                                        $scope.formStatus = spformController.status.IDLE;
-
-                                    });
-
-                                }).error(function(data, status, headers, config, statusText) {
-
-                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
-                                    $compile(transclusionContainer)($scope);
-                                    $scope.formStatus = spformController.status.IDLE;
-                                });
-
-                            } else {
-
-                                // Apply transclusion
-                                transcludeFn($scope, function(clone) {
-                                    
-                                    parseRules(transclusionContainer, clone, true).then(function() {
-
-                                        // If no content was detected within the 'spform' element, generates a default form template.
-                                        if (transclusionContainer[0].children.length === 0) {
-
-                                            $scope.fields = [];
-
-                                            angular.forEach($scope.item.list.Fields, function(field) {
-                                                if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-                                                    $scope.fields.push(field);
-                                                }
                                             });
 
-                                            $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                        }
 
-                                                transclusionContainer.append(html);
+                                        // Search for the 'transclusion-container' attribute in the 'spform' template elements.
+                                        var elements = $element.find('*');
+                                        var transclusionContainer;
+
+                                        angular.forEach(elements, function(elem) {
+                                            if (elem.attributes['transclusion-container'] !== void 0) {
+                                                transclusionContainer = angular.element(elem);
+                                            }
+                                        });
+
+
+                                        // Ensure 'transclusion' element.
+                                        if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
+                                            transclusionContainer = $element;
+                                        }
+
+
+                                        // Remove the 'loading animation' element
+                                        var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                                        if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+
+
+                                        transclusionContainer.empty(); // Needed?
+
+
+                                        // Check for 'templateUrl' attribute
+                                        if ($attrs.templateUrl) {
+
+                                            // Apply the 'templateUrl' attribute
+                                            $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+
+                                                parseRules(transclusionContainer, angular.element(html), false).then(function() {
+
+                                                    $compile(transclusionContainer)($scope);
+                                                    $scope.formStatus = spformController.status.IDLE;
+                                                    dialogResize();
+                                                });
+
+                                            }).error(function(data, status, headers, config, statusText) {
+
+                                                $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
                                                 $compile(transclusionContainer)($scope);
                                                 $scope.formStatus = spformController.status.IDLE;
-
+                                                dialogResize();
                                             });
 
                                         } else {
 
-                                            $scope.formStatus = spformController.status.IDLE;
+                                            // Apply transclusion
+                                            transcludeFn($scope, function(clone) {
+                                                
+                                                parseRules(transclusionContainer, clone, true).then(function() {
+
+                                                    // If no content was detected within the 'spform' element, generates a default form template.
+                                                    if (transclusionContainer[0].children.length === 0) {
+
+                                                        $scope.fields = [];
+
+                                                        angular.forEach($scope.schema, function(field) {
+                                                            if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                                                $scope.fields.push(field);
+                                                            }
+                                                        });
+
+                                                        $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+
+                                                            transclusionContainer.append(html);
+                                                            $compile(transclusionContainer)($scope);
+                                                            $scope.formStatus = spformController.status.IDLE;
+                                                            dialogResize();
+                                                        });
+
+                                                    } else {
+
+                                                        $scope.formStatus = spformController.status.IDLE;
+                                                        dialogResize();
+                                                    }
+                                                });
+                                            });
+
                                         }
+
                                     });
+
                                 });
 
-                            }
+                            });
                             
                         } // loadItemTemplate
 
@@ -9765,6 +11192,26 @@ angular.module('ngSharePoint').directive('spform',
 
                         } // parseRules private function
 
+
+
+                        // Detect when SharePoint is rendering the form in a dialog
+                        // and resize after de DOM is loaded via $timeout.
+                        //
+                        function dialogResize() {
+
+                            if (SP.UI.ModalDialog.get_childDialog()) {
+
+                                $timeout(function() {
+
+                                    SP.UI.ModalDialog.get_childDialog().autoSize();
+
+                                });
+
+                            }
+
+                        } // dialogResize
+
+
                     } // compile.post-link
 
                 }; // compile function return
@@ -9780,6 +11227,121 @@ angular.module('ngSharePoint').directive('spform',
 
 ]);
 
+/*
+    SPItemAuthoringinfo - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPItemAuthoringinfo
+///////////////////////////////////////
+
+(function() {
+    
+    'use strict';
+
+    angular
+        .module('ngSharePoint')
+        .directive('spitemAuthoringinfo', spitemAuthoringinfo);
+
+
+    spitemAuthoringinfo.$inject = ['SharePoint'];
+
+
+    /* @ngInject */
+    function spitemAuthoringinfo(SharePoint) {
+
+        var directive = {
+
+            restrict: 'EA',
+            replace: true,
+            templateUrl: 'templates/form-templates/spitem-authoringinfo.html',
+            link: postLink
+
+        };
+
+        return directive;
+
+        
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+
+
+        function postLink(scope, element, attrs) {
+
+            scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+            // Init localized texts
+
+            scope.contentTypeText = 'Content Type';
+            // NOTA: El ContentType únicamente se muestra cuando está activa la administración de tipos de contenido en la lista.
+
+            scope.versionText = SP.Res.storefront_AppDetails_Version;
+            // NOTA: La versión únicamente se muestra cuando está activo en control de versiones en la lista.
+
+            scope.createdAtText = 'Created at';
+            scope.lastModifiedText = 'Last modified at';
+            scope.byText = 'by';
+
+            // TODO: Gets the above strings in the correct localization !!!
+            //       The strings are located at wss.resx that currently can't load dinamically.
+
+
+            scope.isNewItem = scope.item.isNew();
+
+
+            if (scope.item && !scope.isNewItem) {
+
+                // Gets the item info
+                scope.createdDate = scope.item.Created;
+                scope.modifiedDate = scope.item.Modified;
+                scope.authorName = null;
+                scope.editorName = null;
+
+                // Gets 'Author' properties
+                scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
+
+                    scope.authorName = author.Title;
+                    scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
+
+                });
+
+                // Gets 'Editor' properties
+                scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
+
+                    scope.editorName = editor.Title;
+                    scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
+
+                });
+
+            }
+
+
+            // Try to get original generated authoring info
+            scope.originalAuthoringInfoFound = false;
+            var originalAuthoringInfoElement = document.getElementById('ngsharepoint-formbinder-authoringinfo');
+
+            if (originalAuthoringInfoElement) {
+
+                element.append(originalAuthoringInfoElement);
+                originalAuthoringInfoElement.style.display = 'block';
+                scope.originalAuthoringInfoFound = true;
+            }
+
+
+        } // postLink
+
+    } // Directive factory function
+
+})();
 
 /*
 	SPUser - directive
@@ -9850,6 +11412,7 @@ angular.module('ngSharePoint').directive('spuser',
 		
 	}
 ]);
+
 /*
 	SPWorkingOnIt - directive
 	
@@ -9882,6 +11445,7 @@ angular.module('ngSharePoint').directive('spworkingonit',
 	}
 
 ]);
+
 /*
 	newlines - filter
 	
@@ -9911,6 +11475,7 @@ angular.module('ngSharePoint').filter('newlines',
         
     }
 ]);
+
 /*
 	unsafe - filter
 	
@@ -9940,78 +11505,306 @@ angular.module('ngSharePoint').filter('unsafe',
         
     }
 ]);
-angular.module('ngSharePointFormPage', ['ngSharePoint']);
-
-
-angular.module('ngSharePointFormPage').directive('spformpage', ['SharePoint', 'SPUtils', function(SharePoint, SPUtils) {
-	
-	return {
-
-		restrict: 'EA',
-
-		link: function($scope, $element, $attrs) {
-
-			var listId = _spPageContextInfo.pageListId;
-			var itemId = utils.getQueryStringParamByName('ID');
-
-			if (listId !== void 0 && itemId !== void 0) {
-
-				SharePoint.getWeb().then(function(web) {
-					web.getList(listId).then(function(list) {
-
-						list.getItemById(itemId).then(function(item) {
-
-							$scope.item = item;
-
-						}, function(error) {
-							console.log('Error item', error);
-						});
-
-					}, function(error) {
-						console.log('Error list', error);
-					});
-
-				}, function(error) {
-					console.log('Error web', error);
-				});
 
 /*
-					.then(function(list) { return list.getItemById(itemId); })
-					.then(function(item) {
-						$scope.item = item;
-					})
-					.fail(function(err) {
-						console.log('ERROR!', err);
-					});
-*/					
-			}
+ *  Module: ngSharePointFormPage
+ *  Directive: spformpage
+ *
+ *  Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
+ *
+ */
 
-
-			$scope.onPreSave = function(item) {
-				console.log('>>>> onPreSave', item);
-			};
-
-
-			$scope.onPostSave = function(item) {
-				console.log('>>>> onPostSave', item);
-			};
-
-
-			$scope.onCancel = function(item) {
-				console.log('>>>> onCancel', item);
-			};
-
-		}
-
-	};
-
-}]);
+angular.module('ngSharePointFormPage', ['ngSharePoint', 'oc.lazyLoad']);
 
 
 
+angular.module('ngSharePointFormPage').config(
 
+    ['SPConfigProvider', '$ocLazyLoadProvider', 
+
+    function(SPConfigProvider, $ocLazyLoadProvider) {
+
+        SPConfigProvider.options.loadMinimalSharePointInfraestructure = false;
+        //SPConfigProvider.options.forceLoadResources = true;
+
+        // Config ocLazyLoad...
+        // If you use angular.bootstrap(...) to launch your application, you need to define the main app module as a loaded module.
+        $ocLazyLoadProvider.config({
+
+            loadedModules: ['ngSharePointFormPage']
+
+        });
+
+    }
+
+]);
+
+
+
+angular.module('ngSharePointFormPage').directive('spformpage', 
+
+    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', 'SPExpressionResolver', 
+
+    function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, SPExpressionResolver) {
+        
+        return {
+
+            restrict: 'EA',
+
+            link: function($scope, $element, $attrs) {
+
+                var listId = _spPageContextInfo.pageListId;
+                var itemId = utils.getQueryStringParamByName('ID');
+
+
+                $scope.mode = (ctx.ControlMode == SPClientTemplates.ClientControlMode.DisplayForm ? 'display' : 'edit');
+
+
+                if (listId === void 0) {
+                    throw 'Can\'t access to the page context list or the page context does not exists.';
+                }
+
+
+                SharePoint.getWeb().then(function(web) {
+
+                    $scope.web = web;
+
+                    web.getList(listId).then(function(list) {
+
+                        $scope.list = list;
+
+                        list.getProperties().then(function(props) {
+
+                            getItem(itemId).then(function(item) {
+
+                                // Load dependencies
+                                loadDependencies(item).then(function(formDefinition) {
+
+                                    // Try to get the template
+                                    getTemplateUrl().then(function(templateUrl) {
+
+                                        var formController = formDefinition.formController;
+                                        var spformHTML = '';
+
+                                        $scope.extendedSchema = formDefinition.extendedSchema || {};
+
+                                        if (!angular.isDefined(formController)) {
+
+                                            spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" template-url="' + templateUrl + '"></div>';
+
+                                        } else {
+
+                                            spformHTML = '<div ng-controller="' + formController + ' as appCtrl">' +
+                                                         '    <div data-spform="true" mode="mode" item="item" extended-schema="$parent.extendedSchema" on-pre-save="appCtrl.onPreSave" on-post-save="appCtrl.onPostSave" on-cancel="appCtrl.onCancel" template-url="' + templateUrl + '"></div>' +
+                                                         '</div>';
+                                        }
+
+
+                                        var newElement = $compile(spformHTML)($scope);
+                                        $element.replaceWith(newElement);
+                                        $element = newElement;
+
+
+                                        preBind(item).finally(function() {
+
+                                            // Sets the item
+                                            $scope.item = item;
+
+                                        });
+
+                                    });
+
+                                }, function(err) {
+
+                                    console.error(err);
+
+                                });
+
+                            });
+
+                        });
+
+
+                    }, function(error) {
+
+                        console.log('Error list', error);
+
+                    });
+
+                }, function(error) {
+
+                    console.log('Error web', error);
+
+                });
+
+
+
+
+                function getItem(itemId) {
+
+                    var deferred = $q.defer();
+                    var item = null;
+
+
+                    if (ctx.ControlMode == SPClientTemplates.ClientControlMode.NewForm) {
+
+                        var data = {
+                            ContentTypeId: utils.getQueryStringParamByName('ContentTypeId')
+                        };
+
+                        var newItem = new SPListItem($scope.list, data);
+                        deferred.resolve(newItem);
+
+                    } else {
+
+                        $scope.list.getItemById(itemId).then(function(item) {
+
+                            deferred.resolve(item);
+
+                        }, function(err) {
+
+                            console.log('Error item', err);
+
+                        });
+                        
+                    }
+
+                    return deferred.promise;
+
+                } // getItem
+
+
+
+
+                function getTemplateUrl() {
+
+                    var deferred = $q.defer();
+                    var templateUrl = '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+
+                    // Check if the 'templateUrl' is valid, i.e. the template exists.
+                    $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
+
+                        // Returns the 'templateUrl'
+                        deferred.resolve(templateUrl);
+
+                    }).error(function(data, status, headers, config, statusText) {
+
+                        // No valid template url specified.
+                        console.log(data);
+
+                        // The 'SPForm' directive will be generated with the default form template, so
+                        // return an empty 'templateUrl'.
+                        deferred.resolve('');
+
+                    });
+
+                    return deferred.promise;
+
+                } // getTemplateUrl
+
+
+
+                function loadDependencies(item) {
+
+                    var deferred = $q.defer();
+
+                    // TODO: Hacer un $http para comprobar que exista el script de definición.
+                    //       Si no existe, generar error? utilizar uno vacío? ... ???
+
+
+                    SP.SOD.registerSod('formDefinition', '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
+
+                    SP.SOD.executeFunc('formDefinition', null, function() {
+
+                        // Process the form definition object and load dependencies.
+                        // NOTE: Here should have the variable 'formDefinition'.
+                        var dependencies = [];
+
+                        if (formDefinition !== void 0) {
+
+                            var formDefinitionScope = $scope.$new();
+                            formDefinitionScope.item = item;
+
+                            SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
+
+                                formDefinition = angular.fromJson(formDefinitionResolved);
+
+                                // Process AngularJS modules dependencies.
+                                angular.forEach(formDefinition.angularModules, function(module) {
+
+                                    dependencies.push(module);
+
+                                });
+
+                                // Process JavaScript dependencies (Non AngularJS scripts).
+                                angular.forEach(formDefinition.jsIncludes, function(js) {
+
+                                    dependencies.push(js);
+
+                                });
+
+
+                                // Process CSS dependencies.
+                                angular.forEach(formDefinition.cssIncludes, function(css) {
+
+                                    dependencies.push(css);
+
+                                });
+
+
+                                // Process other.
+                                // ...
+
+
+                                $ocLazyLoad.load(dependencies).then(function() {
+
+                                    deferred.resolve(formDefinition);
+
+                                });
+
+                            });
+
+                        } else {
+
+                            deferred.resolve({});
+                            
+                        }
+
+                    });
+
+
+                    return deferred.promise;
+
+                } // loadDependencies
+
+
+
+                function preBind(item) {
+
+                    var elementScope = $element.scope();
+                    var onPreBind;
+
+                    if (angular.isDefined(elementScope.appCtrl)) {
+                        onPreBind = elementScope.appCtrl.onPreBind;
+                    }
+
+                    return $q.when((onPreBind || angular.noop)(item));
+                    
+                } // preBind
+
+            }
+
+        };
+
+    }
+
+]);
+
+
+/*
 var element = document.querySelector('[data-spformpage]');
 
 if (element) {
-	angular.bootstrap(element, ['ngSharePointFormPage']);
+    angular.bootstrap(element, ['ngSharePointFormPage']);
 }
+*/

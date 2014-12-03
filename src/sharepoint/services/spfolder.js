@@ -38,6 +38,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 			if (path === void 0) {
 				throw '@path parameter not specified in SPFolder constructor.';
 			}
+			// IMPROVEMENT: If path is undefined, instead of throw an error, set the path to '' or '/' to point to the root folder of the web.
 
 
 			this.web = web;
@@ -347,7 +348,8 @@ angular.module('ngSharePoint').factory('SPFolder',
 				success: function(data) {
 
 					var d = utils.parseSPResponse(data);
-					var newFolder = new SPFolderObj(self.web, folderPath, d); def.resolve(newFolder);
+					var newFolder = new SPFolderObj(self.web, folderPath, d);
+					def.resolve(newFolder);
 				},
 
 

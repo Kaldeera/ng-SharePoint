@@ -32,8 +32,25 @@ angular.module('ngSharePoint').directive('spfield',
 				var schema;
 
 				if (spformController) schema = spformController.getFieldSchema(name);
+
 				
 				if (schema !== void 0) {
+
+					// Checks if attachments are enabled in the list when process the 'Attachments' field.
+					if (name === 'Attachments') {
+
+						var item = spformController.getItem();
+
+						if (item !== void 0 && item.list !== void 0 && item.list.EnableAttachments === false) {
+
+							console.error('Can\'t add "Attachments" field because the attachments are disabled in the list.');
+							setEmptyElement();
+							return;
+
+						}
+
+					}
+
 
 					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
@@ -78,11 +95,19 @@ angular.module('ngSharePoint').directive('spfield',
 				} else {
 
 					console.error('Unknown field "' + $attrs.name + '"');
+					setEmptyElement();
+
+				}
+
+
+				function setEmptyElement() {
 
 					var emptyElement = '';
 					$element.replaceWith(emptyElement);
 					$element = emptyElement;
+
 				}
+
 
 			} // link
 

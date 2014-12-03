@@ -87,7 +87,7 @@
                 element.removeAttr('sp-action');
 
                 // Sets the action click event
-                element.attr('ng-click', 'makeAction();' + attrs.ngClick);
+                element.attr('ng-click', 'makeAction();' + (attrs.ngClick || ''));
 
                 // Sets the logic for 'ng-disabled' attribute
                 element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');

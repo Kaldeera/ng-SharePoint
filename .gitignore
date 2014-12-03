@@ -47,3 +47,7 @@ build\ng-sharepoint.forms-editor.*
 .*
 Gruntfile.js
 gruntfile.js
+
+# Build
+# ==========================
+build/*

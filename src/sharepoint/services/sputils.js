@@ -68,10 +68,10 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                             loadScriptPromises.push(self.loadScript('SP.UserProfiles.js', 'SP.UserProfiles'));
                             loadScriptPromises.push(self.loadScript('datepicker.debug.js', 'clickDatePicker'));
-                            loadScriptPromises.push(self.loadScript('clienttemplates.js', ''));
-                            loadScriptPromises.push(self.loadScript('clientforms.js', ''));
+                            loadScriptPromises.push(self.loadScript('clienttemplates.js', 'SPClientTemplates'));
+                            loadScriptPromises.push(self.loadScript('clientforms.js', 'SPClientForms'));
                             loadScriptPromises.push(self.loadScript('clientpeoplepicker.js', 'SPClientPeoplePicker'));
-                            loadScriptPromises.push(self.loadScript('autofill.js', ''));
+                            loadScriptPromises.push(self.loadScript('autofill.js', 'SPClientAutoFill'));
                             loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/initstrings.js', 'Strings'));
                             loadScriptPromises.push(self.loadScript(_spPageContextInfo.currentLanguage + '/strings.js', 'Strings'));
                         }

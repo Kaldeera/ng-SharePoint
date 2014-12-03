@@ -207,7 +207,7 @@ var utils = {
 		}
 		catch(ex) { }
 
-		console.error(errObj.message, errObj);
+		//console.error(errObj.message, errObj);
 
 		return errObj;
 	},
@@ -267,11 +267,16 @@ var utils = {
 
         angular.forEach(spobject, function(value, key) {
 
-            if (typeof value === 'object' && value !== null) {
+            if (typeof value === 'object' && value !== null && key !== '__parent') {
+
                 if (value.__deferred) {
+
                     delete obj[key];
+
                 } else {
+
                 	utils.cleanDeferredProperties(value);
+
                 }
             }
 

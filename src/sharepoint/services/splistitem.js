@@ -34,7 +34,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             var self = this;
 
             if (list === void 0) {
-                throw '@list parameter not specified in SPListItem constructor.';
+                throw 'Required @list parameter not specified in SPListItem constructor.';
             }
 
 
@@ -56,11 +56,12 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                     } else {
 
-                        throw 'Incorrect @data parameter in SPListItem constructor';
+                        throw 'Incorrect @data parameter in SPListItem constructor.';
                     }
                 }
 
             }
+
         };
 
 

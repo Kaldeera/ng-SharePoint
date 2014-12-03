@@ -199,6 +199,20 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				}
 
 
+				// ****************************************************************************
+				// Gets an user item by ID from the users list.
+				//
+				function getUserItem(itemId) {
+
+					return getLookupList().then(function(list) {
+
+						return list.getItemById(itemId);
+
+					});
+
+				}
+
+
 
 				// ****************************************************************************
 				// Gets the user data for display mode.
@@ -217,6 +231,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.selectedUserItems = [];
 
 						// Gets the user items and populate the selected items array
+						/*
 						getUserItems().then(function(items) {
 
 							if ($scope.schema.AllowMultipleValues) {
@@ -273,6 +288,76 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						}, function() {
 							def.reject();
+						});
+						*/
+
+						var getUserItemsPromises = [];
+
+						if ($scope.schema.AllowMultipleValues) {
+
+							angular.forEach($scope.value.results, function(selectedItem) {
+
+								//var selectedUserItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
+								var userItemPromise = getUserItem(selectedItem).then(function(selectedUserItem) {
+
+									if (selectedUserItem !== void 0) {
+
+										var userItem = {
+											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
+											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
+											data: selectedUserItem
+										};
+
+										$scope.selectedUserItems.push(userItem);
+									}
+
+								});
+
+								getUserItemsPromises.push(userItemPromise);
+
+							});
+
+						} else {
+
+							// If no value returns an empty object for corrent binding
+							var userItem = {
+								Title: '',
+								url: '',
+								data: null
+							};
+
+
+							if ($scope.value === null || $scope.value === void 0) {
+
+								$scope.selectedUserItems.push(userItem);
+
+							} else {
+
+								//var selectedUserItem = $filter('filter')(items, { Id: $scope.value }, true)[0];
+								var userItemPromise = getUserItem($scope.value).then(function(selectedUserItem) {
+
+									if (selectedUserItem !== void 0) {
+
+										userItem = {
+											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
+											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
+											data: selectedUserItem
+										};
+
+										$scope.selectedUserItems.push(userItem);
+									}
+
+								});
+
+								getUserItemsPromises.push(userItemPromise);
+							}
+						}
+
+						// Resolves all 'getUserItem' promises
+						$q.all(getUserItemsPromises).then(function() {
+
+							def.resolve($scope.selectedUserItems);
+
 						});
 
 					}
@@ -333,7 +418,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 				    	EntitySeparator: ';',
 				    	PictureOnly: false,
 				    	PictureSize: null,
-				    	UserInfoListId: '{' + $scope.lookupList.Id + '}',
+				    	UserInfoListId: $scope.schema.LookupList,
 				    	SharePointGroupID: $scope.schema.SelectionGroup,
 				    	PrincipalAccountType: 'User,DL,SecGroup,SPGroup',
 				    	SearchPrincipalSource: 15,

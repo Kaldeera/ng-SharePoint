@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPList', 
 
-    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 
 
-    function SPList_Factory($q, SPCache, SPFolder, SPListItem) {
+    function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType) {
 
         'use strict';
 
@@ -215,6 +215,7 @@ angular.module('ngSharePoint').factory('SPList',
                         SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
 
                         def.resolve(fields);
+
                     },
 
                     error: function(data, errorCode, errorMessage) {
@@ -233,6 +234,127 @@ angular.module('ngSharePoint').factory('SPList',
             return def.promise;
 
         }; // getFields
+
+
+
+
+        // ****************************************************************************
+        // getContentTypes
+        //
+        // Gets the list content types
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getContentTypes = function() {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            // We don't cache the content types due to that the user can 
+            // change its order (the default content type) anytime.
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/ContentTypes',
+                method: 'GET',
+                headers: {
+                    "Accept": "application/json; odata=verbose"
+                },
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    var contentTypes = [];
+
+                    angular.forEach(d, function(contentType) {
+
+                        contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
+
+                    });
+
+                    self.ContentTypes = contentTypes;
+
+                    def.resolve(contentTypes);
+
+                },
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+
+            return def.promise;
+
+        }; // getContentTypes
+
+
+
+
+        // ****************************************************************************
+        // getContentType
+        //
+        // Gets a list content type by its ID.
+        //
+        // @contentTypeId: The ID of the content type to retrieve.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getContentType = function(contentTypeId) {
+
+            var self = this;
+            var def = $q.defer();
+
+            self.getContentTypes().then(function() {
+
+                var contentType = self.ContentTypes[0]; //-> Default content type
+
+                angular.forEach(self.ContentTypes, function(ct) {
+
+                    if (ct.Id === contentTypeId) {
+
+                        contentType = ct;
+
+                    }
+
+                });
+
+
+                def.resolve(contentType);
+
+            });
+
+
+            return def.promise;
+
+        }; // getContentType
+
+
+
+
+        // ****************************************************************************
+        // getSchema
+        //
+        // Gets list content type fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getSchema = function(contentTypeId) {
+
+            return this.getContentType().then(function(defaultContentType) {
+
+                return defaultContentType.getFields();
+
+            });
+
+        }; // getSchema
 
 
 
@@ -435,7 +557,7 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // getItemQueryById
         //
-        // Gets an item from the list by its ID. 
+        // Gets an item property value from the list by item ID. 
         //
         // @id: {Counter} The id of the item.
         // @query: {String} The REST query after '.../getItemById(<id>)/'

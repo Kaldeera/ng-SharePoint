@@ -1,11 +1,21 @@
 <div class="spform-item-info" style="float: left; display: inline-block; margin: 10px 0;">
 
-    <div class="ms-descriptiontext">
-        <span ng-bind="createdAtText"></span> <span ng-bind="createdDate | date: cultureInfo.dateTimeFormat.ShortDatePattern"></span> <span ng-bind="byText"></span> <a ng-href="{{authorLink}}" ng-bind="authorName"></a>
-    </div>
+    <div ng-if="!isNewItem && !originalAuthoringInfoFound">
+        <div class="ms-descriptiontext" ng-show="item.list.ContentTypesEnabled == true">
+            <span ng-bind="contentTypeText"></span>: <span ng-bind="item.ContentType.Name"></span>
+        </div>
 
-    <div class="ms-descriptiontext">
-        <span ng-bind="lastModifiedText"></span> <span ng-bind="modifiedDate | date: cultureInfo.dateTimeFormat.ShortDatePattern"></span> <span ng-bind="byText"></span> <a ng-href="{{editorLink}}" ng-bind="editorName"></a>
+        <div class="ms-descriptiontext" ng-show="item.list.EnableVersioning == true">
+            <span ng-bind="versionText"></span>: <span ng-bind="item.OData__UIVersionString"></span>
+        </div>
+
+        <div class="ms-descriptiontext">
+            <span ng-bind="createdAtText"></span> <span ng-bind="createdDate | date: cultureInfo.dateTimeFormat.ShortDatePattern + ' HH:mm'"></span> <span ng-bind="byText"></span> <a class="ms-peopleux-userdisplink ms-subtleLink" ng-href="{{authorLink}}" ng-bind="authorName"></a>
+        </div>
+
+        <div class="ms-descriptiontext">
+            <span ng-bind="lastModifiedText"></span> <span ng-bind="modifiedDate | date: cultureInfo.dateTimeFormat.ShortDatePattern + ' HH:mm'"></span> <span ng-bind="byText"></span> <a class="ms-peopleux-userdisplink ms-subtleLink" ng-href="{{editorLink}}" ng-bind="editorName"></a>
+        </div>
     </div>
 
 </div>
