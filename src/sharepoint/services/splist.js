@@ -174,6 +174,90 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
+
+
+        // ****************************************************************************
+        // updateProperties
+        //
+        // Updates the list properties
+        //
+        // @properties: Object with the properties to update.
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.updateProperties = function(properties) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            var body = {
+                __metadata: {
+                    type: 'SP.List'
+                }
+            };
+
+            // Sets the properties to update
+            angular.extend(body, properties);
+
+
+            // Set the headers for the REST API call.
+            // ----------------------------------------------------------------------------
+            var headers = {
+                "Accept": "application/json; odata=verbose",
+                "content-type": "application/json;odata=verbose",
+                "X-HTTP-Method": "MERGE",
+                "IF-MATCH": "*" // Overwrite any changes in the item. 
+                                // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
+            };
+
+            var requestDigest = document.getElementById('__REQUESTDIGEST');
+            // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+            // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+            if (requestDigest !== null) {
+                headers['X-RequestDigest'] = requestDigest.value;
+            }
+
+
+            // Make the call.
+            // ----------------------------------------------------------------------------
+            executor.executeAsync({
+
+                url: self.apiUrl,
+                method: 'POST',
+                body: angular.toJson(body),
+                headers: headers,
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+
+                    angular.extend(self, properties);
+
+                    def.resolve(properties);
+
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+
+            return def.promise;            
+
+        }; // updateProperties
+
+
+
+
         // ****************************************************************************
         // getFields
         //

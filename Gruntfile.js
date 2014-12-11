@@ -17,7 +17,7 @@ module.exports = function(grunt) {
         banner: '<%= banner %>'
       },
       build: {
-        src: 'src/**/*.js',
+        src: ['src/**/*.js', '!src/libs/**/*.js'],
         dest: 'build/<%= pkg.name %>.min.js'
       }
     },
@@ -119,9 +119,9 @@ module.exports = function(grunt) {
               cwd: 'build/',
               expand: true,
               src: '**',
-              dest: 'R:\\app-ngforms\\js\\ngSharePoint'
+              //dest: 'R:\\app-ngforms\\js\\ngSharePoint'
               //dest: 'X:\\app\\ngSharepoint'
-              //dest: 'V:\\app\\js\\ngSharepoint'
+              dest: 'V:\\app\\ngSharepoint'
             }
           ]
         }      

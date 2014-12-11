@@ -7,7 +7,7 @@
 					<span ng-if="!file.ServerRelativeUrl" ng-bind="file.FileName"></span>
 				</td>
 				<td class="ms-propertysheet" style="white-space: nowrap; padding-left: 20px;">
-					<img alt="Eliminar" src="/_layouts/15/images/rect.gif?rev=23">&nbsp;<a href="#" ng-click="removeAttachment($index, file.local)">{{DeleteAttachmentText}}</a>
+					<img alt="Eliminar" src="/_layouts/15/images/rect.gif?rev=23">&nbsp;<a href="#" ng-click="removeAttachment($event, $index, file.local)">{{DeleteAttachmentText}}</a>
 				</td>
 			</tr>
 		</tbody>

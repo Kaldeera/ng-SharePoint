@@ -79,6 +79,13 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         }
                     }
 
+
+                    // Check for 'require' attribute (Force required)
+                    if ($attrs.required) {
+                        schema.Required = $attrs.required == 'true';
+                    }
+
+
                     // Mount field attributes
                     var ngModelAttr = ' ng-model="item.' + fieldName + '"';
                     var nameAttr = ' name="' + name + '"';
@@ -101,12 +108,6 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if ($attrs.renderAs) {
                         fieldType = $attrs.renderAs;
                     }
-
-
-                    // Check for 'require' attribute (Force required)
-                    if ($attrs.required) {
-                        schema.Required = $attrs.required == 'true';
-                    }
                     
 
                     // Mount the field directive HTML
@@ -126,10 +127,19 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     $element = errorElement;
                     */
                     
+                    setEmptyElement();
+
+                }
+
+
+                function setEmptyElement() {
+
                     var emptyElement = '';
                     $element.replaceWith(emptyElement);
                     $element = emptyElement;
+
                 }
+
 
             } // link
 

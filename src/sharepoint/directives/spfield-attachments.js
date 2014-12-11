@@ -113,7 +113,9 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				// Removes existing attachment, local or server side.
 				// NOTE: Attachments will be effective when save the item.
 				//
-				$scope.removeAttachment = function(index, local) {
+				$scope.removeAttachment = function($event, index, local) {
+
+					$event.preventDefault();
 
 					if (local) {
 
@@ -140,7 +142,13 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 							$scope.attachmentFiles.splice(index, 1);
 						}
 					}
+
+
+					return false;
+
 				};
+
+
 
 			} // link
 

@@ -25,7 +25,7 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "					<span ng-if=\"!file.ServerRelativeUrl\" ng-bind=\"file.FileName\"></span>\n" +
     "				</td>\n" +
     "				<td class=\"ms-propertysheet\" style=\"white-space: nowrap; padding-left: 20px;\">\n" +
-    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($index, file.local)\">{{DeleteAttachmentText}}</a>\n" +
+    "					<img alt=\"Eliminar\" src=\"/_layouts/15/images/rect.gif?rev=23\">&nbsp;<a href=\"#\" ng-click=\"removeAttachment($event, $index, file.local)\">{{DeleteAttachmentText}}</a>\n" +
     "				</td>\n" +
     "			</tr>\n" +
     "		</tbody>\n" +
@@ -292,7 +292,6 @@ angular.module("templates/form-templates/spfield-url-edit.html", []).run(["$temp
     "	<div class=\"ms-formdescription\">{{UrlFieldTypeText}}&nbsp;(<a id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlControlId\" href=\"javascript:TestURL('{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl')\" target=\"_self\">{{UrlFieldClickText}}</a>)</div>\n" +
     "	<input dir=\"ltr\" type=\"text\" ng-model=\"value.Url\" data-spfield-focus-element=\"true\" ng-required=\"{{schema.Required}}\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl\" title=\"{{schema.Title}}\" class=\"ms-long\">\n" +
     "	<div class=\"ms-formdescription\">{{UrlFieldTypeDescription}}&nbsp;</div>\n" +
-    "	<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" ng-model=\"value.Description\" class=\"ms-long\">\n" +
     "	<input type=\"text\" ng-model=\"value.Description\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription\" title=\"{{Description_Text}}\" class=\"ms-long\">\n" +
     "</div>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +

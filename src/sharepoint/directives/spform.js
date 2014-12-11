@@ -399,6 +399,7 @@ angular.module('ngSharePoint').directive('spform',
                         if (result !== false) {
 
                             // Performs the default 'cancel' action...
+                            //self.closeForm(redirectUrl);
 
                             // Restore the item to its 'original' value.
                             //$scope.item = angular.copy($scope.originalItem);
@@ -416,10 +417,27 @@ angular.module('ngSharePoint').directive('spform',
                     }, function() {
 
                         // When error, should close the form ?
+                        //self.closeForm(redirectUrl);
                         def.reject();
                     });
 
                     return def.promise;
+                };
+ 
+ 
+ 
+                this.closeForm = function(redirectUrl) {
+ 
+                    if (redirectUrl !== void 0) {
+ 
+                        window.location = redirectUrl;
+ 
+                    } else {
+                         
+                        window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+ 
+                    }
+ 
                 };
 
             }], // controller property
@@ -510,125 +528,192 @@ angular.module('ngSharePoint').directive('spform',
                             // Gets the schema (fields) of the list.
                             // Really, gets the fields of the list content type specified in the 
                             // item or, if not specified, the default list content type.
-                            $scope.item.list.getFields().then(function(listFields) {
+                            $scope.item.list.getProperties().then(function() {
 
-                                $scope.item.list.getContentType($scope.item.ContentTypeId).then(function(contentType) {
+                                $scope.item.list.getFields().then(function(listFields) {
 
-                                    contentType.getFields().then(function(ctFields) {
+                                    $scope.item.list.getContentType($scope.item.ContentTypeId).then(function(contentType) {
 
-                                        var fields = ctFields;
+                                        contentType.getFields().then(function(ctFields) {
 
-                                        // Adds the 'Attachments' field, if needed.
-                                        if ($scope.item.list.EnableAttachments) {
+                                            var fields = ctFields;
 
-                                            fields.Attachments = listFields.Attachments;
+                                            // Adds the 'Attachments' field, if needed.
+                                            if ($scope.item.list.EnableAttachments) {
 
-                                        }
+                                                fields.Attachments = listFields.Attachments;
 
-                                        // Sets the final schema
-                                        $scope.schema = fields;
+                                            }
+
+                                            // Sets the final schema
+                                            $scope.schema = fields;
+
+                                            // Checks for an 'extendedSchema' and applies it.
+                                            if (angular.isDefined($scope.extendedSchema) && angular.isDefined($scope.extendedSchema.Fields)) {
+
+                                                // The next instruction replaces the entire field definition
+                                                //angular.extend($scope.schema, $scope.extendedSchema.Fields);
+
+                                                angular.forEach($scope.schema, function(field) {
+
+                                                    var extendedFieldSchema = $scope.extendedSchema.Fields[field.InternalName];
+
+                                                    if (angular.isDefined(extendedFieldSchema)) {
+
+                                                        angular.extend(field, extendedFieldSchema);
+
+                                                    }
+
+                                                });
 
 
-                                        if (angular.isDefined($scope.extendedSchema)) {
+                                            }
 
-                                            angular.forEach($scope.schema, function(field) {
+                                            // Search for the 'transclusion-container' attribute in the 'spform' template elements.
+                                            var elements = $element.find('*');
+                                            var transclusionContainer;
 
-                                                var fieldExtendedSchema = $scope.extendedSchema.Fields[field.InternalName] || {};
-                                                angular.extend(field, fieldExtendedSchema);
-
+                                            angular.forEach(elements, function(elem) {
+                                                if (elem.attributes['transclusion-container'] !== void 0) {
+                                                    transclusionContainer = angular.element(elem);
+                                                }
                                             });
 
-                                        }
 
-                                        // Search for the 'transclusion-container' attribute in the 'spform' template elements.
-                                        var elements = $element.find('*');
-                                        var transclusionContainer;
-
-                                        angular.forEach(elements, function(elem) {
-                                            if (elem.attributes['transclusion-container'] !== void 0) {
-                                                transclusionContainer = angular.element(elem);
+                                            // Ensure 'transclusion' element.
+                                            if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
+                                                transclusionContainer = $element;
                                             }
-                                        });
 
 
-                                        // Ensure 'transclusion' element.
-                                        if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
-                                            transclusionContainer = $element;
-                                        }
+                                            /*
+                                            // Remove the 'loading animation' element
+                                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                            */
 
 
-                                        // Remove the 'loading animation' element
-                                        var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
-                                        if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                            transclusionContainer.empty(); // Needed?
 
 
-                                        transclusionContainer.empty(); // Needed?
+                                            // Check for 'templateUrl' attribute
+                                            if ($attrs.templateUrl) {
 
+                                                // Apply the 'templateUrl' attribute
+                                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
 
-                                        // Check for 'templateUrl' attribute
-                                        if ($attrs.templateUrl) {
+                                                    parseRules(transclusionContainer, angular.element(html), false).then(function() {
 
-                                            // Apply the 'templateUrl' attribute
-                                            $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+                                                        /*
+                                                        $compile(transclusionContainer)($scope);
+                                                        $scope.formStatus = spformController.status.IDLE;
+                                                        dialogResize();
+                                                        */
 
-                                                parseRules(transclusionContainer, angular.element(html), false).then(function() {
+                                                        compile(transclusionContainer);
 
+                                                    });
+
+                                                }).error(function(data, status, headers, config, statusText) {
+
+                                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+
+                                                    /*
                                                     $compile(transclusionContainer)($scope);
                                                     $scope.formStatus = spformController.status.IDLE;
                                                     dialogResize();
+                                                    */
+
+                                                    compile(transclusionContainer);
+
                                                 });
 
-                                            }).error(function(data, status, headers, config, statusText) {
+                                            } else {
 
-                                                $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
-                                                $compile(transclusionContainer)($scope);
-                                                $scope.formStatus = spformController.status.IDLE;
-                                                dialogResize();
-                                            });
+                                                // Apply transclusion
+                                                transcludeFn($scope, function(clone) {
+                                                    
+                                                    parseRules(transclusionContainer, clone, true).then(function() {
 
-                                        } else {
+                                                        // If no content was detected within the 'spform' element, generates a default form template.
+                                                        if (transclusionContainer[0].children.length === 0) {
 
-                                            // Apply transclusion
-                                            transcludeFn($scope, function(clone) {
-                                                
-                                                parseRules(transclusionContainer, clone, true).then(function() {
+                                                            $scope.fields = [];
 
-                                                    // If no content was detected within the 'spform' element, generates a default form template.
-                                                    if (transclusionContainer[0].children.length === 0) {
+                                                            angular.forEach($scope.schema, function(field) {
+                                                                if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                                                    $scope.fields.push(field);
+                                                                }
+                                                            });
 
-                                                        $scope.fields = [];
+                                                            $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
 
-                                                        angular.forEach($scope.schema, function(field) {
-                                                            if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-                                                                $scope.fields.push(field);
-                                                            }
-                                                        });
+                                                                transclusionContainer.append(html);
+                                                                /*
+                                                                $compile(transclusionContainer)($scope);
+                                                                $scope.formStatus = spformController.status.IDLE;
+                                                                dialogResize();
+                                                                */
 
-                                                        $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                                                compile(transclusionContainer);
 
-                                                            transclusionContainer.append(html);
-                                                            $compile(transclusionContainer)($scope);
+                                                            });
+
+                                                        } else {
+
+                                                            /*
                                                             $scope.formStatus = spformController.status.IDLE;
                                                             dialogResize();
-                                                        });
+                                                            */
 
-                                                    } else {
+                                                            compile(transclusionContainer);
 
-                                                        $scope.formStatus = spformController.status.IDLE;
-                                                        dialogResize();
-                                                    }
+                                                        }
+                                                    });
                                                 });
-                                            });
 
-                                        }
+                                            }
+
+                                        });
 
                                     });
 
                                 });
 
                             });
-                            
+
                         } // loadItemTemplate
+
+
+
+                        function compile(element) {
+
+                            $q.when($compile(element)($scope)).then(function() {
+
+                                // Remove the 'loading animation' element if still present.
+                                var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                                if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+
+                                // Waits for the next $digest cycle when all the DOM has been rendered.
+                                $timeout(function() {
+
+                                    // Sets the form to its idle status.
+                                    $scope.formStatus = spformController.status.IDLE;
+
+                                    // Checks for dialog and resize if needed.
+                                    dialogResize();
+
+                                    // Broadcast the 'formRenderComplete' event to form childs.
+                                    $scope.$broadcast('formRenderComplete');
+
+                                    // Also emit the event to parent elements/controllers.
+                                    $scope.$emit('formRenderComplete');
+
+                                });
+
+                            });
+
+                        } // compile
 
 
 
@@ -773,8 +858,8 @@ angular.module('ngSharePoint').directive('spform',
 
 
 
-                        // Detect when SharePoint is rendering the form in a dialog
-                        // and resize after de DOM is loaded via $timeout.
+                        // Checks if SharePoint is rendering the form in a dialog, and if so 
+                        // resizes it after de DOM is loaded using the $timeout service.
                         //
                         function dialogResize() {
 

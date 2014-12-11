@@ -109,7 +109,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					// Gets the data for the lookup and then render the field.
 					getLookupData($scope.currentMode).then(function(){
 
-						directive.renderField($scope.currentMode);
+						directive.renderField();
 
 					}, function(err) {
 

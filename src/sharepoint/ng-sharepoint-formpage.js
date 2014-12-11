@@ -23,7 +23,7 @@ angular.module('ngSharePointFormPage').config(
         // If you use angular.bootstrap(...) to launch your application, you need to define the main app module as a loaded module.
         $ocLazyLoadProvider.config({
 
-            loadedModules: ['ngSharePointFormPage']
+            loadedModules: ['ngSharePoint', 'ngSharePointFormPage']
 
         });
 
@@ -76,6 +76,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                     getTemplateUrl().then(function(templateUrl) {
 
                                         var formController = formDefinition.formController;
+                                        var useControllerAsSyntax = formDefinition.useControllerAsSyntax;
                                         var spformHTML = '';
 
                                         $scope.extendedSchema = formDefinition.extendedSchema || {};
@@ -86,7 +87,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                         } else {
 
-                                            spformHTML = '<div ng-controller="' + formController + ' as appCtrl">' +
+                                            spformHTML = '<div ng-controller="' + formController + (useControllerAsSyntax ? ' as appCtrl">' : '">') +
                                                          '    <div data-spform="true" mode="mode" item="item" extended-schema="$parent.extendedSchema" on-pre-save="appCtrl.onPreSave" on-post-save="appCtrl.onPostSave" on-cancel="appCtrl.onCancel" template-url="' + templateUrl + '"></div>' +
                                                          '</div>';
                                         }
@@ -171,7 +172,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    var templateUrl = '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+                    var templateUrl = $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
@@ -185,7 +186,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                         console.log(data);
 
                         // The 'SPForm' directive will be generated with the default form template, so
-                        // return an empty 'templateUrl'.
+                        // returns an empty 'templateUrl'.
                         deferred.resolve('');
 
                     });
@@ -204,7 +205,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     //       Si no existe, generar error? utilizar uno vacío? ... ???
 
 
-                    SP.SOD.registerSod('formDefinition', '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
+                    SP.SOD.registerSod('formDefinition', $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
 
                     SP.SOD.executeFunc('formDefinition', null, function() {
 
@@ -219,6 +220,10 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
 
+                                // Replaces the token ~site with the site relative url
+                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url);
+
+                                // Converts back the JSON object resolved to a real object.
                                 formDefinition = angular.fromJson(formDefinitionResolved);
 
                                 // Process AngularJS modules dependencies.
@@ -277,7 +282,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     var onPreBind;
 
                     if (angular.isDefined(elementScope.appCtrl)) {
+
                         onPreBind = elementScope.appCtrl.onPreBind;
+
                     }
 
                     return $q.when((onPreBind || angular.noop)(item));

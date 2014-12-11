@@ -102,7 +102,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                             if (showInRibbon) {
 
-                                // Checks for '<spform-toolbar-action>' element
+                                // Checks for '<spform-toolbar-button>' element
                                 if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
 
                                     var actionAttr = elem.getAttribute('action').toLowerCase();
@@ -159,7 +159,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     // Makes the transclusion
                     transcludeFn($scope, function(clone) {
                         
-                        // If there are elements to transclude, before process the ribbon.
+                        // Checks if there are elements to transclude before processing the ribbon.
                         if (isRibbonNeeded(clone)) {
 
                             SPRibbon.ready().then(function() {
