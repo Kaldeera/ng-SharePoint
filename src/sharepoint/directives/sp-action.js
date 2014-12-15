@@ -33,7 +33,7 @@
 
             restrict: 'A',
             require: '^spformToolbar',
-            priority: 1000,
+            priority: 500,
             terminal: true,
 
             scope: {

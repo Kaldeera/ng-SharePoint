@@ -6480,7 +6480,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
             restrict: 'A',
             require: '^spformToolbar',
-            priority: 1000,
+            priority: 500,
             terminal: true,
 
             scope: {
@@ -7313,11 +7313,19 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     }
 
                     // Gets the field type
-                    var fieldType = schema.TypeAsString;
+                    var fieldType = (schema.hasExtendedSchema ? schema.originalTypeAsString : schema.TypeAsString);
                     if (fieldType === 'UserMulti') fieldType = 'User';
 
                     // Gets the field name
                     var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+
+                    // If the field has extended schema, adjust the type to its extended 'TypeAsString' property.
+                    // This must be done after adjust the 'fieldName' in order to the 'ng-model' binds to the correct field name.
+                    if (schema.hasExtendedSchema) {
+
+                        fieldType = schema.TypeAsString;
+
+                    }
 
                     // Adjust the field name if necessary.
                     // This is for additional read-only fields attached to Lookup and LookupMulti field types.
@@ -7879,7 +7887,30 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
                 if ($scope.formCtrl) {
 
                     $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
-                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+
+                    if (!existsFocusElement($scope.name)) {
+
+                        $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+
+                    }
+
+                }
+
+
+                function existsFocusElement(name) {
+
+                    for (var i = 0; i < $scope.formCtrl.focusElements.length; i++) {
+                        
+                        if ($scope.formCtrl.focusElements[i].name === name) {
+
+                            return true;
+
+                        }
+
+                    }
+
+                    return false;
+
                 }
 
             } // link
@@ -10572,6 +10603,9 @@ angular.module('ngSharePoint').directive('spform',
             templateUrl: 'templates/form-templates/spform.html',
 
 
+            controllerAs: 'spformCtrl',
+
+
             controller: ['$scope', '$attrs', function spformController($scope, $attrs) {
 
 
@@ -10738,15 +10772,19 @@ angular.module('ngSharePoint').directive('spform',
                         } else {
 
                             // If argument @fieldName is not defined, set the focus in the first invalid field.
-                            if ($scope.ngFormCtrl[this.focusElements[i].name].$invalid) {
+                            var control = $scope.ngFormCtrl[this.focusElements[i].name];
+
+                            if (control && control.$invalid) {
 
                                 this.focusElements[i].element.focus();
                                 fieldFocused = true;
                                 break;
+
                             }
                         }
                     }
 
+                    // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
                         this.focusElements[0].element.focus();
@@ -10808,6 +10846,9 @@ angular.module('ngSharePoint').directive('spform',
 
                         });
 
+                        // Check if 'force' option is enabled.
+                        // If so, continues with the saving process even if there are invalid fields.
+                        // Otherwise, cancel the saving process.
                         if (options.force !== true) {
 
                             def.reject();
@@ -10822,6 +10863,18 @@ angular.module('ngSharePoint').directive('spform',
                     if (options.silent !== true) {
                         dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
                     }
+
+
+                    // Removes all the custom 'virtual' fields.
+                    angular.forEach($scope.schema, function(field, key) {
+
+                        if (field.isVirtualField) {
+
+                            delete $scope.item[key];
+
+                        }
+
+                    });
 
 
                     // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
@@ -11077,21 +11130,44 @@ angular.module('ngSharePoint').directive('spform',
                                             // Checks for an 'extendedSchema' and applies it.
                                             if (angular.isDefined($scope.extendedSchema) && angular.isDefined($scope.extendedSchema.Fields)) {
 
-                                                // The next instruction replaces the entire field definition
+                                                // The next instruction replaces the entire field definition. Wrong way!
                                                 //angular.extend($scope.schema, $scope.extendedSchema.Fields);
 
-                                                angular.forEach($scope.schema, function(field) {
+                                                /*
+                                                 * Temporary solution:
+                                                 *
+                                                 * Expand all the existent fields individually and then add the
+                                                 * inexistent ones.
+                                                 *
+                                                 */
 
-                                                    var extendedFieldSchema = $scope.extendedSchema.Fields[field.InternalName];
+                                                angular.forEach($scope.extendedSchema.Fields, function(extendedField, fieldName) {
 
-                                                    if (angular.isDefined(extendedFieldSchema)) {
+                                                    var fieldSchema = $scope.schema[fieldName];
 
-                                                        angular.extend(field, extendedFieldSchema);
+                                                    if (angular.isDefined(fieldSchema)) {
+
+                                                        extendedField.hasExtendedSchema = true;
+                                                        extendedField.originalTypeAsString = fieldSchema.TypeAsString;
+
+                                                        angular.extend($scope.schema[fieldName], extendedField);
+
+                                                    } else {
+
+                                                        extendedField.isVirtualField = true;
+                                                        $scope.schema[fieldName] = extendedField;
 
                                                     }
 
                                                 });
 
+                                                /*
+                                                 * TODO:
+                                                 *
+                                                 * Make a deep angular.extend without replacing existing properties and, optionally, 
+                                                 * with a limit of recursion levels to avoid infinite loops due to redundant objects.
+                                                 *
+                                                 */
 
                                             }
 

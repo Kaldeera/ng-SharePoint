@@ -29,7 +29,30 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
                 if ($scope.formCtrl) {
 
                     $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
-                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+
+                    if (!existsFocusElement($scope.name)) {
+
+                        $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
+
+                    }
+
+                }
+
+
+                function existsFocusElement(name) {
+
+                    for (var i = 0; i < $scope.formCtrl.focusElements.length; i++) {
+                        
+                        if ($scope.formCtrl.focusElements[i].name === name) {
+
+                            return true;
+
+                        }
+
+                    }
+
+                    return false;
+
                 }
 
             } // link

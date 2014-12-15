@@ -62,11 +62,19 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     }
 
                     // Gets the field type
-                    var fieldType = schema.TypeAsString;
+                    var fieldType = (schema.hasExtendedSchema ? schema.originalTypeAsString : schema.TypeAsString);
                     if (fieldType === 'UserMulti') fieldType = 'User';
 
                     // Gets the field name
                     var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+
+                    // If the field has extended schema, adjust the type to its extended 'TypeAsString' property.
+                    // This must be done after adjust the 'fieldName' in order to the 'ng-model' binds to the correct field name.
+                    if (schema.hasExtendedSchema) {
+
+                        fieldType = schema.TypeAsString;
+
+                    }
 
                     // Adjust the field name if necessary.
                     // This is for additional read-only fields attached to Lookup and LookupMulti field types.
