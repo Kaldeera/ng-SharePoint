@@ -10697,7 +10697,12 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.fieldValueChanged = function(fieldName, fieldValue) {
 
+                    // Propagate to child Elements/Fields
                     $scope.$broadcast(fieldName + '_changed', fieldValue);
+
+                    // Propagate to parent Elements/Controllers
+                    $scope.$emit(fieldName + '_changed', fieldValue);
+                    
                 };
 
 
