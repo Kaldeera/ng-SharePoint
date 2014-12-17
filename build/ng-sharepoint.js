@@ -8093,7 +8093,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					if ($scope.lastValue !== $scope.value) {
 
 						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value);
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, $scope.lastValue);
 
 						$scope.lastValue = $scope.value;
 					}
@@ -10695,13 +10695,13 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
-                this.fieldValueChanged = function(fieldName, fieldValue) {
+                this.fieldValueChanged = function(fieldName, newValue, oldValue) {
 
                     // Propagate to child Elements/Fields
-                    $scope.$broadcast(fieldName + '_changed', fieldValue);
+                    $scope.$broadcast(fieldName + '_changed', newValue, oldValue);
 
                     // Propagate to parent Elements/Controllers
-                    $scope.$emit(fieldName + '_changed', fieldValue);
+                    $scope.$emit(fieldName + '_changed', newValue, oldValue);
                     
                 };
 
