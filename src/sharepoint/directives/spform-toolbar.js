@@ -103,7 +103,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                             if (showInRibbon) {
 
                                 // Checks for '<spform-toolbar-button>' element
-                                if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+                                if ((elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) || elem.hasAttribute('spform-toolbar-button')) {
 
                                     var actionAttr = elem.getAttribute('action').toLowerCase();
 
@@ -151,9 +151,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
                     // Ensure 'transclusion' element.
-                    if (transcludeElement === void 0 || transcludeElement.length === 0) {
+                    if ((transcludeElement === void 0 || transcludeElement.length === 0) && $element.attr('sp-transclude') !== void 0) {
                         transcludeElement = $element;
                     }
+
+                    // If no transclude element found could be that has been replaced by 
+                    // another directive with less priority. i.e.: ngIf or spIf
+                    // 
+                    if (transcludeElement === void 0 || transcludeElement.length === 0) return;
 
 
                     // Makes the transclusion

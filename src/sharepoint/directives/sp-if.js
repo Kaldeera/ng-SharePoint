@@ -29,6 +29,9 @@ angular.module('ngSharePoint').directive('spIf',
 
             link: function ($scope, $element, $attrs) {
 
+                // NOTA: Habría que hacer un $watch o $observe del atributo 'spif' igual que hace
+                //       la directiva 'ngIf' de angular para que se evalúe dinámicamente.
+
                 SPExpressionResolver.resolve($attrs.spIf, $scope).then(function(result) {
 
                     if (!$scope.$eval(result)) {

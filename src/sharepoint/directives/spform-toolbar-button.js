@@ -40,11 +40,14 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 $scope.status = $scope.formCtrl.status;
 
 
+                var action = $attrs.action || $attrs.spformToolbarButton;
+
+
                 // Sets the button 'text' and 'action'.
                 // Also checks for pre-defined buttons (i.e., save, cancel and close)
                 SPUtils.SharePointReady().then(function() {
 
-                    switch($attrs.action.toLowerCase()) {
+                    switch(action.toLowerCase()) {
 
                         case 'save':
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_SaveButtonCaption);

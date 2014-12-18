@@ -5354,7 +5354,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
 
         function registerPageComponent() {
 
-            // Register tye type 'ngSharePointPageComponent'.
+            // Register the type 'ngSharePointPageComponent'.
             Type.registerNamespace('ngSharePointPageComponent');
 
 
@@ -5489,7 +5489,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
             };
 
 
-            // Unregister default save and cancel commands
+            // Unregister the default 'save', 'cancel' and 'attach file' commands
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Publish');
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Cancel');
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Actions.AttachFile');
@@ -6785,6 +6785,9 @@ angular.module('ngSharePoint').directive('spIf',
 
 
             link: function ($scope, $element, $attrs) {
+
+                // NOTA: Habría que hacer un $watch o $observe del atributo 'spif' igual que hace
+                //       la directiva 'ngIf' de angular para que se evalúe dinámicamente.
 
                 SPExpressionResolver.resolve($attrs.spIf, $scope).then(function(result) {
 
@@ -10181,11 +10184,14 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 $scope.status = $scope.formCtrl.status;
 
 
+                var action = $attrs.action || $attrs.spformToolbarButton;
+
+
                 // Sets the button 'text' and 'action'.
                 // Also checks for pre-defined buttons (i.e., save, cancel and close)
                 SPUtils.SharePointReady().then(function() {
 
-                    switch($attrs.action.toLowerCase()) {
+                    switch(action.toLowerCase()) {
 
                         case 'save':
                             $scope.text = $scope.text || STSHtmlEncode(Strings.STS.L_SaveButtonCaption);
@@ -10436,7 +10442,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                             if (showInRibbon) {
 
                                 // Checks for '<spform-toolbar-button>' element
-                                if (elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) {
+                                if ((elem.tagName.toLowerCase() === 'spform-toolbar-button' && elem.hasAttribute('action')) || elem.hasAttribute('spform-toolbar-button')) {
 
                                     var actionAttr = elem.getAttribute('action').toLowerCase();
 
@@ -10484,9 +10490,14 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 
                     // Ensure 'transclusion' element.
-                    if (transcludeElement === void 0 || transcludeElement.length === 0) {
+                    if ((transcludeElement === void 0 || transcludeElement.length === 0) && $element.attr('sp-transclude') !== void 0) {
                         transcludeElement = $element;
                     }
+
+                    // If no transclude element found could be that has been replaced by 
+                    // another directive with less priority. i.e.: ngIf or spIf
+                    // 
+                    if (transcludeElement === void 0 || transcludeElement.length === 0) return;
 
 
                     // Makes the transclusion

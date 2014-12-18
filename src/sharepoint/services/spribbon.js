@@ -490,7 +490,7 @@
 
         function registerPageComponent() {
 
-            // Register tye type 'ngSharePointPageComponent'.
+            // Register the type 'ngSharePointPageComponent'.
             Type.registerNamespace('ngSharePointPageComponent');
 
 
@@ -625,7 +625,7 @@
             };
 
 
-            // Unregister default save and cancel commands
+            // Unregister the default 'save', 'cancel' and 'attach file' commands
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Publish');
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Cancel');
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Actions.AttachFile');
