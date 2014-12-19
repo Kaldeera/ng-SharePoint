@@ -10,37 +10,4 @@ Current Status
 Currently this is a beta version that has only been used in internal projects. We will continue posting improvements and more features in future releases.
 
 
-
-Services
---------
-
-	SharePoint provider
-	-------------------
-
-
-	SPCache factory
-	---------------
-	
-
-	SPWeb factory
-	-------------
-
-
-	SPList factory
-	--------------
-
-
-	SPListItem factory
-	------------------
-	Easy CRUD operations with SharePoint items.
-
-
-
-	SPUtils factory
-	---------------
-
-Forms
------
-Use the **spform** directive to renders SharePoint forms with the standar SharePoint layout and styles or create your own templates/styles for the form, fields, toolbars and more.
-
-Bootstrap css styled forms templates comming soon.
+*Documentation pending*
