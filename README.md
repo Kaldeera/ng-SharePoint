@@ -1,4 +1,4 @@
 ng-SharePoint
 =============
 
-  AngularJS-SharePoint (ngSharePoint) wraps SharePoint REST/JSOM into the AngularJS world.
+  ngSharePoint is a powerful and extensible AngularJS module that converts the APIs of SharePoint 2013 (REST and JSOM) to the AngularJS world.
