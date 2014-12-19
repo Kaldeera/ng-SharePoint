@@ -1,4 +1,4 @@
 ng-SharePoint
 =============
 
-  AngularJS-SharePoint wraps SharePoint REST/JSOM into Angular world.
+  AngularJS-SharePoint (ngSharePoint) wraps SharePoint REST/JSOM into Angular world.
