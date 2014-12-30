@@ -293,7 +293,7 @@ var utils = {
 	// @func: {function} The function name without the parenthesis.
 	// @returns: {Array[{String}]} The names of the parameters.
 	//
-	getFunctionParameterNames: function (func) {
+	getFunctionParameterNames: function(func) {
 
 		var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 		var ARGUMENT_NAMES = /([^\s,]+)/g;
@@ -302,6 +302,36 @@ var utils = {
 		var result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
 
 		return result || [];
+	},
+
+
+	extendDeep: function(dest) {
+
+	    angular.forEach(arguments, function(obj) {
+
+	        if (obj !== dest) {
+
+	            angular.forEach(obj, function(value, key) {
+
+	                if (dest[key] && angular.isObject(dest[key])) {
+
+	                    utils.extendDeep(dest[key], value);
+
+	                } else if(!angular.isFunction(dest[key])) {
+
+	                    dest[key] = angular.copy(value);
+
+	                }
+
+	            });
+
+	        }
+
+	    });
+
+
+	    return dest;
+
 	}
 
 };
@@ -1557,9 +1587,9 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
 angular.module('ngSharePoint').service('SPFieldDirective', 
 
-    ['$compile', '$http', '$templateCache',
+    ['$compile', '$http', '$templateCache', '$q',
 
-    function SPFieldDirective_Factory($compile, $http, $templateCache) {
+    function SPFieldDirective_Factory($compile, $http, $templateCache, $q) {
 
         // ****************************************************************************
         // Private functions
@@ -1718,10 +1748,11 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
             // ****************************************************************************
-            // Renders the field with the correct layout based on the field/form mode.
+            // Gets the field rendering template.
             //
-            directive.renderField = function() {
+            directive.getFieldTemplate = function() {
 
+                var deferred = $q.defer();
                 var templateUrl = 'templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html';
 
                 if ($scope.currentMode === 'display' && directive.displayTemplateUrl) templateUrl = directive.displayTemplateUrl;
@@ -1730,9 +1761,73 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                 $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
 
+                    // Checks if the field has an 'extended template'.
+                    // The 'extended template' is defined in the field 'extended schema'.
+                    //
+                    // Extended template definition:
+                    //
+                    // extendedTemplate: {
+                    //     html: A string that contains the HTML.
+                    //     url: Url to the template that contains the HTML. This overwrites 'html' property
+                    //     replaceOnDisplay: true or false that indicates if the template will replace the 
+                    //                       default field template on 'display' mode.
+                    //     replaceOnEdit: true or false that indicates if the template will replace the default 
+                    //                    field template on 'edit' mode.
+                    // }
+
+
+                    if (angular.isDefined($scope.schema.extendedTemplate)) {
+
+                        var finalHtml = html;
+                        var templateEx = $scope.schema.extendedTemplate;
+                        var replace = (
+                            ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) || 
+                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true)
+                        );
+
+                        if (angular.isDefined(templateEx.url)) {
+
+                            $http.get(templateEx.url, { cache: $templateCache }).success(function(htmlEx) {
+
+                                finalHtml = replace ? htmlEx : html + htmlEx;
+                                deferred.resolve(finalHtml);
+
+                            });
+
+                        } else if (angular.isDefined(templateEx.html)) {
+                            
+                            finalHtml = replace ? templateEx.html : html + templateEx.html;
+                            deferred.resolve(finalHtml);
+
+                        }
+
+                    } else {
+
+                        deferred.resolve(html);
+
+                    }
+
+                });
+                
+
+                return deferred.promise;
+
+            };
+
+
+
+            // ****************************************************************************
+            // Renders the field with the correct layout based on the field/form mode.
+            //
+            directive.renderField = function() {
+
+                directive.getFieldTemplate().then(function(html) {
+                        
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
+
                 });
+
             };
 
 
@@ -7332,12 +7427,14 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
                     // Adjust the field name if necessary.
                     // This is for additional read-only fields attached to Lookup and LookupMulti field types.
+                    // Also, for this read-only fields, sets always the form mode to display.
                     if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
 
                         var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
 
                         if (primaryFieldSchema !== void 0) {
                             fieldName = primaryFieldSchema.InternalName + 'Id';
+                            $attrs.mode = 'display';
                         }
                     }
 
@@ -8022,9 +8119,9 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 
 angular.module('ngSharePoint').directive('spfieldLookup', 
 
-	['SPFieldDirective', '$q', '$filter', 'SharePoint',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint', '$http', '$templateCache', '$compile',
 
-	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
+	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint, $http, $templateCache, $compile) {
 
 		var spfieldLookup_DirectiveDefinitionObject = {
 
@@ -8056,8 +8153,24 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						if (newValue === oldValue) return;
 
 						$scope.lookupItem = void 0;
-						refreshData();						
+						refreshData();
+					},
+
+					/*
+					postRenderFn: function() {
+
+						if (angular.isDefined($scope.schema.extraTemplateUrl)) {
+
+			                $http.get($scope.schema.extraTemplateUrl, { cache: $templateCache }).success(function(html) {
+
+			                    var newElement = $compile(html)($scope);
+			                    $element.append(newElement);
+
+			                });
+
+						}
 					}
+					*/
 				};
 
 
@@ -8091,7 +8204,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				// ****************************************************************************
 				// Controls the 'changed' event in the associated <select> element.
 				//
-				$scope.valueChanged = function() {
+				$scope.valueChanged = function(item) {
 
 					if ($scope.lastValue !== $scope.value) {
 
@@ -8113,7 +8226,30 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData($scope.currentMode).then(function(){
+					getLookupData($scope.currentMode).then(function() {
+
+						if ($scope.currentMode === 'edit') {
+
+							// Extends the internal 'lookupItem' object with the real lookup item to make
+							// available all the lookup fields for use in the 'extendedSchema' extra-template.
+
+							$scope.lookupItem = {}; // Initialize 'lookupItem' object.
+
+							if ($scope.value !== null && $scope.value !== void 0 && $scope.value > 0) {
+
+								angular.forEach($scope.lookupItems, function(lookupItem) {
+
+									if (lookupItem.Id == $scope.value) {
+
+										$scope.lookupItem = lookupItem;
+
+									}
+
+								});
+
+							}
+
+						}
 
 						directive.renderField();
 
@@ -8241,7 +8377,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								// If no value returns an empty object for correct binding
 								$scope.lookupItem = {
-									Title: '',
+									title: '',
 									url: ''
 								};
 
@@ -8255,7 +8391,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
 
 									if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
-										var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+										var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 										var date = new Date(displayValue);
 										displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
 									}
@@ -8273,9 +8409,13 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									}
 
 									$scope.lookupItem = {
-										Title: displayValue,
+										title: displayValue,
 										url: item.list.Forms.results[0].ServerRelativeUrl + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location)
 									};
+
+									// Extends the internal 'lookupItem' object with the real lookup item to make
+									// available all the lookup fields for use in the 'extendedSchema' extra-template.
+									angular.extend($scope.lookupItem, item);
 
 									def.resolve($scope.lookupItem);
 
@@ -8304,7 +8444,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					var def = $q.defer();
 
-					if ($scope.lookupItems !== void 0){
+					if ($scope.lookupItems !== void 0) {
 
 						// Returns cached selected items
 						def.resolve($scope.lookupItems);
@@ -8361,6 +8501,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 										}
 									}
 								}
+
 
 								$scope.valueChanged();
 
@@ -8451,7 +8592,8 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					
 					parserFn: function(viewValue) {
 
-						directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						var hasValue = $scope.value && $scope.value.results.length > 0;
+						directive.setValidity('required', !$scope.schema.Required || hasValue);
 						
 						return viewValue;
 					},
@@ -9342,7 +9484,8 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						if ($scope.schema.AllowMultipleValues) {
 
-							directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+							var hasValue = $scope.value && $scope.value.results.length > 0;
+							directive.setValidity('required', !$scope.schema.Required || hasValue);
 
 						} else {
 
@@ -10764,7 +10907,7 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.setFieldFocus = function(fieldName) {
 
-                    var fieldFocused = false;
+                    var fieldFocused;
 
                     // Ensure 'focusElements' array.
                     this.focusElements = this.focusElements || [];
@@ -10780,8 +10923,8 @@ angular.module('ngSharePoint').directive('spform',
                             // If argument @fieldName is defined, set the focus in the field specified (if found).
                             if (this.focusElements[i].name === fieldName) {
 
-                                this.focusElements[i].element.focus();
-                                fieldFocused = true;
+                                //this.focusElements[i].element.focus();
+                                fieldFocused = this.focusElements[i].element;
                                 break;
                             }
 
@@ -10792,8 +10935,8 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (control && control.$invalid) {
 
-                                this.focusElements[i].element.focus();
-                                fieldFocused = true;
+                                //this.focusElements[i].element.focus();
+                                fieldFocused = this.focusElements[i].element;
                                 break;
 
                             }
@@ -10803,8 +10946,13 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        this.focusElements[0].element.focus();
+                        //this.focusElements[0].element.focus();
+                        fieldFocused = this.focusElements[0].element;
                     }
+
+                    fieldFocused.focus();
+
+                    return fieldFocused;
 
                 };
 
@@ -10858,7 +11006,10 @@ angular.module('ngSharePoint').directive('spform',
                         $q.when($scope.$broadcast('validate')).then(function(result) {
 
                             // Set the focus in the first invalid field.
-                            self.setFieldFocus();
+                            var fieldFocused = self.setFieldFocus();
+
+                            $scope.$broadcast('postValidate', fieldFocused);
+                            $scope.$emit('postValidate', fieldFocused);
 
                         });
 
@@ -11962,7 +12113,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    var templateUrl = $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
@@ -11995,7 +12146,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     //       Si no existe, generar error? utilizar uno vacío? ... ???
 
 
-                    SP.SOD.registerSod('formDefinition', $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
+                    SP.SOD.registerSod('formDefinition', $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
 
                     SP.SOD.executeFunc('formDefinition', null, function() {
 
@@ -12011,7 +12162,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
 
                                 // Replaces the token ~site with the site relative url
-                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url);
+                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
 
                                 // Converts back the JSON object resolved to a real object.
                                 formDefinition = angular.fromJson(formDefinitionResolved);

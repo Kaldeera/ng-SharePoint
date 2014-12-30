@@ -162,13 +162,13 @@ angular.module("templates/form-templates/spfield-label.html", []).run(["$templat
 
 angular.module("templates/form-templates/spfield-lookup-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-display.html",
-    "<a ng-href=\"{{lookupItem.url}}\" ng-bind=\"lookupItem.Title\"></a>\n" +
+    "<a ng-href=\"{{lookupItem.url}}\" ng-bind=\"lookupItem.title\"></a>\n" +
     "");
 }]);
 
 angular.module("templates/form-templates/spfield-lookup-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-lookup-edit.html",
-    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" data-spfield-focus-element=\"true\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged()\"></select></div>\n" +
+    "<div><select title=\"{{schema.Title}}\" ng-model=\"value\" data-spfield-focus-element=\"true\" ng-options=\"item.Id as item[schema.LookupField] for item in lookupItems\" ng-change=\"valueChanged(item)\"></select></div>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");
 }]);

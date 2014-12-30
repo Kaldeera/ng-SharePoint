@@ -56,7 +56,8 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					
 					parserFn: function(viewValue) {
 
-						directive.setValidity('required', !$scope.schema.Required || $scope.value.results.length > 0);
+						var hasValue = $scope.value && $scope.value.results.length > 0;
+						directive.setValidity('required', !$scope.schema.Required || hasValue);
 						
 						return viewValue;
 					},

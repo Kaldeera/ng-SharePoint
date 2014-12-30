@@ -78,12 +78,14 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
                     // Adjust the field name if necessary.
                     // This is for additional read-only fields attached to Lookup and LookupMulti field types.
+                    // Also, for this read-only fields, sets always the form mode to display.
                     if ((fieldType == 'Lookup' || fieldType == 'LookupMulti') && schema.PrimaryFieldId !== null) {
 
                         var primaryFieldSchema = spformController.getFieldSchema(schema.PrimaryFieldId);
 
                         if (primaryFieldSchema !== void 0) {
                             fieldName = primaryFieldSchema.InternalName + 'Id';
+                            $attrs.mode = 'display';
                         }
                     }
 

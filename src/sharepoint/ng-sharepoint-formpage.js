@@ -172,7 +172,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    var templateUrl = $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
@@ -205,7 +205,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     //       Si no existe, generar error? utilizar uno vacío? ... ???
 
 
-                    SP.SOD.registerSod('formDefinition', $scope.web.url + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
+                    SP.SOD.registerSod('formDefinition', $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
 
                     SP.SOD.executeFunc('formDefinition', null, function() {
 
@@ -221,7 +221,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
 
                                 // Replaces the token ~site with the site relative url
-                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url);
+                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
 
                                 // Converts back the JSON object resolved to a real object.
                                 formDefinition = angular.fromJson(formDefinitionResolved);
