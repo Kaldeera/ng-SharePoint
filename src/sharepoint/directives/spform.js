@@ -196,7 +196,7 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.setFieldFocus = function(fieldName) {
 
-                    var fieldFocused = false;
+                    var fieldFocused;
 
                     // Ensure 'focusElements' array.
                     this.focusElements = this.focusElements || [];
@@ -212,8 +212,8 @@ angular.module('ngSharePoint').directive('spform',
                             // If argument @fieldName is defined, set the focus in the field specified (if found).
                             if (this.focusElements[i].name === fieldName) {
 
-                                this.focusElements[i].element.focus();
-                                fieldFocused = true;
+                                //this.focusElements[i].element.focus();
+                                fieldFocused = this.focusElements[i].element;
                                 break;
                             }
 
@@ -224,8 +224,8 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (control && control.$invalid) {
 
-                                this.focusElements[i].element.focus();
-                                fieldFocused = true;
+                                //this.focusElements[i].element.focus();
+                                fieldFocused = this.focusElements[i].element;
                                 break;
 
                             }
@@ -235,8 +235,13 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        this.focusElements[0].element.focus();
+                        //this.focusElements[0].element.focus();
+                        fieldFocused = this.focusElements[0].element;
                     }
+
+                    fieldFocused.focus();
+
+                    return fieldFocused;
 
                 };
 
@@ -290,7 +295,10 @@ angular.module('ngSharePoint').directive('spform',
                         $q.when($scope.$broadcast('validate')).then(function(result) {
 
                             // Set the focus in the first invalid field.
-                            self.setFieldFocus();
+                            var fieldFocused = self.setFieldFocus();
+
+                            $scope.$broadcast('postValidate', fieldFocused);
+                            $scope.$emit('postValidate', fieldFocused);
 
                         });
 

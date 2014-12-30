@@ -293,7 +293,7 @@ var utils = {
 	// @func: {function} The function name without the parenthesis.
 	// @returns: {Array[{String}]} The names of the parameters.
 	//
-	getFunctionParameterNames: function (func) {
+	getFunctionParameterNames: function(func) {
 
 		var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 		var ARGUMENT_NAMES = /([^\s,]+)/g;
@@ -302,6 +302,36 @@ var utils = {
 		var result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
 
 		return result || [];
+	},
+
+
+	extendDeep: function(dest) {
+
+	    angular.forEach(arguments, function(obj) {
+
+	        if (obj !== dest) {
+
+	            angular.forEach(obj, function(value, key) {
+
+	                if (dest[key] && angular.isObject(dest[key])) {
+
+	                    utils.extendDeep(dest[key], value);
+
+	                } else if(!angular.isFunction(dest[key])) {
+
+	                    dest[key] = angular.copy(value);
+
+	                }
+
+	            });
+
+	        }
+
+	    });
+
+
+	    return dest;
+
 	}
 
 };

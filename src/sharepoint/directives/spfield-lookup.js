@@ -50,8 +50,9 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						if (newValue === oldValue) return;
 
 						$scope.lookupItem = void 0;
-						refreshData();						
+						refreshData();
 					}
+
 				};
 
 
@@ -107,7 +108,30 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
 					// Gets the data for the lookup and then render the field.
-					getLookupData($scope.currentMode).then(function(){
+					getLookupData($scope.currentMode).then(function() {
+
+						if ($scope.currentMode === 'edit') {
+
+							// Extends the internal 'lookupItem' object with the real lookup item to make
+							// available all the lookup fields for use in the 'extendedSchema' extra-template.
+
+							$scope.lookupItem = {}; // Initialize 'lookupItem' object.
+
+							if ($scope.value !== null && $scope.value !== void 0 && $scope.value > 0) {
+
+								angular.forEach($scope.lookupItems, function(lookupItem) {
+
+									if (lookupItem.Id == $scope.value) {
+
+										$scope.lookupItem = lookupItem;
+
+									}
+
+								});
+
+							}
+
+						}
 
 						directive.renderField();
 
@@ -235,7 +259,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								// If no value returns an empty object for correct binding
 								$scope.lookupItem = {
-									Title: '',
+									title: '',
 									url: ''
 								};
 
@@ -249,7 +273,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									var fieldSchema = $scope.lookupList.Fields[$scope.schema.LookupField];
 
 									if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
-										var cultureInfo = __cultureInfo || Sys.CultureInfo.CurrentCulture;
+										var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 										var date = new Date(displayValue);
 										displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
 									}
@@ -267,9 +291,13 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									}
 
 									$scope.lookupItem = {
-										Title: displayValue,
+										title: displayValue,
 										url: item.list.Forms.results[0].ServerRelativeUrl + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location)
 									};
+
+									// Extends the internal 'lookupItem' object with the real lookup item to make
+									// available all the lookup fields for use in the 'extendedSchema' extra-template.
+									angular.extend($scope.lookupItem, item);
 
 									def.resolve($scope.lookupItem);
 
@@ -298,7 +326,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					var def = $q.defer();
 
-					if ($scope.lookupItems !== void 0){
+					if ($scope.lookupItems !== void 0) {
 
 						// Returns cached selected items
 						def.resolve($scope.lookupItems);
@@ -355,6 +383,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 										}
 									}
 								}
+
 
 								$scope.valueChanged();
 

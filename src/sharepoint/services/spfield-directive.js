@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').service('SPFieldDirective', 
 
-    ['$compile', '$http', '$templateCache',
+    ['$compile', '$http', '$templateCache', '$q',
 
-    function SPFieldDirective_Factory($compile, $http, $templateCache) {
+    function SPFieldDirective_Factory($compile, $http, $templateCache, $q) {
 
         // ****************************************************************************
         // Private functions
@@ -177,10 +177,11 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
             // ****************************************************************************
-            // Renders the field with the correct layout based on the field/form mode.
+            // Gets the field rendering template.
             //
-            directive.renderField = function() {
+            directive.getFieldTemplate = function() {
 
+                var deferred = $q.defer();
                 var templateUrl = 'templates/form-templates/spfield-' + directive.fieldTypeName + '-' + $scope.currentMode + '.html';
 
                 if ($scope.currentMode === 'display' && directive.displayTemplateUrl) templateUrl = directive.displayTemplateUrl;
@@ -189,9 +190,73 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                 $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
 
+                    // Checks if the field has an 'extended template'.
+                    // The 'extended template' is defined in the field 'extended schema'.
+                    //
+                    // Extended template definition:
+                    //
+                    // extendedTemplate: {
+                    //     html: A string that contains the HTML.
+                    //     url: Url to the template that contains the HTML. This overwrites 'html' property
+                    //     replaceOnDisplay: true or false that indicates if the template will replace the 
+                    //                       default field template on 'display' mode.
+                    //     replaceOnEdit: true or false that indicates if the template will replace the default 
+                    //                    field template on 'edit' mode.
+                    // }
+
+
+                    if (angular.isDefined($scope.schema.extendedTemplate)) {
+
+                        var finalHtml = html;
+                        var templateEx = $scope.schema.extendedTemplate;
+                        var replace = (
+                            ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) || 
+                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true)
+                        );
+
+                        if (angular.isDefined(templateEx.url)) {
+
+                            $http.get(templateEx.url, { cache: $templateCache }).success(function(htmlEx) {
+
+                                finalHtml = replace ? htmlEx : html + htmlEx;
+                                deferred.resolve(finalHtml);
+
+                            });
+
+                        } else if (angular.isDefined(templateEx.html)) {
+                            
+                            finalHtml = replace ? templateEx.html : html + templateEx.html;
+                            deferred.resolve(finalHtml);
+
+                        }
+
+                    } else {
+
+                        deferred.resolve(html);
+
+                    }
+
+                });
+                
+
+                return deferred.promise;
+
+            };
+
+
+
+            // ****************************************************************************
+            // Renders the field with the correct layout based on the field/form mode.
+            //
+            directive.renderField = function() {
+
+                directive.getFieldTemplate().then(function(html) {
+                        
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
+
                 });
+
             };
 
 
