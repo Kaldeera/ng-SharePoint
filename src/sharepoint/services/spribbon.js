@@ -38,6 +38,7 @@
         var spRibbonService = {
 
             ready                       : ready,
+            refresh                     : refresh,
             addTab                      : addTab,
             getTab                      : getTab,
             getEditTab                  : getEditTab,
@@ -114,6 +115,14 @@
             return ribbonDeferred.promise;
 
         } // ready
+
+
+
+        function refresh() {
+
+            ribbon.refresh();
+
+        } // refresh
 
 
 
@@ -438,7 +447,7 @@
 
 
 
-        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, canHandle, btnImage) {
+        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, btnImage, canHandle) {
 
             var buttonId = toolbar.group.get_id() + '.Button-' + _getNextButtonSequence();
 
@@ -568,7 +577,7 @@
 
                     }
 
-                    return canHandle;
+                    return !!canHandle;
 
                 },
 
@@ -608,7 +617,7 @@
                         this._handledCommands[commandId] = {
 
                             handle: handlerFn,
-                            enabled: canHandle || true
+                            enabled: canHandle
 
                         };
 

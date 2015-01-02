@@ -286,6 +286,7 @@ angular.module('ngSharePoint').directive('spform',
                         }
                     }
 
+
                     // Change the form to a 'dirty' state.
                     $scope.ngFormCtrl.$setDirty();
 
@@ -305,6 +306,10 @@ angular.module('ngSharePoint').directive('spform',
                         // Check if 'force' option is enabled.
                         // If so, continues with the saving process even if there are invalid fields.
                         // Otherwise, cancel the saving process.
+                        //
+                        // NOTE: Must check if there are fields that will generate an error when saving the item.
+                        //       e.g. If the user sets an string in a numeric field and so on.
+                        //
                         if (options.force !== true) {
 
                             def.reject();
@@ -425,6 +430,9 @@ angular.module('ngSharePoint').directive('spform',
 
                     var self = this;
                     var def = $q.defer();
+
+                    // Change the form to a 'pristine' state to avoid field validation.
+                    $scope.ngFormCtrl.$setPristine();
 
                     $scope.formStatus = this.status.PROCESSING;
 

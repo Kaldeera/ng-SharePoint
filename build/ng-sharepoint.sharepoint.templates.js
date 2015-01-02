@@ -50,7 +50,7 @@ angular.module("templates/form-templates/spfield-boolean-display.html", []).run(
 
 angular.module("templates/form-templates/spfield-boolean-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-boolean-edit.html",
-    "<input type=\"checkbox\" ng-model=\"value\" />\n" +
+    "<label><input type=\"checkbox\" ng-model=\"value\" /> <span ng-bind=\"schema.Title\"></span></label>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");
 }]);
@@ -99,7 +99,7 @@ angular.module("templates/form-templates/spfield-control.html", []).run(["$templ
 
 angular.module("templates/form-templates/spfield-currency-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-display.html",
-    "<div ng-bind=\"value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"value\" ng-bind=\"$parent.value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
     "");
 }]);
 
@@ -250,7 +250,8 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
 
 angular.module("templates/form-templates/spfield-number-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-display.html",
-    "<div ng-bind=\"(schema.Percentage ? (value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"value\" ng-bind=\"(schema.Percentage ? ($parent.value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
+    "\n" +
     "");
 }]);
 
@@ -368,7 +369,7 @@ angular.module("templates/form-templates/spform-default.html", []).run(["$templa
 
 angular.module("templates/form-templates/spform-toolbar-button.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform-toolbar-button.html",
-    "<input type=\"button\" class=\"spform-toolbar-element spform-toolbar-action ms-ButtonHeightWidth\" value=\"{{text}}\" ng-click=\"makeAction();\" ng-disabled=\"isInDesignMode || formCtrl.getFormStatus() != status.IDLE\" />\n" +
+    "<input type=\"button\" class=\"spform-toolbar-element spform-toolbar-action ms-ButtonHeightWidth\" value=\"{{text}}\" ng-click=\"makeAction();\" ng-disabled=\"isInDesignMode || formCtrl.getFormStatus() != status.IDLE || enabled === false\" />\n" +
     "");
 }]);
 
