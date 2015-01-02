@@ -38,7 +38,8 @@
 
             scope: {
                 spAction: '&',
-                redirectUrl: '@'
+                redirectUrl: '@',
+                enabled: '='
             },
 
             link: postLink
@@ -70,6 +71,16 @@
             var ngClick = attrs.ngClick;
             var tooltip = attrs.tooltip;
             var description = attrs.description;
+            var ribbonButtonImage = attrs.ribbonButtonImage;
+
+
+            // Watch for 'enabled' attribute
+            scope.$watch('enabled', function(newValue, oldValue) {
+
+                SPRibbon.refresh();
+
+            });
+
 
             processAction();
 
@@ -90,7 +101,7 @@
                 element.attr('ng-click', 'makeAction();' + (attrs.ngClick || ''));
 
                 // Sets the logic for 'ng-disabled' attribute
-                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE || enabled === false');
 
                 // Sets css classes
                 element.addClass('spform-toolbar-element spform-toolbar-action');
@@ -151,7 +162,7 @@
 
                                 if (toolbar) {
 
-                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description);
+                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description, ribbonButtonImage, canHandle);
 
                                 }
 
@@ -164,6 +175,15 @@
 
                 // Compile the element with the new attributes and scope values
                 $compile(element)(scope);
+
+            }
+
+
+
+            // Gets if the action is enabled and can be handled.
+            function canHandle() {
+
+                return scope.enabled !== false;
 
             }
 

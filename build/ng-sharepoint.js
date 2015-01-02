@@ -4997,6 +4997,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
         var spRibbonService = {
 
             ready                       : ready,
+            refresh                     : refresh,
             addTab                      : addTab,
             getTab                      : getTab,
             getEditTab                  : getEditTab,
@@ -5073,6 +5074,14 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
             return ribbonDeferred.promise;
 
         } // ready
+
+
+
+        function refresh() {
+
+            ribbon.refresh();
+
+        } // refresh
 
 
 
@@ -5397,7 +5406,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
 
 
 
-        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, canHandle, btnImage) {
+        function addButtonToToolbar(toolbar, label, handlerFn, tooltip, description, btnImage, canHandle) {
 
             var buttonId = toolbar.group.get_id() + '.Button-' + _getNextButtonSequence();
 
@@ -5527,7 +5536,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
 
                     }
 
-                    return canHandle;
+                    return !!canHandle;
 
                 },
 
@@ -5567,7 +5576,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
                         this._handledCommands[commandId] = {
 
                             handle: handlerFn,
-                            enabled: canHandle || true
+                            enabled: canHandle
 
                         };
 
@@ -6580,7 +6589,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 
             scope: {
                 spAction: '&',
-                redirectUrl: '@'
+                redirectUrl: '@',
+                enabled: '='
             },
 
             link: postLink
@@ -6612,6 +6622,16 @@ angular.module('ngSharePoint').factory('SPWeb',
             var ngClick = attrs.ngClick;
             var tooltip = attrs.tooltip;
             var description = attrs.description;
+            var ribbonButtonImage = attrs.ribbonButtonImage;
+
+
+            // Watch for 'enabled' attribute
+            scope.$watch('enabled', function(newValue, oldValue) {
+
+                SPRibbon.refresh();
+
+            });
+
 
             processAction();
 
@@ -6632,7 +6652,7 @@ angular.module('ngSharePoint').factory('SPWeb',
                 element.attr('ng-click', 'makeAction();' + (attrs.ngClick || ''));
 
                 // Sets the logic for 'ng-disabled' attribute
-                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE');
+                element.attr('ng-disabled', 'isInDesignMode || formCtrl.getFormStatus() != status.IDLE || enabled === false');
 
                 // Sets css classes
                 element.addClass('spform-toolbar-element spform-toolbar-action');
@@ -6693,7 +6713,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
                                 if (toolbar) {
 
-                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description);
+                                    SPRibbon.addButtonToToolbar(toolbar, getLabel(), makeAction, tooltip, description, ribbonButtonImage, canHandle);
 
                                 }
 
@@ -6706,6 +6726,15 @@ angular.module('ngSharePoint').factory('SPWeb',
 
                 // Compile the element with the new attributes and scope values
                 $compile(element)(scope);
+
+            }
+
+
+
+            // Gets if the action is enabled and can be handled.
+            function canHandle() {
+
+                return scope.enabled !== false;
 
             }
 
@@ -8119,9 +8148,9 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 
 angular.module('ngSharePoint').directive('spfieldLookup', 
 
-	['SPFieldDirective', '$q', '$filter', 'SharePoint', '$http', '$templateCache', '$compile',
+	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
-	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint, $http, $templateCache, $compile) {
+	function spfieldLookup_DirectiveFactory(SPFieldDirective, $q, $filter, SharePoint) {
 
 		var spfieldLookup_DirectiveDefinitionObject = {
 
@@ -8154,23 +8183,8 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 						$scope.lookupItem = void 0;
 						refreshData();
-					},
-
-					/*
-					postRenderFn: function() {
-
-						if (angular.isDefined($scope.schema.extraTemplateUrl)) {
-
-			                $http.get($scope.schema.extraTemplateUrl, { cache: $templateCache }).success(function(html) {
-
-			                    var newElement = $compile(html)($scope);
-			                    $element.append(newElement);
-
-			                });
-
-						}
 					}
-					*/
+
 				};
 
 
@@ -8204,7 +8218,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				// ****************************************************************************
 				// Controls the 'changed' event in the associated <select> element.
 				//
-				$scope.valueChanged = function(item) {
+				$scope.valueChanged = function() {
 
 					if ($scope.lastValue !== $scope.value) {
 
@@ -10316,7 +10330,8 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
             scope: {
                 action: '&',
                 redirectUrl: '@',
-                text: '@'
+                text: '@',
+                enabled: '='
             },
 
 
@@ -10328,6 +10343,13 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
 
                 var action = $attrs.action || $attrs.spformToolbarButton;
+
+
+                $scope.$watch('enabled', function(newValue, oldValue) {
+
+                    SPRibbon.refresh();
+
+                });
 
 
                 // Sets the button 'text' and 'action'.
@@ -10368,8 +10390,11 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                                 SPRibbon.ready().then(function() {
 
                                     var toolbar = spformToolbarController.getRibbonToolbar();
+
                                     if (toolbar) {
-                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description);
+
+                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description, $attrs.ribbonButtonImage, canHandle);
+
                                     }
 
                                 });
@@ -10384,6 +10409,15 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 // ****************************************************************************
                 // Private methods
                 //
+
+                // Gets if the action is enabled and can be handled.
+                function canHandle() {
+
+                    return $scope.enabled !== false;
+
+                }
+
+
 
                 // Default SAVE form action
                 function save() {
@@ -10997,6 +11031,7 @@ angular.module('ngSharePoint').directive('spform',
                         }
                     }
 
+
                     // Change the form to a 'dirty' state.
                     $scope.ngFormCtrl.$setDirty();
 
@@ -11016,6 +11051,10 @@ angular.module('ngSharePoint').directive('spform',
                         // Check if 'force' option is enabled.
                         // If so, continues with the saving process even if there are invalid fields.
                         // Otherwise, cancel the saving process.
+                        //
+                        // NOTE: Must check if there are fields that will generate an error when saving the item.
+                        //       e.g. If the user sets an string in a numeric field and so on.
+                        //
                         if (options.force !== true) {
 
                             def.reject();
@@ -11136,6 +11175,9 @@ angular.module('ngSharePoint').directive('spform',
 
                     var self = this;
                     var def = $q.defer();
+
+                    // Change the form to a 'pristine' state to avoid field validation.
+                    $scope.ngFormCtrl.$setPristine();
 
                     $scope.formStatus = this.status.PROCESSING;
 

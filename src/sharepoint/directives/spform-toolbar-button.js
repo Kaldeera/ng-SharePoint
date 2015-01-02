@@ -29,7 +29,8 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
             scope: {
                 action: '&',
                 redirectUrl: '@',
-                text: '@'
+                text: '@',
+                enabled: '='
             },
 
 
@@ -41,6 +42,13 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
 
 
                 var action = $attrs.action || $attrs.spformToolbarButton;
+
+
+                $scope.$watch('enabled', function(newValue, oldValue) {
+
+                    SPRibbon.refresh();
+
+                });
 
 
                 // Sets the button 'text' and 'action'.
@@ -81,8 +89,11 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                                 SPRibbon.ready().then(function() {
 
                                     var toolbar = spformToolbarController.getRibbonToolbar();
+
                                     if (toolbar) {
-                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description);
+
+                                        SPRibbon.addButtonToToolbar(toolbar, $scope.text, $scope.makeAction, $attrs.tooltip, $attrs.description, $attrs.ribbonButtonImage, canHandle);
+
                                     }
 
                                 });
@@ -97,6 +108,15 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 // ****************************************************************************
                 // Private methods
                 //
+
+                // Gets if the action is enabled and can be handled.
+                function canHandle() {
+
+                    return $scope.enabled !== false;
+
+                }
+
+
 
                 // Default SAVE form action
                 function save() {
