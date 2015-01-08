@@ -48,13 +48,63 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 var listId = _spPageContextInfo.pageListId;
                 var itemId = utils.getQueryStringParamByName('ID');
 
+                // Sets the form mode
+                //$scope.mode = (ctx.ControlMode == SPClientTemplates.ClientControlMode.NewForm || ctx.ControlMode == SPClientTemplates.ClientControlMode.EditForm ? 'edit' : 'display');
 
-                $scope.mode = (ctx.ControlMode == SPClientTemplates.ClientControlMode.DisplayForm ? 'display' : 'edit');
+                var controlMode = 'display';
+                var currentMode = 'display';
+                $scope.mode = 'display';
+                /*
+                 * SPClientTemplates.ClientControlMode:
+                 *
+                 * Invalid: 0
+                 * DisplayForm: 1
+                 * EditForm: 2
+                 * NewForm: 3
+                 * View: 4
+                 *
+                 */
+
+                switch(ctx.ControlMode) {
+
+                    case SPClientTemplates.ClientControlMode.Invalid:
+                        controlMode = 'invalid';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.DisplayForm:
+                        controlMode = 'display';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.EditForm:
+                        controlMode = 'edit';
+                        currentMode = 'edit';
+                        $scope.mode = 'edit';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.NewForm:
+                        controlMode = 'new';
+                        currentMode = 'edit';
+                        $scope.mode = 'edit';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.View:
+                        controlMode = 'view';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                }
 
 
+                // Checks if the 'listId' exists.
                 if (listId === void 0) {
                     throw 'Can\'t access to the page context list or the page context does not exists.';
                 }
+
 
 
                 SharePoint.getWeb().then(function(web) {
@@ -71,6 +121,19 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                 // Load dependencies
                                 loadDependencies(item).then(function(formDefinition) {
+
+                                    if (formDefinition.formModesOverride) {
+
+                                        $scope.mode = formDefinition.formModesOverride[controlMode] || currentMode;
+
+                                        // If no valid override mode specified, sets the mode back to its default value.
+                                        if ($scope.mode !== 'display' && $scope.mode !== 'edit') {
+
+                                            $scope.mode = currentMode;
+
+                                        }
+
+                                    }
 
                                     // Try to get the template
                                     getTemplateUrl().then(function(templateUrl) {
@@ -172,7 +235,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+                    //var mode = SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode);
+                    var mode = (controlMode == 'new' ? controlMode : $scope.mode);
+                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {

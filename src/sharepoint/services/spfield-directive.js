@@ -193,7 +193,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     // Checks if the field has an 'extended template'.
                     // The 'extended template' is defined in the field 'extended schema'.
                     //
-                    // Extended template definition:
+                    // Extended template definition (Apply for display and edit modes):
                     //
                     // extendedTemplate: {
                     //     html: A string that contains the HTML.
@@ -202,16 +202,40 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     //                       default field template on 'display' mode.
                     //     replaceOnEdit: true or false that indicates if the template will replace the default 
                     //                    field template on 'edit' mode.
+                    //     replace: true or false that indicates if the template will replace the default field
+                    //              template on both form modes (display and edit).
+                    //              This have precedence over 'replaceOnEdit' and 'replaceOnDisplay'
+                    //              properties.
                     // }
+                    //
+                    // or
+                    //
+                    // extendedTemplate: {
+                    //     display|edit: {
+                    //         html: String
+                    //         url: String
+                    //         replace: Boolean
+                    //     }   
+                    // }
+                    //
 
 
                     if (angular.isDefined($scope.schema.extendedTemplate)) {
 
                         var finalHtml = html;
                         var templateEx = $scope.schema.extendedTemplate;
+
+                        // Checks if there are defined and explicit mode extended template.
+                        if (angular.isDefined(templateEx[$scope.currentMode])) {
+
+                            templateEx = templateEx[$scope.currentMode];
+
+                        }
+
                         var replace = (
                             ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) || 
-                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true)
+                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true) ||
+                            templateEx.replace === true
                         );
 
                         if (angular.isDefined(templateEx.url)) {
@@ -228,6 +252,11 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                             finalHtml = replace ? templateEx.html : html + templateEx.html;
                             deferred.resolve(finalHtml);
 
+                        } else {
+
+                            // The properties 'url' or 'html' not found.
+                            deferred.resolve(finalHtml);
+
                         }
 
                     } else {
@@ -242,6 +271,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 return deferred.promise;
 
             };
+
 
 
 

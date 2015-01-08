@@ -50,7 +50,7 @@ angular.module("templates/form-templates/spfield-boolean-display.html", []).run(
 
 angular.module("templates/form-templates/spfield-boolean-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-boolean-edit.html",
-    "<label><input type=\"checkbox\" ng-model=\"value\" /> <span ng-bind=\"schema.Title\"></span></label>\n" +
+    "<label style=\"cursor: pointer;\"><input type=\"checkbox\" ng-model=\"value\" style=\"cursor: pointer;\" /> <span ng-bind=\"schema.Title\"></span></label>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");
 }]);
