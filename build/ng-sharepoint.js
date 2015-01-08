@@ -1764,7 +1764,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     // Checks if the field has an 'extended template'.
                     // The 'extended template' is defined in the field 'extended schema'.
                     //
-                    // Extended template definition:
+                    // Extended template definition (Apply for display and edit modes):
                     //
                     // extendedTemplate: {
                     //     html: A string that contains the HTML.
@@ -1773,16 +1773,40 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     //                       default field template on 'display' mode.
                     //     replaceOnEdit: true or false that indicates if the template will replace the default 
                     //                    field template on 'edit' mode.
+                    //     replace: true or false that indicates if the template will replace the default field
+                    //              template on both form modes (display and edit).
+                    //              This have precedence over 'replaceOnEdit' and 'replaceOnDisplay'
+                    //              properties.
                     // }
+                    //
+                    // or
+                    //
+                    // extendedTemplate: {
+                    //     display|edit: {
+                    //         html: String
+                    //         url: String
+                    //         replace: Boolean
+                    //     }   
+                    // }
+                    //
 
 
                     if (angular.isDefined($scope.schema.extendedTemplate)) {
 
                         var finalHtml = html;
                         var templateEx = $scope.schema.extendedTemplate;
+
+                        // Checks if there are defined and explicit mode extended template.
+                        if (angular.isDefined(templateEx[$scope.currentMode])) {
+
+                            templateEx = templateEx[$scope.currentMode];
+
+                        }
+
                         var replace = (
                             ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) || 
-                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true)
+                            ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true) ||
+                            templateEx.replace === true
                         );
 
                         if (angular.isDefined(templateEx.url)) {
@@ -1799,6 +1823,11 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                             finalHtml = replace ? templateEx.html : html + templateEx.html;
                             deferred.resolve(finalHtml);
 
+                        } else {
+
+                            // The properties 'url' or 'html' not found.
+                            deferred.resolve(finalHtml);
+
                         }
 
                     } else {
@@ -1813,6 +1842,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 return deferred.promise;
 
             };
+
 
 
 
@@ -7262,9 +7292,9 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 
 angular.module('ngSharePoint').directive('spfieldCalculated', 
 
-	[
+	['SPFieldDirective', 'SPUtils',
 
-	function spfieldCalculated_DirectiveFactory() {
+	function spfieldCalculated_DirectiveFactory(SPFieldDirective, SPUtils) {
 
 		var spfieldCalculated_DirectiveDefinitionObject = {
 
@@ -7274,7 +7304,148 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 			scope: {
 				value: '=ngModel'
 			},
-			templateUrl: 'templates/form-templates/spfield-text-display.html'
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
+			link: function($scope, $element, $attrs, controllers) {
+
+				// NOTA: El campo calculado puede ser de los siguientes tipos:
+				//		 Text, DateTime, Boolean, Number, Currency
+
+				/*
+				 * SPFieldCalculated schema:
+				 *
+				 * FieldTypeKind: 17 (SP.FieldType.calculated)
+				 * OutputType: 2, 4, 8, 9, 10
+				 *			  (SP.FieldType.text, SP.FieldType.dateTime, SP.FieldType.boolean, SP.FieldType.number, SP.FieldType.currency)
+				 *
+				 * Sample 'SchemaXml' property:
+				 * SchemaXml.Format="DateOnly"
+				 *			.LCID="3082"
+				 *			.ResultType="Number"
+				 *			.Decimals="2"
+				 */
+
+
+				var directive = {
+					
+					fieldTypeName: 'text',
+					replaceAll: false,
+
+					init: function() {
+
+						 switch($scope.schema.OutputType) {
+
+						 	case SP.FieldType.text:
+						 		// Change directive type
+						 		directive.fieldTypeName = 'text';
+						 		break;
+
+
+						 	case SP.FieldType.dateTime:
+						 		// Change directive type
+						 		directive.fieldTypeName = 'datetime';
+
+						 		// Specific type initialization
+						 		$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+						 		break;
+
+
+						 	case SP.FieldType.boolean:
+						 		// Change directive type
+						 		directive.fieldTypeName = 'boolean';
+						 		break;
+
+
+						 	case SP.FieldType.number:
+						 		// Change directive type
+						 		directive.fieldTypeName = 'number';
+
+						 		// Specific type initialization
+								var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
+								var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
+								var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
+								$scope.schema.Percentage = percentage.toLowerCase() === 'true';
+								$scope.schema.Decimals = parseInt(decimals);
+								$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+						 		break;
+
+
+						 	case SP.FieldType.currency:
+						 		// Change directive type
+						 		directive.fieldTypeName = 'currency';
+
+						 		// Specific type initialization
+								$scope.currencyLocaleId = $scope.schema.CurrencyLocaleId;
+								// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
+								$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+								// TODO: Currency could also have the 'Decimal' value in the 'SchemaXml' property.
+								//		 (See SPFieldNumber)
+
+						 		break;
+
+						 }
+
+					},
+
+					watchValueFn: function(newValue) {
+						
+						switch($scope.schema.OutputType) {
+
+						 	case SP.FieldType.text:
+						 		break;
+
+
+						 	case SP.FieldType.dateTime:
+								if ($scope.value !== null && $scope.value !== void 0) {
+									
+									$scope.dateModel = new Date($scope.value);
+
+								} else {
+
+									$scope.dateModel = null;
+
+								}
+					 			break;
+
+
+						 	case SP.FieldType.boolean:
+								$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+						 		break;
+
+
+						 	case SP.FieldType.number:
+						 		// Parse the value to match the type.
+						 		$scope.value = parseFloat(newValue);
+						 		break;
+
+
+						 	case SP.FieldType.currency:
+						 		// Parse the value to match the type.
+						 		$scope.value = parseFloat(newValue);
+						 		break;
+
+						}
+
+					},
+
+					watchModeFn: function() {
+
+						// Force always to render in display mode.
+						// NOTE: Edit mode is not supported for calculated fields.
+						$scope.currentMode = 'display';
+
+						// Renders the field
+						directive.renderField();
+
+					}
+
+				};
+				
+
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+			}
 
 		}; // Directive definition object
 
@@ -7418,7 +7589,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
 
                     // If the field has extended schema, adjust the type to its extended 'TypeAsString' property.
-                    // This must be done after adjust the 'fieldName' in order to the 'ng-model' binds to the correct field name.
+                    // This must be done after adjust the 'fieldName' in order to bind the 'ng-model' to the correct field name.
                     if (schema.hasExtendedSchema) {
 
                         fieldType = schema.TypeAsString;
@@ -7555,14 +7726,16 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					init: function() {
 
-						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
+						$scope.currencyLocaleId = $scope.schema.CurrencyLocaleId;
 						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+						// TODO: Currency could also have the 'Decimal' value in the 'SchemaXml' property.
+						//		 (See SPFieldNumber)
 
 					},
 
 					parserFn: function(viewValue) {
-						
 
 						// Number validity
 						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
@@ -11989,13 +12162,63 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 var listId = _spPageContextInfo.pageListId;
                 var itemId = utils.getQueryStringParamByName('ID');
 
+                // Sets the form mode
+                //$scope.mode = (ctx.ControlMode == SPClientTemplates.ClientControlMode.NewForm || ctx.ControlMode == SPClientTemplates.ClientControlMode.EditForm ? 'edit' : 'display');
 
-                $scope.mode = (ctx.ControlMode == SPClientTemplates.ClientControlMode.DisplayForm ? 'display' : 'edit');
+                var controlMode = 'display';
+                var currentMode = 'display';
+                $scope.mode = 'display';
+                /*
+                 * SPClientTemplates.ClientControlMode:
+                 *
+                 * Invalid: 0
+                 * DisplayForm: 1
+                 * EditForm: 2
+                 * NewForm: 3
+                 * View: 4
+                 *
+                 */
+
+                switch(ctx.ControlMode) {
+
+                    case SPClientTemplates.ClientControlMode.Invalid:
+                        controlMode = 'invalid';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.DisplayForm:
+                        controlMode = 'display';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.EditForm:
+                        controlMode = 'edit';
+                        currentMode = 'edit';
+                        $scope.mode = 'edit';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.NewForm:
+                        controlMode = 'new';
+                        currentMode = 'edit';
+                        $scope.mode = 'edit';
+                        break;
+
+                    case SPClientTemplates.ClientControlMode.View:
+                        controlMode = 'view';
+                        currentMode = 'display';
+                        $scope.mode = 'display';
+                        break;
+
+                }
 
 
+                // Checks if the 'listId' exists.
                 if (listId === void 0) {
                     throw 'Can\'t access to the page context list or the page context does not exists.';
                 }
+
 
 
                 SharePoint.getWeb().then(function(web) {
@@ -12012,6 +12235,19 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                 // Load dependencies
                                 loadDependencies(item).then(function(formDefinition) {
+
+                                    if (formDefinition.formModesOverride) {
+
+                                        $scope.mode = formDefinition.formModesOverride[controlMode] || currentMode;
+
+                                        // If no valid override mode specified, sets the mode back to its default value.
+                                        if ($scope.mode !== 'display' && $scope.mode !== 'edit') {
+
+                                            $scope.mode = currentMode;
+
+                                        }
+
+                                    }
 
                                     // Try to get the template
                                     getTemplateUrl().then(function(templateUrl) {
@@ -12113,7 +12349,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode) + '.html';
+                    //var mode = SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode);
+                    var mode = (controlMode == 'new' ? controlMode : $scope.mode);
+                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {

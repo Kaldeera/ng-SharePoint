@@ -42,14 +42,16 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					init: function() {
 
-						$scope.currentyLocaleId = $scope.schema.CurrencyLocaleId;
+						$scope.currencyLocaleId = $scope.schema.CurrencyLocaleId;
 						// TODO: Get the CultureInfo object based on the field schema 'CurrencyLocaleId' property.
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+						// TODO: Currency could also have the 'Decimal' value in the 'SchemaXml' property.
+						//		 (See SPFieldNumber)
 
 					},
 
 					parserFn: function(viewValue) {
-						
 
 						// Number validity
 						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
