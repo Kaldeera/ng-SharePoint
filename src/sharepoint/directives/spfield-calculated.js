@@ -26,9 +26,11 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
+				mode: '@',
 				value: '=ngModel'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
