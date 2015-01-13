@@ -212,7 +212,6 @@ angular.module('ngSharePoint').directive('spform',
                             // If argument @fieldName is defined, set the focus in the field specified (if found).
                             if (this.focusElements[i].name === fieldName) {
 
-                                //this.focusElements[i].element.focus();
                                 fieldFocused = this.focusElements[i].element;
                                 break;
                             }
@@ -224,7 +223,6 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (control && control.$invalid) {
 
-                                //this.focusElements[i].element.focus();
                                 fieldFocused = this.focusElements[i].element;
                                 break;
 
@@ -235,11 +233,16 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        //this.focusElements[0].element.focus();
                         fieldFocused = this.focusElements[0].element;
+
                     }
 
-                    fieldFocused.focus();
+                    // Set the focus on the final element if exists.
+                    if (fieldFocused) {
+
+                        fieldFocused.focus();
+
+                    }
 
                     return fieldFocused;
 
@@ -581,7 +584,8 @@ angular.module('ngSharePoint').directive('spform',
 
                                             var fields = ctFields;
 
-                                            // Adds the 'Attachments' field, if needed.
+                                            // The 'Attachments' field belongs to the list not to the content type.
+                                            // So adds it to the content type fields, if needed.
                                             if ($scope.item.list.EnableAttachments) {
 
                                                 fields.Attachments = listFields.Attachments;

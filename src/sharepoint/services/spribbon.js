@@ -33,6 +33,7 @@
         var ribbonDeferred = $q.defer();
         var toolbarSequence = 1;
         var buttonSequence = 1;
+        var ribbonReady = false;
 
 
         var spRibbonService = {
@@ -70,6 +71,8 @@
             ribbon = pageManager.get_ribbon();
             commandDispatcher = pageManager.get_commandDispatcher();
 
+            ribbonReady = true;
+            
             ribbonDeferred.resolve();
 
         } // onRibbonInited
@@ -77,6 +80,12 @@
 
 
         function ready() {
+
+            if (ribbonReady === true) {
+
+                ribbonDeferred.resolve();
+
+            }
 
             // Initialize ribbon
             SP.SOD.executeOrDelayUntilScriptLoaded(function () {
@@ -120,7 +129,11 @@
 
         function refresh() {
 
-            ribbon.refresh();
+            ready().then(function() {
+
+                ribbon.refresh();
+
+            });
 
         } // refresh
 
