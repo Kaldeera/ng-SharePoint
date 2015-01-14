@@ -6666,6 +6666,23 @@ angular.module('ngSharePoint').factory('SPWeb',
             var ngClick = attrs.ngClick;
             var tooltip = attrs.tooltip;
             var description = attrs.description;
+<<<<<<< HEAD
+=======
+            var ribbonButtonImage = attrs.ribbonButtonImage;
+
+
+            // Watch for 'enabled' attribute
+            scope.$watch('enabled', SPRibbon.refresh);
+
+
+            // Watch for 'formStatus'
+            scope.$watch(function() {
+
+                return scope.formCtrl.getFormStatus();
+
+            }, SPRibbon.refresh);
+
+>>>>>>> origin/PCASME
 
             processAction();
 
@@ -6765,6 +6782,18 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
+<<<<<<< HEAD
+=======
+            // Gets if the action is enabled and can be handled.
+            function canHandle() {
+
+                return scope.enabled !== false && scope.formCtrl.getFormStatus() == scope.status.IDLE;
+
+            }
+
+
+
+>>>>>>> origin/PCASME
             // Gets the action text/label
             function getLabel() {
 
@@ -7619,6 +7648,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if (schema.hasExtendedSchema) {
 
                         fieldType = schema.TypeAsString;
+                        if (fieldType === 'UserMulti') fieldType = 'User';
 
                     }
 
@@ -8187,28 +8217,24 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
 
                     $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
 
-                    if (!existsFocusElement($scope.name)) {
+                    removeFocusElement($scope.name);
 
-                        $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
-
-                    }
+                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
 
                 }
 
 
-                function existsFocusElement(name) {
+                function removeFocusElement(name) {
 
                     for (var i = 0; i < $scope.formCtrl.focusElements.length; i++) {
                         
                         if ($scope.formCtrl.focusElements[i].name === name) {
 
-                            return true;
+                            $scope.formCtrl.focusElements.splice(i, 1);
 
                         }
 
                     }
-
-                    return false;
 
                 }
 
@@ -10529,6 +10555,21 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 var action = $attrs.action || $attrs.spformToolbarButton;
 
 
+<<<<<<< HEAD
+=======
+                // Watch for 'enabled' attribute
+                $scope.$watch('enabled', SPRibbon.refresh);
+
+
+                // Watch for 'formStatus'
+                $scope.$watch(function() {
+
+                    return $scope.formCtrl.getFormStatus();
+
+                }, SPRibbon.refresh);
+
+
+>>>>>>> origin/PCASME
                 // Sets the button 'text' and 'action'.
                 // Also checks for pre-defined buttons (i.e., save, cancel and close)
                 SPUtils.SharePointReady().then(function() {
@@ -10584,6 +10625,18 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 // Private methods
                 //
 
+<<<<<<< HEAD
+=======
+                // Gets if the action is enabled and can be handled.
+                function canHandle() {
+
+                    return $scope.enabled !== false && $scope.formCtrl.getFormStatus() == $scope.status.IDLE;
+
+                }
+
+
+
+>>>>>>> origin/PCASME
                 // Default SAVE form action
                 function save() {
 
@@ -12106,7 +12159,7 @@ angular.module('ngSharePoint').filter('newlines',
 
         return function(text) {
 
-            return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
+            return $sce.trustAsHtml((text || '').replace(/\n\r?/g, '<br/>'));
         };
         
     }
@@ -12428,6 +12481,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                             formDefinitionScope.item = item;
 
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
+
+                                // Destroys the scope
+                                formDefinitionScope.$destroy();
 
                                 // Replaces the token ~site with the site relative url
                                 formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));

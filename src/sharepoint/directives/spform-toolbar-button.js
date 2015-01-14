@@ -44,11 +44,16 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 var action = $attrs.action || $attrs.spformToolbarButton;
 
 
-                $scope.$watch('enabled', function(newValue, oldValue) {
+                // Watch for 'enabled' attribute
+                $scope.$watch('enabled', SPRibbon.refresh);
 
-                    SPRibbon.refresh();
 
-                });
+                // Watch for 'formStatus'
+                $scope.$watch(function() {
+
+                    return $scope.formCtrl.getFormStatus();
+
+                }, SPRibbon.refresh);
 
 
                 // Sets the button 'text' and 'action'.
@@ -112,7 +117,7 @@ angular.module('ngSharePoint').directive('spformToolbarButton',
                 // Gets if the action is enabled and can be handled.
                 function canHandle() {
 
-                    return $scope.enabled !== false;
+                    return $scope.enabled !== false && $scope.formCtrl.getFormStatus() == $scope.status.IDLE;
 
                 }
 

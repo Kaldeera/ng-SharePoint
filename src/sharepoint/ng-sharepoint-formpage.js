@@ -285,6 +285,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
 
+                                // Destroys the scope
+                                formDefinitionScope.$destroy();
+
                                 // Replaces the token ~site with the site relative url
                                 formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
 

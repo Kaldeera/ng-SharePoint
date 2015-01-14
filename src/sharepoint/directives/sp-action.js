@@ -75,11 +75,15 @@
 
 
             // Watch for 'enabled' attribute
-            scope.$watch('enabled', function(newValue, oldValue) {
+            scope.$watch('enabled', SPRibbon.refresh);
 
-                SPRibbon.refresh();
 
-            });
+            // Watch for 'formStatus'
+            scope.$watch(function() {
+
+                return scope.formCtrl.getFormStatus();
+
+            }, SPRibbon.refresh);
 
 
             processAction();
@@ -183,7 +187,7 @@
             // Gets if the action is enabled and can be handled.
             function canHandle() {
 
-                return scope.enabled !== false;
+                return scope.enabled !== false && scope.formCtrl.getFormStatus() == scope.status.IDLE;
 
             }
 

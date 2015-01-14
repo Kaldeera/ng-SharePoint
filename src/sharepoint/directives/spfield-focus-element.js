@@ -30,28 +30,24 @@ angular.module('ngSharePoint').directive('spfieldFocusElement',
 
                     $scope.formCtrl.focusElements = $scope.formCtrl.focusElements || [];
 
-                    if (!existsFocusElement($scope.name)) {
+                    removeFocusElement($scope.name);
 
-                        $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
-
-                    }
+                    $scope.formCtrl.focusElements.push({ name: $scope.name, element: $element });
 
                 }
 
 
-                function existsFocusElement(name) {
+                function removeFocusElement(name) {
 
                     for (var i = 0; i < $scope.formCtrl.focusElements.length; i++) {
                         
                         if ($scope.formCtrl.focusElements[i].name === name) {
 
-                            return true;
+                            $scope.formCtrl.focusElements.splice(i, 1);
 
                         }
 
                     }
-
-                    return false;
 
                 }
 
