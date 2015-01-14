@@ -73,6 +73,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if (schema.hasExtendedSchema) {
 
                         fieldType = schema.TypeAsString;
+                        if (fieldType === 'UserMulti') fieldType = 'User';
 
                     }
 

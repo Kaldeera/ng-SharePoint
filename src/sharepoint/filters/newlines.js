@@ -22,7 +22,7 @@ angular.module('ngSharePoint').filter('newlines',
 
         return function(text) {
 
-            return $sce.trustAsHtml((text || '').replace(/\n/g, '<br/>'));
+            return $sce.trustAsHtml((text || '').replace(/\n\r?/g, '<br/>'));
         };
         
     }
