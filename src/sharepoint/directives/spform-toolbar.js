@@ -203,14 +203,21 @@ angular.module('ngSharePoint').directive('spformToolbar',
                         switch($scope.currentMode) {
 
                             case 'display':
-                                transcludeElement.append($compile('<spform-toolbar-button action="close"></spform-toolbar-button>')($scope));
+                                //transcludeElement.append($compile('<button type="button" sp-action="close">' + STSHtmlEncode(Strings.STS.L_CloseButtonCaption) + '</button>')($scope));
+                                transcludeElement.append('<button type="button" sp-action="close">' + STSHtmlEncode(Strings.STS.L_CloseButtonCaption) + '</button>');
                                 break;
 
                             case 'edit':
-                                transcludeElement.append($compile('<spform-toolbar-button action="save"></spform-toolbar-button>')($scope));
-                                transcludeElement.append($compile('<spform-toolbar-button action="cancel"></spform-toolbar-button>')($scope));
+                                /*
+                                transcludeElement.append($compile('<button type="button" sp-action="save">' + STSHtmlEncode(Strings.STS.L_SaveButtonCaption) + '</button>')($scope));
+                                transcludeElement.append($compile('<button type="button" sp-action="cancel">' + STSHtmlEncode(Strings.STS.L_CancelButtonCaption) + '</button>')($scope));
+                                */
+                                transcludeElement.append('<button type="button" sp-action="save">' + STSHtmlEncode(Strings.STS.L_SaveButtonCaption) + '</button>');
+                                transcludeElement.append('<button type="button" sp-action="cancel">' + STSHtmlEncode(Strings.STS.L_CancelButtonCaption) + '</button>');
                                 break;
                         }
+
+                        $compile(transcludeElement)($scope);
 
                     }
 

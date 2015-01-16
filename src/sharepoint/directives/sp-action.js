@@ -23,11 +23,11 @@
         .directive('spAction', spAction);
 
 
-    spAction.$inject = ['$compile', '$q', 'SPUtils', 'SPRibbon'];
+    spAction.$inject = ['$compile', '$q', 'SPUtils', 'SPRibbon', '$timeout'];
 
 
     /* @ngInject */
-    function spAction($compile, $q, SPUtils, SPRibbon) {
+    function spAction($compile, $q, SPUtils, SPRibbon, $timeout) {
 
         var directive = {
 
@@ -272,6 +272,10 @@
                                         // TODO: Get the right default 'DispForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'display' form.
+                                
+
+                                        // Redirects to the correct url
+                                        window.location = redirectUrl;
                                         break;
 
 
@@ -280,6 +284,9 @@
                                         // TODO: Get the right default 'EditForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'edit' form.
+
+                                        // Redirects to the correct url
+                                        window.location = redirectUrl;
                                         break;
 
 
@@ -288,18 +295,35 @@
                                         // TODO: Get the right default 'NewForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'new' form.
+
+                                        // Redirects to the correct url
+                                        window.location = redirectUrl;
                                         break;
 
 
                                     case 'default':
-                                        redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+
+                                        if (SP.UI.ModalDialog.get_childDialog()) {
+
+                                            $timeout(function() {
+
+                                                SP.UI.ModalDialog.get_childDialog().close();
+
+                                            });
+
+                                        } else {
+
+                                            redirectUrl = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
+                                            // TODO: Redireccionar a la vista por defecto de la lista.
+
+                                            // Redirects to the correct url
+                                            window.location = redirectUrl;
+
+                                        }
+
                                         break;
 
                                 }
-                                
-
-                                // Redirects to the correct url
-                                window.location = redirectUrl;
 
                             }
 
