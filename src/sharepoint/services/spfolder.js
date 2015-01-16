@@ -314,7 +314,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			var self = this;
 			var def = $q.defer();
-			var folderPath = self.ServerRelativeUrl + '/' + folderName;
+			var folderPath = self.ServerRelativeUrl.rtrim('/') + '/' + folderName;
 			var url = self.apiUrl + '/folders';
 
 			var headers = {

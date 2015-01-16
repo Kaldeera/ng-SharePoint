@@ -17,7 +17,8 @@ module.exports = function(grunt) {
         banner: '<%= banner %>'
       },
       build: {
-        src: ['src/**/*.js', '!src/libs/**/*.js'],
+        //src: ['src/**/*.js', '!src/libs/**/*.js'],
+        src: ['build/<%= pkg.name %>.js'],
         dest: 'build/<%= pkg.name %>.min.js'
       }
     },
@@ -153,7 +154,7 @@ module.exports = function(grunt) {
   //grunt.loadNpmTasks('grunt-ng-annotate');
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', /*'ngAnnotate', */'uglify', 'concat:ngSharePoint', 'html2js:sharepoint', 'copy:toServer']);
+  grunt.registerTask('default', ['jshint:all', /*'ngAnnotate', */'concat:ngSharePoint', 'uglify', 'html2js:sharepoint'/*, 'copy:toServer'*/]);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
 
