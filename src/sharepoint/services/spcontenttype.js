@@ -131,7 +131,27 @@ angular.module('ngSharePoint').factory('SPContentType',
             var self = this;
             var deferred = $q.defer();
 
-            var ctx = SP.ClientContext.get_current();
+            var url;
+
+            if (self.__parent.url) {
+                url = self.__parent.url;
+            }
+
+            if (url === void 0 && self.__parent.web) {
+
+                url = self.__parent.web.url;
+            }
+
+            var ctx;
+
+            if (url === void 0) {
+
+                ctx = SP.ClientContext.get_current();
+            } else {
+
+                ctx = new SP.ClientContext(url);
+            }
+            
             var web = ctx.get_web();
             var list = web.get_lists().getByTitle(self.__parent.Title);
             var contentTypes = list.get_contentTypes();
