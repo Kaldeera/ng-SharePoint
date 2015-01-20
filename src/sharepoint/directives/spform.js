@@ -94,10 +94,26 @@ angular.module('ngSharePoint').directive('spform',
                                 break;
 
                             case 'DateTime':
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName] = new Date(); //-> [today]
-                                    // TODO: Hay que controlar el resto de posibles valores por defecto.
+                                var value;
+
+                                switch(fieldSchema.DefaultValue) {
+                                    case '[today]':
+                                        value = new Date();
+                                        break;
+
+                                    case 'undefined':
+                                    case undefined:
+                                    case null:
+                                        value = undefined;
+                                        break;
+
+                                    default:
+                                        value = new Date(fieldSchema.DefaultValue);
+                                        break;
                                 }
+
+
+                                $scope.item[fieldName] = value;
                                 break;
 
                             case 'Boolean':
@@ -106,8 +122,15 @@ angular.module('ngSharePoint').directive('spform',
                                 }
                                 break;
 
-                            default:
+                            case 'Lookup':
+                            case 'User':
                                 if (fieldSchema.DefaultValue !== null) {
+                                    $scope.item[fieldName + 'Id'] = parseInt(fieldSchema.DefaultValue);
+                                }
+                                break;
+
+                            default:
+                                if (fieldSchema.DefaultValue !== null && fieldSchema.DefaultValue != 'undefined') {
                                     $scope.item[fieldName] = fieldSchema.DefaultValue;
                                 }
                                 break;
@@ -598,44 +621,50 @@ angular.module('ngSharePoint').directive('spform',
                                             // Checks for an 'extendedSchema' and applies it.
                                             if (angular.isDefined($scope.extendedSchema) && angular.isDefined($scope.extendedSchema.Fields)) {
 
-                                                // The next instruction replaces the entire field definition. Wrong way!
-                                                //angular.extend($scope.schema, $scope.extendedSchema.Fields);
+                                                // Resolve expressions
+                                                SPExpressionResolver.resolve(angular.toJson($scope.extendedSchema), $scope).then(function(extendedSchemaSolved) {
 
-                                                /*
-                                                 * Temporary solution:
-                                                 *
-                                                 * Expand all the existent fields individually and then add the
-                                                 * inexistent ones.
-                                                 *
-                                                 */
+                                                    var solvedExtendedSchema = angular.fromJson(extendedSchemaSolved);
 
-                                                angular.forEach($scope.extendedSchema.Fields, function(extendedField, fieldName) {
+                                                    // The next instruction replaces the entire field definition. Wrong way!
+                                                    //angular.extend($scope.schema, $scope.extendedSchema.Fields);
 
-                                                    var fieldSchema = $scope.schema[fieldName];
+                                                    /*
+                                                     * Temporary solution:
+                                                     *
+                                                     * Expand all the existent fields individually and then add the
+                                                     * inexistent ones.
+                                                     *
+                                                     */
 
-                                                    if (angular.isDefined(fieldSchema)) {
+                                                    angular.forEach(solvedExtendedSchema.Fields, function(extendedField, fieldName) {
 
-                                                        extendedField.hasExtendedSchema = true;
-                                                        extendedField.originalTypeAsString = fieldSchema.TypeAsString;
+                                                        var fieldSchema = $scope.schema[fieldName];
 
-                                                        angular.extend($scope.schema[fieldName], extendedField);
+                                                        if (angular.isDefined(fieldSchema)) {
 
-                                                    } else {
+                                                            extendedField.hasExtendedSchema = true;
+                                                            extendedField.originalTypeAsString = fieldSchema.TypeAsString;
 
-                                                        extendedField.isVirtualField = true;
-                                                        $scope.schema[fieldName] = extendedField;
+                                                            angular.extend($scope.schema[fieldName], extendedField);
 
-                                                    }
+                                                        } else {
 
+                                                            extendedField.isVirtualField = true;
+                                                            $scope.schema[fieldName] = extendedField;
+
+                                                        }
+
+                                                    });
+
+                                                    /*
+                                                     * TODO:
+                                                     *
+                                                     * Make a deep angular.extend without replacing existing properties and, optionally, 
+                                                     * with a limit of recursion levels to avoid infinite loops due to redundant objects.
+                                                     *
+                                                     */
                                                 });
-
-                                                /*
-                                                 * TODO:
-                                                 *
-                                                 * Make a deep angular.extend without replacing existing properties and, optionally, 
-                                                 * with a limit of recursion levels to avoid infinite loops due to redundant objects.
-                                                 *
-                                                 */
 
                                             }
 
