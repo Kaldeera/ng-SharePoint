@@ -258,7 +258,9 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 						var minutes = $scope.minutesModel;
 						var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
 
-						$scope.value = date.toISOString();
+						// Into the item must store a valid Date object
+						// $scope.value = date.toISOString();)
+						$scope.value = date;
 
 					} catch(e) {
 

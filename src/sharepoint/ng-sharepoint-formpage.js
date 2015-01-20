@@ -280,19 +280,35 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                         if (formDefinition !== void 0) {
 
+                            /*
+                                Pau (improvement):
+                                Expressions are not resolved at this point. Only affect to extendeSchema.
+                                Later, spform will resolve it.
+                                This change improves spform eliminating his dependence with  formpage to resolve 
+                                schema expressions.
+                            */
+
+
+                            /*
                             var formDefinitionScope = $scope.$new();
                             formDefinitionScope.item = item;
+
+
 
                             SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
 
                                 // Destroys the scope
                                 formDefinitionScope.$destroy();
 
+                            */
+
+                                var formDefinitionResolved = angular.toJson(formDefinition);
                                 // Replaces the token ~site with the site relative url
                                 formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
 
                                 // Converts back the JSON object resolved to a real object.
                                 formDefinition = angular.fromJson(formDefinitionResolved);
+                                
 
                                 // Process AngularJS modules dependencies.
                                 angular.forEach(formDefinition.angularModules, function(module) {
@@ -327,7 +343,10 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                 });
 
+                            /*
+                                No expression resolve at this point
                             });
+                            */
 
                         } else {
 

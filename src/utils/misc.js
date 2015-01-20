@@ -128,6 +128,9 @@ var utils = {
 
 	        return decodeURIComponent(results[1].replace(/\+/g, ' '));
 
+	    } else {
+
+	    	return undefined;
 	    }
 
 	},
