@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPUtils', 
 
-    ['SPConfig', '$q', '$http', 'ODataParserProvider', 
+    ['SPConfig', '$q', '$http', '$injector', 'ODataParserProvider', 
 
-    function SPUtils_Factory(SPConfig, $q, $http, ODataParserProvider) {
+    function SPUtils_Factory(SPConfig, $q, $http, $injector, ODataParserProvider) {
 
         'use strict';
 
@@ -456,7 +456,7 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
 
-
+            /**
             // ****************************************************************************     
             // getFileBinary
             //
@@ -465,6 +465,7 @@ angular.module('ngSharePoint').factory('SPUtils',
             // @file: A file object from the files property of the DOM element <input type="File" ... />.
             // @returns: Promise with the binary data.
             //
+            */
             getFileBinary: function(file) {
 
                 var self = this;
@@ -490,6 +491,29 @@ angular.module('ngSharePoint').factory('SPUtils',
                 reader.readAsArrayBuffer(file);
 
                 return deferred.promise;
+            },
+
+
+            /**
+            * This function calls the fn function injecting her params (services)
+            */
+            callFunctionWithParams: function(fn, scope) {
+
+                var result = true;
+                if (fn) {
+
+                    var annotations = $injector.annotate(fn);
+                    result = $injector.invoke(fn, scope, scope);
+
+                    /*
+                    for(var r=0; r < annotations.length; r++) {
+                        annotations[r] = $injector.get(annotations[r]);
+                    }
+                    result = fn(annotations);
+                    */
+                }
+
+                return result;
             }
 
         };

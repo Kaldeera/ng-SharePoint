@@ -309,33 +309,27 @@ var utils = {
 	},
 
 
-	extendDeep: function(dest) {
+	/**
+	 * Extening object that entered in first argument.
+	 * Returns extended object
+	 */
+	extend: function(obj) {
 
-	    angular.forEach(arguments, function(obj) {
+		if (typeof obj !== 'object') return obj;
 
-	        if (obj !== dest) {
+		var source, prop;
+		for (var i = 1, length = arguments.length; i < length; i++) {
 
-	            angular.forEach(obj, function(value, key) {
+			source = arguments[i];
+			
+			for (prop in source) {
+				if (hasOwnProperty.call(source, prop)) {
+					obj[prop] = source[prop];
+				}
+			}
+		}
 
-	                if (dest[key] && angular.isObject(dest[key])) {
-
-	                    utils.extendDeep(dest[key], value);
-
-	                } else if(!angular.isFunction(dest[key])) {
-
-	                    dest[key] = angular.copy(value);
-
-	                }
-
-	            });
-
-	        }
-
-	    });
-
-
-	    return dest;
-
+		return obj;
 	},
 
 

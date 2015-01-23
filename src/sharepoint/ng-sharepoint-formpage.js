@@ -138,35 +138,19 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                     // Try to get the template
                                     getTemplateUrl().then(function(templateUrl) {
 
-                                        var formController = formDefinition.formController;
-                                        var useControllerAsSyntax = formDefinition.useControllerAsSyntax;
                                         var spformHTML = '';
 
                                         $scope.extendedSchema = formDefinition.extendedSchema || {};
+                                        $scope.controller = formDefinition.controller || {};
 
-                                        if (!angular.isDefined(formController)) {
-
-                                            spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" template-url="' + templateUrl + '"></div>';
-
-                                        } else {
-
-                                            spformHTML = '<div ng-controller="' + formController + (useControllerAsSyntax ? ' as appCtrl">' : '">') +
-                                                         '    <div data-spform="true" mode="mode" item="item" extended-schema="$parent.extendedSchema" on-pre-save="appCtrl.onPreSave" on-post-save="appCtrl.onPostSave" on-cancel="appCtrl.onCancel" template-url="' + templateUrl + '"></div>' +
-                                                         '</div>';
-                                        }
-
+                                        spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" extended-controller="controller" template-url="' + templateUrl + '"></div>';
 
                                         var newElement = $compile(spformHTML)($scope);
                                         $element.replaceWith(newElement);
                                         $element = newElement;
 
-
-                                        preBind(item).finally(function() {
-
-                                            // Sets the item
-                                            $scope.item = item;
-
-                                        });
+                                        // Sets the item
+                                        $scope.item = item;
 
                                     });
 
@@ -280,73 +264,38 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                         if (formDefinition !== void 0) {
 
-                            /*
-                                Pau (improvement):
-                                Expressions are not resolved at this point. Only affect to extendeSchema.
-                                Later, spform will resolve it.
-                                This change improves spform eliminating his dependence with  formpage to resolve 
-                                schema expressions.
-                            */
+                            // Process AngularJS modules dependencies.
+                            angular.forEach(formDefinition.angularModules, function(module) {
 
+                                dependencies.push(replaceWebRelativeUrls(module));
 
-                            /*
-                            var formDefinitionScope = $scope.$new();
-                            formDefinitionScope.item = item;
-
-
-
-                            SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
-
-                                // Destroys the scope
-                                formDefinitionScope.$destroy();
-
-                            */
-
-                                var formDefinitionResolved = angular.toJson(formDefinition);
-                                // Replaces the token ~site with the site relative url
-                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
-
-                                // Converts back the JSON object resolved to a real object.
-                                formDefinition = angular.fromJson(formDefinitionResolved);
-                                
-
-                                // Process AngularJS modules dependencies.
-                                angular.forEach(formDefinition.angularModules, function(module) {
-
-                                    dependencies.push(module);
-
-                                });
-
-                                // Process JavaScript dependencies (Non AngularJS scripts).
-                                angular.forEach(formDefinition.jsIncludes, function(js) {
-
-                                    dependencies.push(js);
-
-                                });
-
-
-                                // Process CSS dependencies.
-                                angular.forEach(formDefinition.cssIncludes, function(css) {
-
-                                    dependencies.push(css);
-
-                                });
-
-
-                                // Process other.
-                                // ...
-
-
-                                $ocLazyLoad.load(dependencies).then(function() {
-
-                                    deferred.resolve(formDefinition);
-
-                                });
-
-                            /*
-                                No expression resolve at this point
                             });
-                            */
+
+                            // Process JavaScript dependencies (Non AngularJS scripts).
+                            angular.forEach(formDefinition.jsIncludes, function(js) {
+
+                                dependencies.push(replaceWebRelativeUrls(js));
+
+                            });
+
+
+                            // Process CSS dependencies.
+                            angular.forEach(formDefinition.cssIncludes, function(css) {
+
+                                dependencies.push(replaceWebRelativeUrls(css));
+
+                            });
+
+
+                            // Process other.
+                            // ...
+
+
+                            $ocLazyLoad.load(dependencies).then(function() {
+
+                                deferred.resolve(formDefinition);
+
+                            });
 
                         } else {
 
@@ -362,21 +311,27 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 } // loadDependencies
 
 
+                function replaceWebRelativeUrls(module) {
 
-                function preBind(item) {
+                    if (module === void 0) return module;
 
-                    var elementScope = $element.scope();
-                    var onPreBind;
+                    if (module.files) {
 
-                    if (angular.isDefined(elementScope.appCtrl)) {
+                        if (angular.isArray(module.files)) {
 
-                        onPreBind = elementScope.appCtrl.onPreBind;
+                            for(var r=0; r < module.files.length; r++) {
 
+                                module.files[r] = module.files[r].replace(/~site/g, $scope.web.url.rtrim('/'));
+                            }
+
+                        } else if (angular.isString(module.files)) {
+
+                            module.files = module.files.replace(/~site/g, $scope.web.url.rtrim('/'));
+                        }
                     }
 
-                    return $q.when((onPreBind || angular.noop)(item));
-                    
-                } // preBind
+                    return module;
+                }
 
             }
 
@@ -387,10 +342,3 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 ]);
 
 
-/*
-var element = document.querySelector('[data-spformpage]');
-
-if (element) {
-    angular.bootstrap(element, ['ngSharePointFormPage']);
-}
-*/
