@@ -122,6 +122,27 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                 // Load dependencies
                                 loadDependencies(item).then(function(formDefinition) {
 
+                                    var hideRibbon = formDefinition.hideRibbon;
+                                    var dlg = SP.UI.ModalDialog.get_childDialog();
+                                    if (dlg !== null) {
+                                        var args = dlg.get_args();
+                                        if (args !== undefined && args.hideRibbon !== undefined) {
+                                            hideRibbon = args.hideRibbon;
+                                        }
+                                    }
+
+                                    if (typeof hideRibbon === 'function') {
+
+                                        hideRibbon = hideRibbon();
+                                    }
+
+                                    if (hideRibbon === true) {
+
+                                        var ribbon = $('#s4-ribbonrow');
+                                        ribbon.next().height(ribbon.next().height() + ribbon.height());
+                                        ribbon.remove();
+                                    }
+
                                     if (formDefinition.formModesOverride) {
 
                                         $scope.mode = formDefinition.formModesOverride[controlMode] || currentMode;
