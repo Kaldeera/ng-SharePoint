@@ -563,6 +563,22 @@ angular.module('ngSharePoint').factory('SPListItem',
                         delete saveObj[field.InternalName];
                     }
 
+                    // Required fields with null values don't allow to save the item
+                    // Deleting this properties the item will be saved correctly
+                    if (field.Required === true) {
+
+                        var fieldType = field.originalTypeAsString || field.TypeAsString;
+                        var fieldName = field.InternalName;
+                        if (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti') {
+                            fieldName = fieldName + 'Id';
+                        }
+
+                        if (saveObj[fieldName] === null) {
+
+                            delete saveObj[fieldName];
+                        }
+                    }
+
                 });
 
                 // Remove attachments
@@ -570,8 +586,6 @@ angular.module('ngSharePoint').factory('SPListItem',
                 delete saveObj.AttachmentFiles;
 
                 angular.extend(body, saveObj);
-                console.log(saveObj, angular.toJson(saveObj));
-
 
 
                 // Set the headers for the REST API call.
@@ -707,6 +721,111 @@ angular.module('ngSharePoint').factory('SPListItem',
             return def.promise;
 
         }; // remove
+
+
+
+
+        // ****************************************************************************     
+        // runWorkflow
+        //
+        // Runs the specified workflow (guid or name) over the current item.
+        // This method uses the _vti/bin/workflow.asmx service and performs a soap call
+        // to accomplish this request
+        //
+        // @returns: Promise with the result of the operation.
+        //
+        SPListItemObj.prototype.runWorkflow = function(workflowName, params) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.list.web.url);
+
+            if (workflowName === void 0) {
+                throw 'Required @workflowName parameter not specified in SPListItem.runWorkflow method.';
+            }
+
+            if (!utils.isGuid(workflowName)) {
+
+                this.list.getWorkflowAssociationByName(workflowName).then(function(workflowAssociations) {
+
+                    if (workflowAssociations.length > 0) {
+
+                        return self.runWorkflow(workflowAssociations[0].Id, params);
+
+                    } else {
+
+                        console.error('There is no associated workflow with name ' + workflowName);
+                    }
+                });
+
+            } else {
+
+                var context = new SP.ClientContext(self.list.web.url);
+                var web = context.get_web();
+                var list = web.get_lists().getById(self.list.Id);
+                self._item = list.getItemById(self.Id);
+                context.load(self._item);
+
+                context.executeQueryAsync(function() {
+
+                    // Set the headers for the REST API call.
+                    // ----------------------------------------------------------------------------
+                    var headers = {
+                        "content-type": "text/xml;charset='utf-8'"
+                    };
+
+                    var requestDigest = document.getElementById('__REQUESTDIGEST');
+                    // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+                    // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+                    if (requestDigest !== null) {
+                        headers['X-RequestDigest'] = requestDigest.value;
+                    }
+
+                    var data = '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><StartWorkflow xmlns="http://schemas.microsoft.com/sharepoint/soap/workflow/"><item>';
+                    data += _spPageContextInfo.webAbsoluteUrl + self._item.get_item('FileRef');
+                    data += '</item><templateId>';
+                    data += workflowName;
+                    data += '</templateId><workflowParameters><root /></workflowParameters></StartWorkflow></soap12:Body></soap12:Envelope>';
+
+                    // Make the call.
+                    // ----------------------------------------------------------------------------
+                    executor.executeAsync({
+
+                        url: self.list.web.url.rtrim('/') + '/_vti_bin/workflow.asmx',
+                        method: "POST",
+                        dataType: "xml",
+                        async: true,
+                        headers: headers,
+                        body: data,
+
+                        success: function(data) {
+
+                            self.getProperties().then(function() {
+                                def.resolve();
+                            });
+                        }, 
+
+                        error: function(data, errorCode, errorMessage) {
+
+                            var err = utils.parseError({
+                                data: data,
+                                errorCode: errorCode,
+                                errorMessage: errorMessage
+                            });
+
+                            def.reject(err);
+                        }
+                    });
+
+                }); // get _item
+
+            }
+
+            return def.promise;
+
+        }; // runWorkflow
+
 
 
         // Returns the SPListItemObj class
