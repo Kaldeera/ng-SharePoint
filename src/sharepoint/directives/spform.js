@@ -143,7 +143,8 @@ angular.module('ngSharePoint').directive('spform',
 
                     } else {
 
-                        return $scope.schema[fieldName];
+                        // returns the content type field or list field (workflow fields and other hand added fields to list)
+                        return $scope.schema[fieldName] || $scope.item.list.Fields[fieldName] || undefined;
                     }
 
                 };
