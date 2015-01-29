@@ -536,7 +536,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (newValue === void 0 || newValue === oldValue) return;
 
-                            loadItemInfraestructure().then(function() {
+                            loadItemInfrastructure().then(function() {
                                 loadItemTemplate();
                             });
 
@@ -559,23 +559,29 @@ angular.module('ngSharePoint').directive('spform',
                             // Instead, create a 'new SPListItem(@list, @data)' that use the 'angular.extend' method.
                             $scope.originalItem = new SPListItem($scope.item.list, $scope.item);
 
-                            loadItemInfraestructure().then(function() {
+                            loadItemInfrastructure().then(function() {
                                 loadItemTemplate();
                             });
 
                         });
 
 
-                        function loadItemInfraestructure() {
+                        function loadItemInfrastructure() {
 
                             var self = this;
                             var def = $q.defer();
 
                             // Checks if the form is already being processed.
-                            if ($scope.formStatus === spformController.status.PROCESSING) return def.reject();
+                            if ($scope.formStatus === spformController.status.PROCESSING) {
+                                def.reject();
+                                return def.promise;
+                            }
 
                             // Ensure item has a value
-                            if (!angular.isDefined($scope.item)) return def.reject();
+                            if (!angular.isDefined($scope.item)) {
+                                def.reject();
+                                return def.promise;
+                            }
 
                             // Ensure mode has a value
                             if (!angular.isDefined($scope.mode)) {
@@ -647,7 +653,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             return def.promise;
 
-                        }   // loadItemInfraestructure
+                        }   // loadItemInfrastructure
 
 
 

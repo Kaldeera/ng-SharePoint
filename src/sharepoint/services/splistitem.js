@@ -586,8 +586,6 @@ angular.module('ngSharePoint').factory('SPListItem',
                 delete saveObj.AttachmentFiles;
 
                 angular.extend(body, saveObj);
-                console.log(saveObj, angular.toJson(saveObj));
-
 
 
                 // Set the headers for the REST API call.
