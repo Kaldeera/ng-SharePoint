@@ -340,6 +340,99 @@ angular.module('ngSharePoint').factory('SPFile',
 
 
 		// ****************************************************************************
+		// moveFile
+		//
+		// Move the current file
+		//
+		// @pathToMove
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.moveFile = function (pathToMove) {
+			var self = this;
+			var def = $q.defer();
+			var headers = {
+				'Accept': 'application/json; odata=verbose'
+			};
+
+			var url = self.apiUrl + '/moveto(newurl=\'' + pathToMove + '/' + self.Name + '\',flags=1)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+				url: url,
+				method: 'POST',
+
+				success: function () {
+					def.resolve();
+				},
+
+				error: function (data, errorCode, errorMessage) {
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // moveFile
+
+
+		
+
+		// ****************************************************************************
+		// copyFile
+		//
+		// Copy the current file
+		//
+		// @pathToCopy
+		// @return: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.copyFile = function (pathToCopy) {
+			var self = this;
+			var def = $q.defer();
+			var headers = {
+				'Accept': 'application/json; odata=verbose'
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+			var url = self.apiUrl + '/copyto(strnewurl=\'' + pathToCopy + '/' + self.Name + '\',boverwrite=true)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+				url: url,
+				method: 'POST',
+
+				success: function () {
+					def.resolve();
+				},
+
+				error: function (data, errorCode, errorMessage) {
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+		}; // copyFile
+
+
+
+		// ****************************************************************************
 		// checkOut
 		//
 		// checkOut the current file
