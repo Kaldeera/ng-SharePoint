@@ -126,7 +126,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                     var dlg = SP.UI.ModalDialog.get_childDialog();
                                     if (dlg !== null) {
                                         var args = dlg.get_args();
-                                        if (args !== undefined && args.hideRibbon !== undefined) {
+                                        if (args !== null && args.hideRibbon !== undefined) {
                                             hideRibbon = args.hideRibbon;
                                         }
                                     }
