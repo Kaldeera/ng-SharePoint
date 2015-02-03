@@ -629,8 +629,21 @@ angular.module('ngSharePoint').directive('spform',
                                             // Sets schema
                                             $scope.schema = fields;
 
-                                            $scope.extendedSchema = utils.deepExtend({Fields: {}}, $scope.extendedSchema);
-                                            
+                                            // There are dialog args ?
+                                            var dialogExtendedSchema = {};
+
+                                            var dlg = SP.UI.ModalDialog.get_childDialog();
+                                            if (dlg !== null) {
+                                                var args = dlg.get_args();
+                                                if (args !== null && args.extendedSchema !== undefined) {
+
+                                                    dialogExtendedSchema = args.extendedSchema;
+                                                }
+                                            }
+
+                                            $scope.extendedSchema = utils.deepExtend({Fields: {}}, $scope.extendedSchema, dialogExtendedSchema);
+
+
                                             // Resolve expressions
                                             SPExpressionResolver.resolve(angular.toJson($scope.extendedSchema), $scope).then(function(extendedSchemaSolved) {
 
