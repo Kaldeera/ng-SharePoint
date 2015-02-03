@@ -153,6 +153,20 @@ angular.module('ngSharePoint').factory('SPList',
 
                     angular.extend(self, d);
 
+                    if (self.Fields !== void 0 && self.Fields.results !== void 0) {
+
+                        // process fields --> $expand: 'Fields'
+
+                        var fields = {};
+
+                        angular.forEach(self.Fields.results, function(field) {
+                            fields[field.InternalName] = field;
+                        });
+
+                        self.Fields = fields;
+                        SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+                    }
+
                     def.resolve(d);
                 }, 
 
@@ -499,6 +513,55 @@ angular.module('ngSharePoint').factory('SPList',
 
 
         // ****************************************************************************
+        // getSchema
+        //
+        // Gets list content type fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getWorkflowAssociationByName = function(workflowName) {
+
+            var self = this;
+            var def = $q.defer();
+
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            var params = utils.parseQuery({
+                $filter: "enabled eq true and Name eq '" + workflowName + "'"
+            });
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/WorkflowAssociations' + params,
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                },
+                
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    def.resolve(d);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        };  // getWorkflowAssociationByName
+
+
+        // ****************************************************************************
         // getListItems
         //
         // Gets the list items
@@ -685,6 +748,182 @@ angular.module('ngSharePoint').factory('SPList',
             return def.promise;
 
         }; // getItemById
+
+
+
+        // ****************************************************************************
+        // getDefaultEditFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultEditFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultEditFormUrl !== void 0) {
+
+                def.resolve(this.defaultEditFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultEditFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultEditFormUrl = self._list.get_defaultEditFormUrl();
+                def.resolve(self.defaultEditFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultEditFormUrl
+
+
+        // ****************************************************************************
+        // getDefaultDisplayFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultDisplayFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultDisplayFormUrl !== void 0) {
+
+                def.resolve(this.defaultDisplayFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultDisplayFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultDisplayFormUrl = self._list.get_defaultDisplayFormUrl();
+                def.resolve(self.defaultDisplayFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultDisplayFormUrl
+
+
+
+        // ****************************************************************************
+        // getDefaultNewFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultNewFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultNewFormUrl !== void 0) {
+
+                def.resolve(this.defaultNewFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultNewFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultNewFormUrl = self._list.get_defaultNewFormUrl();
+                def.resolve(self.defaultNewFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultNewFormUrl
 
 
 
