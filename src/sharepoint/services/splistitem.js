@@ -563,6 +563,18 @@ angular.module('ngSharePoint').factory('SPListItem',
                         delete saveObj[field.InternalName];
                     }
 
+                    // NOTA DE MEJORA!
+                    // Se pueden controlar los campos e tipo Lookup y User para que convierta los valores
+                    // al nombre de campo correcto (si es que están mal)
+                    // 
+                    // Ej. un campo que se llama Sala y el objeto tiene
+                    // obj.Sala = 12
+                    // 
+                    // Para que no se produzca un error, se deberia convertir a:
+                    //
+                    // obj.SalaId = 12
+                    //
+
                     // Required fields with null values don't allow to save the item
                     // Deleting this properties the item will be saved correctly
                     if (field.Required === true) {
@@ -584,6 +596,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 // Remove attachments
                 delete saveObj.attachments;
                 delete saveObj.AttachmentFiles;
+                delete saveObj.ContentType;
 
                 angular.extend(body, saveObj);
 
