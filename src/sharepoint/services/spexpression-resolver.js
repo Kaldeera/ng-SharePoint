@@ -170,7 +170,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             var deferred = $q.defer();
             var expressionsArray = [];
 
-            if (text !== void 0 && text !== null) {
+            if (angular.isString(text)) {
                 
                 // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
                 text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
