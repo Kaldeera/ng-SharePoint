@@ -97,7 +97,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
                     var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
                     var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
-                    var validationAttributes = ' ng-required="' + schema.Required + '"';
+                    var validationAttributes = (angular.isDefined($attrs.required) ? ' ng-required="' + schema.Required + '"' : '');
                     
                     // Specific field type validation attributes
                     switch(schema.TypeAsString) {
@@ -113,10 +113,24 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if ($attrs.renderAs) {
                         fieldType = $attrs.renderAs;
                     }
+
+
+                    // Process other attributes
+                    var otherAttributes = '';
+                    var processedAttributes = ['name', 'mode', 'required', 'dependsOn', 'renderAs'];
+                    angular.forEach($attrs.$attr, function(attr, normalizedAttr) {
+
+                        if (processedAttributes.indexOf(normalizedAttr) == -1) {
+                            
+                            otherAttributes += ' ' + attr + '="' + $attrs[normalizedAttr] + '"';
+
+                        }
+
+                    });
                     
 
                     // Mount the field directive HTML
-                    var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
+                    var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + '></spfield-' + fieldType + '>';
                     var newElement = $compile(fieldControlHTML)($scope);
 
                     $element.replaceWith(newElement);

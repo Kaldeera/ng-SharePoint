@@ -170,23 +170,26 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             var deferred = $q.defer();
             var expressionsArray = [];
 
-            // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
-            text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
+            if (text !== void 0 && text !== null) {
+                
+                // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
+                text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
 
-                // Check if the expression is already added.
-                // This way resolves the expression only once and replaces it in all places 
-                // where appears in the text.
-                var pos = expressionsArray.indexOf(p1);
+                    // Check if the expression is already added.
+                    // This way resolves the expression only once and replaces it in all places 
+                    // where appears in the text.
+                    var pos = expressionsArray.indexOf(p1);
 
-                if (pos == -1) {
-                    expressionsArray.push(p1);
-                    pos = expressionsArray.length - 1;
-                }
+                    if (pos == -1) {
+                        expressionsArray.push(p1);
+                        pos = expressionsArray.length - 1;
+                    }
 
-                return '{e:' + pos + '}';
+                    return '{e:' + pos + '}';
 
-            });
+                });
 
+            }
 
             // Resolve the 'expressionsArray' with promises
             resolveExpression(expressionsArray, scope).then(function() {
