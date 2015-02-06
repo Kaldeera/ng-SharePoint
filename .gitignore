@@ -45,9 +45,4 @@ build\ng-sharepoint.forms-editor.*
 # Other
 # ==========================
 .*
-Gruntfile.js
-gruntfile.js
-
-# Build
-# ==========================
-build/*
+!.gitignore

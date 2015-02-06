@@ -122,7 +122,7 @@ module.exports = function(grunt) {
               src: '**',
               //dest: 'R:\\app-ngforms\\js\\ngSharePoint'
               //dest: 'X:\\app\\ngSharepoint'
-              dest: 'V:\\app\\ngSharepoint'
+              dest: 'U:\\app\\libs'
             }
           ]
         }      
@@ -154,7 +154,7 @@ module.exports = function(grunt) {
   //grunt.loadNpmTasks('grunt-ng-annotate');
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', /*'ngAnnotate', */'concat:ngSharePoint', 'uglify', 'html2js:sharepoint'/*, 'copy:toServer'*/]);
+  grunt.registerTask('default', ['jshint:all', /*'ngAnnotate', */'concat:ngSharePoint', 'uglify', 'html2js:sharepoint', 'copy:toServer']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
 

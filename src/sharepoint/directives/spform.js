@@ -71,58 +71,62 @@ angular.module('ngSharePoint').directive('spform',
 
                         var fieldSchema = this.getFieldSchema(fieldName);
 
-                        // Set field default value.
-                        switch(fieldSchema.TypeAsString) {
+                        SPExpressionResolver.resolve(fieldSchema.DefaultValue, $scope).then(function(solvedDefaultValue) {
 
-                            case 'MultiChoice':
-                                $scope.item[fieldName] = { results: [] };
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName].results.push(fieldSchema.DefaultValue);
-                                }
-                                break;
+                            // Set field default value.
+                            switch(fieldSchema.TypeAsString) {
 
-                            case 'DateTime':
-                                var value;
+                                case 'MultiChoice':
+                                    $scope.item[fieldName] = { results: [] };
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName].results.push(solvedDefaultValue);
+                                    }
+                                    break;
 
-                                switch(fieldSchema.DefaultValue) {
-                                    case '[today]':
-                                        value = new Date();
-                                        break;
+                                case 'DateTime':
+                                    var value;
 
-                                    case 'undefined':
-                                    case undefined:
-                                    case null:
-                                        value = undefined;
-                                        break;
+                                    switch(solvedDefaultValue) {
+                                        case '[today]':
+                                            value = new Date();
+                                            break;
 
-                                    default:
-                                        value = new Date(fieldSchema.DefaultValue);
-                                        break;
-                                }
+                                        case 'undefined':
+                                        case undefined:
+                                        case null:
+                                            value = undefined;
+                                            break;
+
+                                        default:
+                                            value = new Date(solvedDefaultValue);
+                                            break;
+                                    }
 
 
-                                $scope.item[fieldName] = value;
-                                break;
+                                    $scope.item[fieldName] = value;
+                                    break;
 
-                            case 'Boolean':
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName] = fieldSchema.DefaultValue == '1';
-                                }
-                                break;
+                                case 'Boolean':
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName] = solvedDefaultValue == '1';
+                                    }
+                                    break;
 
-                            case 'Lookup':
-                            case 'User':
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName + 'Id'] = parseInt(fieldSchema.DefaultValue);
-                                }
-                                break;
+                                case 'Lookup':
+                                case 'User':
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName + 'Id'] = parseInt(solvedDefaultValue);
+                                    }
+                                    break;
 
-                            default:
-                                if (fieldSchema.DefaultValue !== null && fieldSchema.DefaultValue != 'undefined') {
-                                    $scope.item[fieldName] = fieldSchema.DefaultValue;
-                                }
-                                break;
-                        }
+                                default:
+                                    if (solvedDefaultValue !== null && solvedDefaultValue != 'undefined') {
+                                        $scope.item[fieldName] = solvedDefaultValue;
+                                    }
+                                    break;
+                            }
+
+                        });
                     }
                 };
 
@@ -645,6 +649,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                             // Resolve expressions
+                                            /*
                                             SPExpressionResolver.resolve(angular.toJson($scope.extendedSchema), $scope).then(function(extendedSchemaSolved) {
 
                                                 var solvedExtendedSchema = angular.fromJson(extendedSchemaSolved);
@@ -654,6 +659,12 @@ angular.module('ngSharePoint').directive('spform',
 
                                                 def.resolve();
                                             });
+                                            */
+
+                                            // Extend original schema with extended properties
+                                            $scope.schema = utils.deepExtend({}, $scope.schema, $scope.extendedSchema.Fields);
+
+                                            def.resolve();
 
                                         }); // contentType.getFields
 

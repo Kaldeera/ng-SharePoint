@@ -128,6 +128,9 @@ var utils = {
 
 	        return decodeURIComponent(results[1].replace(/\+/g, ' '));
 
+	    } else {
+
+	    	return undefined;
 	    }
 
 	},
@@ -285,6 +288,7 @@ var utils = {
 
 
 
+    /**
 	// ***************************************************************************
 	// getFunctionParameterNames
 	//
@@ -292,7 +296,7 @@ var utils = {
 	//
 	// @func: {function} The function name without the parenthesis.
 	// @returns: {Array[{String}]} The names of the parameters.
-	//
+	*/
 	getFunctionParameterNames: function(func) {
 
 		var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
@@ -305,34 +309,96 @@ var utils = {
 	},
 
 
-	extendDeep: function(dest) {
+	/**
+	 * Extening object that entered in first argument.
+	 * Returns extended object
+	 */
+	extend: function(obj) {
 
-	    angular.forEach(arguments, function(obj) {
+		if (typeof obj !== 'object') return obj;
 
-	        if (obj !== dest) {
+		var source, prop;
+		for (var i = 1, length = arguments.length; i < length; i++) {
 
-	            angular.forEach(obj, function(value, key) {
+			source = arguments[i];
+			
+			for (prop in source) {
+				if (hasOwnProperty.call(source, prop)) {
+					obj[prop] = source[prop];
+				}
+			}
+		}
 
-	                if (dest[key] && angular.isObject(dest[key])) {
-
-	                    utils.extendDeep(dest[key], value);
-
-	                } else if(!angular.isFunction(dest[key])) {
-
-	                    dest[key] = angular.copy(value);
-
-	                }
-
-	            });
-
-	        }
-
-	    });
+		return obj;
+	},
 
 
-	    return dest;
+	/**
+	 * Extening object that entered in first argument.
+	 * Returns extended object or false if have no target object or incorrect type.
+	 * If you wish to clone object, simply use that:
+	 *  deepExtend({}, yourObj_1, [yourObj_N]) - first arg is new empty object
+	 */
+	deepExtend: function (/*obj_1, [obj_2], [obj_N]*/) {
+		if (arguments.length < 1 || typeof arguments[0] !== 'object') {
+			return false;
+		}
 
-	}
+		if (arguments.length < 2) return arguments[0];
+
+		var target = arguments[0];
+
+		// convert arguments to array and cut off target object
+		var args = Array.prototype.slice.call(arguments, 1);
+
+		var key, val, src, clone, tmpBuf;
+
+		args.forEach(function (obj) {
+			if (typeof obj !== 'object') return;
+
+			for (key in obj) {
+				if ( ! (key in obj)) continue;
+
+				src = target[key];
+				val = obj[key];
+
+				if (val === target) continue;
+
+				if (typeof val !== 'object' || val === null) {
+					target[key] = val;
+					continue;
+				// } else if (val instanceof Buffer) {
+				// 	tmpBuf = new Buffer(val.length);
+				// 	val.copy(tmpBuf);
+				// 	target[key] = tmpBuf;
+				// 	continue;
+				} else if (val instanceof Date) {
+					target[key] = new Date(val.getTime());
+					continue;
+				} else if (val instanceof RegExp) {
+					target[key] = new RegExp(val);
+					continue;
+				}
+
+				if (typeof src !== 'object' || src === null) {
+					clone = (Array.isArray(val)) ? [] : {};
+					target[key] = utils.deepExtend(clone, val);
+					continue;
+				}
+
+				if (Array.isArray(val)) {
+					clone = (Array.isArray(src)) ? src : [];
+				} else {
+					clone = (!Array.isArray(src)) ? src : {};
+				}
+
+				target[key] = utils.deepExtend(clone, val);
+			}
+		});
+
+		return target;
+
+	}	// deepExtend
 
 };
 
@@ -1282,7 +1348,27 @@ angular.module('ngSharePoint').factory('SPContentType',
             var self = this;
             var deferred = $q.defer();
 
-            var ctx = SP.ClientContext.get_current();
+            var url;
+
+            if (self.__parent.url) {
+                url = self.__parent.url;
+            }
+
+            if (url === void 0 && self.__parent.web) {
+
+                url = self.__parent.web.url;
+            }
+
+            var ctx;
+
+            if (url === void 0) {
+
+                ctx = SP.ClientContext.get_current();
+            } else {
+
+                ctx = new SP.ClientContext(url);
+            }
+            
             var web = ctx.get_web();
             var list = web.get_lists().getByTitle(self.__parent.Title);
             var contentTypes = list.get_contentTypes();
@@ -1529,23 +1615,26 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             var deferred = $q.defer();
             var expressionsArray = [];
 
-            // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
-            text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
+            if (angular.isString(text)) {
+                
+                // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
+                text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
 
-                // Check if the expression is already added.
-                // This way resolves the expression only once and replaces it in all places 
-                // where appears in the text.
-                var pos = expressionsArray.indexOf(p1);
+                    // Check if the expression is already added.
+                    // This way resolves the expression only once and replaces it in all places 
+                    // where appears in the text.
+                    var pos = expressionsArray.indexOf(p1);
 
-                if (pos == -1) {
-                    expressionsArray.push(p1);
-                    pos = expressionsArray.length - 1;
-                }
+                    if (pos == -1) {
+                        expressionsArray.push(p1);
+                        pos = expressionsArray.length - 1;
+                    }
 
-                return '{e:' + pos + '}';
+                    return '{e:' + pos + '}';
 
-            });
+                });
 
+            }
 
             // Resolve the 'expressionsArray' with promises
             resolveExpression(expressionsArray, scope).then(function() {
@@ -2272,6 +2361,99 @@ angular.module('ngSharePoint').factory('SPFile',
 			return def.promise;
 
 		};	// removeFile
+
+
+
+		// ****************************************************************************
+		// moveFile
+		//
+		// Move the current file
+		//
+		// @pathToMove
+		// @returns: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.moveFile = function (pathToMove) {
+			var self = this;
+			var def = $q.defer();
+			var headers = {
+				'Accept': 'application/json; odata=verbose'
+			};
+
+			var url = self.apiUrl + '/moveto(newurl=\'' + pathToMove + '/' + self.Name + '\',flags=1)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+				url: url,
+				method: 'POST',
+
+				success: function () {
+					def.resolve();
+				},
+
+				error: function (data, errorCode, errorMessage) {
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+
+		}; // moveFile
+
+
+		
+
+		// ****************************************************************************
+		// copyFile
+		//
+		// Copy the current file
+		//
+		// @pathToCopy
+		// @return: Promise with the new SPFile object.
+		//
+		SPFileObj.prototype.copyFile = function (pathToCopy) {
+			var self = this;
+			var def = $q.defer();
+			var headers = {
+				'Accept': 'application/json; odata=verbose'
+			};
+
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+
+			var url = self.apiUrl + '/copyto(strnewurl=\'' + pathToCopy + '/' + self.Name + '\',boverwrite=true)';
+
+			var executor = new SP.RequestExecutor(self.web.url);
+
+			executor.executeAsync({
+				url: url,
+				method: 'POST',
+
+				success: function () {
+					def.resolve();
+				},
+
+				error: function (data, errorCode, errorMessage) {
+					var err = utils.parseError({
+						data: data,
+						errorCode: errorCode,
+						errorMessage: errorMessage
+					});
+
+					def.reject(err);
+				}
+			});
+
+			return def.promise;
+		}; // copyFile
 
 
 
@@ -3425,6 +3607,20 @@ angular.module('ngSharePoint').factory('SPList',
 
                     angular.extend(self, d);
 
+                    if (self.Fields !== void 0 && self.Fields.results !== void 0) {
+
+                        // process fields --> $expand: 'Fields'
+
+                        var fields = {};
+
+                        angular.forEach(self.Fields.results, function(field) {
+                            fields[field.InternalName] = field;
+                        });
+
+                        self.Fields = fields;
+                        SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
+                    }
+
                     def.resolve(d);
                 }, 
 
@@ -3771,6 +3967,55 @@ angular.module('ngSharePoint').factory('SPList',
 
 
         // ****************************************************************************
+        // getSchema
+        //
+        // Gets list content type fields
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getWorkflowAssociationByName = function(workflowName) {
+
+            var self = this;
+            var def = $q.defer();
+
+            var executor = new SP.RequestExecutor(self.web.url);
+
+            var params = utils.parseQuery({
+                $filter: "enabled eq true and Name eq '" + workflowName + "'"
+            });
+
+            executor.executeAsync({
+
+                url: self.apiUrl + '/WorkflowAssociations' + params,
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                },
+                
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+                    def.resolve(d);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        };  // getWorkflowAssociationByName
+
+
+        // ****************************************************************************
         // getListItems
         //
         // Gets the list items
@@ -3957,6 +4202,182 @@ angular.module('ngSharePoint').factory('SPList',
             return def.promise;
 
         }; // getItemById
+
+
+
+        // ****************************************************************************
+        // getDefaultEditFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultEditFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultEditFormUrl !== void 0) {
+
+                def.resolve(this.defaultEditFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultEditFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultEditFormUrl = self._list.get_defaultEditFormUrl();
+                def.resolve(self.defaultEditFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultEditFormUrl
+
+
+        // ****************************************************************************
+        // getDefaultDisplayFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultDisplayFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultDisplayFormUrl !== void 0) {
+
+                def.resolve(this.defaultDisplayFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultDisplayFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultDisplayFormUrl = self._list.get_defaultDisplayFormUrl();
+                def.resolve(self.defaultDisplayFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultDisplayFormUrl
+
+
+
+        // ****************************************************************************
+        // getDefaultNewFormUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultNewFormUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultNewFormUrl !== void 0) {
+
+                def.resolve(this.defaultNewFormUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultNewFormUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultNewFormUrl = self._list.get_defaultNewFormUrl();
+                def.resolve(self.defaultNewFormUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultNewFormUrl
 
 
 
@@ -4762,15 +5183,42 @@ angular.module('ngSharePoint').factory('SPListItem',
                         delete saveObj[field.InternalName];
                     }
 
+                    // NOTA DE MEJORA!
+                    // Se pueden controlar los campos e tipo Lookup y User para que convierta los valores
+                    // al nombre de campo correcto (si es que están mal)
+                    // 
+                    // Ej. un campo que se llama Sala y el objeto tiene
+                    // obj.Sala = 12
+                    // 
+                    // Para que no se produzca un error, se deberia convertir a:
+                    //
+                    // obj.SalaId = 12
+                    //
+
+                    // Required fields with null values don't allow to save the item
+                    // Deleting this properties the item will be saved correctly
+                    if (field.Required === true) {
+
+                        var fieldType = field.originalTypeAsString || field.TypeAsString;
+                        var fieldName = field.InternalName;
+                        if (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti') {
+                            fieldName = fieldName + 'Id';
+                        }
+
+                        if (saveObj[fieldName] === null) {
+
+                            delete saveObj[fieldName];
+                        }
+                    }
+
                 });
 
                 // Remove attachments
                 delete saveObj.attachments;
                 delete saveObj.AttachmentFiles;
+                delete saveObj.ContentType;
 
                 angular.extend(body, saveObj);
-                console.log(saveObj, angular.toJson(saveObj));
-
 
 
                 // Set the headers for the REST API call.
@@ -4906,6 +5354,111 @@ angular.module('ngSharePoint').factory('SPListItem',
             return def.promise;
 
         }; // remove
+
+
+
+
+        // ****************************************************************************     
+        // runWorkflow
+        //
+        // Runs the specified workflow (guid or name) over the current item.
+        // This method uses the _vti/bin/workflow.asmx service and performs a soap call
+        // to accomplish this request
+        //
+        // @returns: Promise with the result of the operation.
+        //
+        SPListItemObj.prototype.runWorkflow = function(workflowName, params) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.list.web.url);
+
+            if (workflowName === void 0) {
+                throw 'Required @workflowName parameter not specified in SPListItem.runWorkflow method.';
+            }
+
+            if (!utils.isGuid(workflowName)) {
+
+                this.list.getWorkflowAssociationByName(workflowName).then(function(workflowAssociations) {
+
+                    if (workflowAssociations.length > 0) {
+
+                        return self.runWorkflow(workflowAssociations[0].Id, params);
+
+                    } else {
+
+                        console.error('There is no associated workflow with name ' + workflowName);
+                    }
+                });
+
+            } else {
+
+                var context = new SP.ClientContext(self.list.web.url);
+                var web = context.get_web();
+                var list = web.get_lists().getById(self.list.Id);
+                self._item = list.getItemById(self.Id);
+                context.load(self._item);
+
+                context.executeQueryAsync(function() {
+
+                    // Set the headers for the REST API call.
+                    // ----------------------------------------------------------------------------
+                    var headers = {
+                        "content-type": "text/xml;charset='utf-8'"
+                    };
+
+                    var requestDigest = document.getElementById('__REQUESTDIGEST');
+                    // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+                    // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+                    if (requestDigest !== null) {
+                        headers['X-RequestDigest'] = requestDigest.value;
+                    }
+
+                    var data = '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><StartWorkflow xmlns="http://schemas.microsoft.com/sharepoint/soap/workflow/"><item>';
+                    data += _spPageContextInfo.webAbsoluteUrl + self._item.get_item('FileRef');
+                    data += '</item><templateId>';
+                    data += workflowName;
+                    data += '</templateId><workflowParameters><root /></workflowParameters></StartWorkflow></soap12:Body></soap12:Envelope>';
+
+                    // Make the call.
+                    // ----------------------------------------------------------------------------
+                    executor.executeAsync({
+
+                        url: self.list.web.url.rtrim('/') + '/_vti_bin/workflow.asmx',
+                        method: "POST",
+                        dataType: "xml",
+                        async: true,
+                        headers: headers,
+                        body: data,
+
+                        success: function(data) {
+
+                            self.getProperties().then(function() {
+                                def.resolve();
+                            });
+                        }, 
+
+                        error: function(data, errorCode, errorMessage) {
+
+                            var err = utils.parseError({
+                                data: data,
+                                errorCode: errorCode,
+                                errorMessage: errorMessage
+                            });
+
+                            def.reject(err);
+                        }
+                    });
+
+                }); // get _item
+
+            }
+
+            return def.promise;
+
+        }; // runWorkflow
+
 
 
         // Returns the SPListItemObj class
@@ -5801,9 +6354,9 @@ angular.module('ngSharePoint').factory('SPUser',
 
 angular.module('ngSharePoint').factory('SPUtils', 
 
-    ['SPConfig', '$q', '$http', 'ODataParserProvider', 
+    ['SPConfig', '$q', '$http', '$injector', 'ODataParserProvider', 
 
-    function SPUtils_Factory(SPConfig, $q, $http, ODataParserProvider) {
+    function SPUtils_Factory(SPConfig, $q, $http, $injector, ODataParserProvider) {
 
         'use strict';
 
@@ -6241,7 +6794,7 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
 
-
+            /**
             // ****************************************************************************     
             // getFileBinary
             //
@@ -6250,6 +6803,7 @@ angular.module('ngSharePoint').factory('SPUtils',
             // @file: A file object from the files property of the DOM element <input type="File" ... />.
             // @returns: Promise with the binary data.
             //
+            */
             getFileBinary: function(file) {
 
                 var self = this;
@@ -6275,6 +6829,29 @@ angular.module('ngSharePoint').factory('SPUtils',
                 reader.readAsArrayBuffer(file);
 
                 return deferred.promise;
+            },
+
+
+            /**
+            * This function calls the fn function injecting her params (services)
+            */
+            callFunctionWithParams: function(fn, scope) {
+
+                var result = true;
+                if (fn) {
+
+                    var annotations = $injector.annotate(fn);
+                    result = $injector.invoke(fn, scope, scope);
+
+                    /*
+                    for(var r=0; r < annotations.length; r++) {
+                        annotations[r] = $injector.get(annotations[r]);
+                    }
+                    result = fn(annotations);
+                    */
+                }
+
+                return result;
             }
 
         };
@@ -6812,6 +7389,10 @@ angular.module('ngSharePoint').factory('SPWeb',
             // Default SAVE form action
             function save() {
 
+                if (SP.UI.ModalDialog.get_childDialog()) {
+                    scope.dialogResult = SP.UI.DialogResult.OK;
+                }
+
                 return scope.formCtrl.save(redirectUrl);
 
             }
@@ -6820,6 +7401,10 @@ angular.module('ngSharePoint').factory('SPWeb',
 
             // Default CANCEL form action
             function cancel() {
+
+                if (SP.UI.ModalDialog.get_childDialog()) {
+                    scope.dialogResult = SP.UI.DialogResult.cancel;
+                }
 
                 return scope.formCtrl.cancel(redirectUrl);
 
@@ -6856,52 +7441,83 @@ angular.module('ngSharePoint').factory('SPWeb',
 
                             if (redirectUrl) {
 
+                                var item = scope.formCtrl.getItem();
+                                var list = item.list;
+
                                 // Checks for pre-defined values in the redirect url.
                                 switch(redirectUrl.toLowerCase()) {
 
                                     case 'display':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
                                         // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
                                         //       puede ser '.../lo-que-sea.aspx'.
                                         // TODO: Get the right default 'DispForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'display' form.
-                                
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultDisplayFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+                                
                                         break;
 
 
                                     case 'edit':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
                                         // TODO: Get the right default 'EditForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'edit' form.
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultEditFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+
                                         break;
 
 
                                     case 'new':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
                                         // TODO: Get the right default 'NewForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'new' form.
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultNewFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+
                                         break;
 
 
                                     case 'default':
+                                                
+                                        var dialog = SP.UI.ModalDialog.get_childDialog();
 
-                                        if (SP.UI.ModalDialog.get_childDialog()) {
+                                        if (dialog) {
 
                                             $timeout(function() {
 
-                                                SP.UI.ModalDialog.get_childDialog().close();
+                                                try {
+
+                                                    scope.dialogReturnValue = 'Valor devuelto desde un cuadro de diálogo al cerrar...';
+
+                                                    // NOTE: The next call will throw an error if the dialog wasn't opened with the method
+                                                    //       SP.UI.ModalDialog.commonModalDialogOpen(url, options, callback, args)
+                                                    dialog.commonModalDialogClose(scope.dialogResult, scope.dialogReturnValue);
+
+                                                } catch(e) {
+
+                                                    dialog.close(scope.dialogResult);
+
+                                                }
 
                                             });
 
@@ -7654,20 +8270,14 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     }
 
                     // Gets the field type
-                    var fieldType = (schema.hasExtendedSchema ? schema.originalTypeAsString : schema.TypeAsString);
+                    var fieldType = schema.originalTypeAsString;
                     if (fieldType === 'UserMulti') fieldType = 'User';
 
                     // Gets the field name
                     var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
 
-                    // If the field has extended schema, adjust the type to its extended 'TypeAsString' property.
-                    // This must be done after adjust the 'fieldName' in order to bind the 'ng-model' to the correct field name.
-                    if (schema.hasExtendedSchema) {
-
-                        fieldType = schema.TypeAsString;
-                        if (fieldType === 'UserMulti') fieldType = 'User';
-
-                    }
+                    fieldType = schema.TypeAsString;
+                    if (fieldType === 'UserMulti') fieldType = 'User';
 
                     // Adjust the field name if necessary.
                     // This is for additional read-only fields attached to Lookup and LookupMulti field types.
@@ -7695,7 +8305,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     var modeAttr = ($attrs.mode ? ' mode="' + $attrs.mode + '"' : '');
                     var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
                     var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
-                    var validationAttributes = ' ng-required="' + schema.Required + '"';
+                    var validationAttributes = (angular.isDefined($attrs.required) ? ' ng-required="' + schema.Required + '"' : '');
                     
                     // Specific field type validation attributes
                     switch(schema.TypeAsString) {
@@ -7711,10 +8321,24 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if ($attrs.renderAs) {
                         fieldType = $attrs.renderAs;
                     }
+
+
+                    // Process other attributes
+                    var otherAttributes = '';
+                    var processedAttributes = ['name', 'mode', 'required', 'dependsOn', 'renderAs'];
+                    angular.forEach($attrs.$attr, function(attr, normalizedAttr) {
+
+                        if (processedAttributes.indexOf(normalizedAttr) == -1) {
+                            
+                            otherAttributes += ' ' + attr + '="' + $attrs[normalizedAttr] + '"';
+
+                        }
+
+                    });
                     
 
                     // Mount the field directive HTML
-                    var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + '></spfield-' + fieldType + '>';
+                    var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + '></spfield-' + fieldType + '>';
                     var newElement = $compile(fieldControlHTML)($scope);
 
                     $element.replaceWith(newElement);
@@ -8097,9 +8721,21 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 							hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
 						}
 						var minutes = $scope.minutesModel;
-						var date = new Date(Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes));
+						var utcDate = Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes);
+						//var offset = $scope.dateModel.getTimezoneOffset() * 60 * 1000;
+						/*
+						var offset = 0;
+						try {
+							var parts = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+							offset = new Date(parts[2], (parts[1] - 1), parts[0]).getTimezoneOffset() * 60 * 1000;
+						} catch(e) { }
+						*/
+						var offset = new Date().getTimezoneOffset() * 60 * 1000;
+						var date = new Date(utcDate + offset);
 
-						$scope.value = date.toISOString();
+						// Into the item must store a valid Date object
+						// $scope.value = date.toISOString();)
+						$scope.value = date;
 
 					} catch(e) {
 
@@ -10322,6 +10958,318 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 ]);
 
 /*
+    SPFieldValue - directive
+    
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+    Pau Codina (pau.codina@kaldeera.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  SPFieldValue
+///////////////////////////////////////
+
+(function() {
+    
+    'use strict';
+
+    angular
+        .module('ngSharePoint')
+        .directive('spfieldValue', spfieldValue);
+
+
+    spfieldValue.$inject = ['$q', 'SharePoint', '$filter'];
+
+
+    /* @ngInject */
+    function spfieldValue($q, SharePoint, $filter) {
+
+        var directive = {
+
+            restrict: 'AE',
+            template: '<div ng-bind-html="fieldValue | unsafe"></div>',
+            replace: true,
+            scope: {
+                item: '=',
+                field: '='
+            },
+            link: postLink,
+
+        };
+
+        return directive;
+
+        
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+
+
+        function postLink(scope, element, attrs) {
+
+            if (!angular.isDefined(scope.item) || !angular.isDefined(scope.field)) {
+
+                throw 'Required "item" or "field" attributes missing in SPFieldValue directive.';
+
+            }
+
+
+            // Init the field value
+            scope.fieldValue = '';
+
+
+            var fieldType = scope.field.TypeAsString;
+            var fieldName = scope.field.InternalName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+            var fieldValue = scope.item[fieldName] || '';
+
+
+            if (fieldValue !== '') {
+
+                switch(fieldType) {
+
+                    case 'DateTime':
+                        var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+                        scope.fieldValue = '<span>' + new Date(fieldValue).format(cultureInfo.dateTimeFormat.ShortDatePattern) + '</span>';
+                        break;
+
+                    case 'MultiChoice':
+                        if (fieldValue === void 0 || fieldValue === null) {
+                            fieldValue = { results: [] };
+                        }
+                        scope.fieldValue = '<span>' + fieldValue.results.join(', ') + '</span>';
+                        break;
+
+                    case 'Boolean':
+                        scope.fieldValue = '<span>' + $filter('boolean')(fieldValue) + '</span>';
+                        break;
+
+                    case 'User':
+                    case 'UserMulti':
+                    case 'Lookup':
+                    case 'LookupMulti':
+
+                        if (fieldValue === void 0 || fieldValue === null) {
+                            fieldValue = { results: [] };
+                        }
+
+                        if (!angular.isObject(fieldValue)) {
+                            fieldValue = { results: [fieldValue].filter(Boolean) };
+                        }
+
+                        getLookupValues(fieldValue.results).then(function(values) {
+
+                            scope.fieldValue = '<span>';
+
+                            angular.forEach(values, function(value) {
+
+                                scope.fieldValue += '<a href="' + value.url + '" onclick="if(event.stopPropagation) event.stopPropagation();">' + value.title + '</a>, ';
+
+                            });
+
+                            // Remove the comma from the last element
+                            scope.fieldValue = scope.fieldValue.replace(/ *, *$/, '');
+
+                            scope.fieldValue += '</span>';
+
+                        });
+
+                        break;
+
+                    case 'URL':
+                        // Url
+                        if (scope.field.DisplayFormat === 0) {
+                            scope.fieldValue += '<a href="' + fieldValue.Url + '" target="_blank" onclick="if(event.stopPropagation) event.stopPropagation();">' + fieldValue.Description + '</a>';
+                        }
+
+                        // Image
+                        if (scope.field.DisplayFormat === 1) {
+                            scope.fieldValue += '<img src="' + fieldValue.Url + '" alt="' + fieldValue.Description + '" />';
+                        }
+
+                        break;
+
+                    default:
+                        scope.fieldValue = '<span>' + fieldValue + '</span>';
+                }
+                
+            }
+
+
+
+            function getLookupValues(values) {
+
+                var resolvedValues = [];
+
+                return SharePoint.getWeb(scope.field.LookupWebId).then(function(lookupWeb) {
+
+                    return lookupWeb.getList(scope.field.LookupList).then(function(lookupList) {
+
+                        var query = {};
+
+                        // Expand 'Forms' property for Lookup and LookupMulti fields.
+                        if (scope.field.TypeAsString == 'Lookup' || scope.field.TypeAsString == 'LookupMulti') {
+
+                            query.$expand = 'Forms';
+
+                        }
+
+                        return lookupList.getProperties(query).then(function() {
+
+                            return lookupList.getFields().then(function() {
+
+                                var promises = [];
+
+                                angular.forEach(values, function(lookupValue) {
+
+                                    var lookupPromise = lookupList.getItemById(lookupValue).then(function(lookupItem) {
+
+                                        var displayValue = lookupItem[scope.field.LookupField];
+                                        var fieldSchema = lookupList.Fields[scope.field.LookupField];
+
+                                        if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
+                                            var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+                                            var date = new Date(displayValue);
+                                            displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+                                        }
+
+                                        if (fieldSchema.TypeAsString === 'Number') {
+                                            if (fieldSchema.Percentage) {
+                                                displayValue += '%';
+                                            }
+                                        }
+
+
+                                        // When the field is a Computed field, shows its title.
+                                        // TODO: Resolve computed fields.
+                                        if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
+                                            displayValue = lookupItem.Title;
+                                        }
+
+
+                                        // Gets the lookup url
+                                        var url = '';
+
+                                        if (scope.field.TypeAsString == 'User' || scope.field.TypeAsString == 'UserMulti') {
+
+                                            url = lookupItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
+
+                                        } else {
+
+                                            url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
+                                            
+                                        }
+
+
+                                        // Set the final field value.
+                                        resolvedValues.push({
+
+                                            title: displayValue,
+                                            url: url
+
+                                        });
+
+                                        return true;
+
+                                    });
+
+                                    promises.push(lookupPromise);
+
+                                });
+
+
+                                return $q.all(promises).then(function() {
+
+                                    return resolvedValues;
+
+                                });
+
+                            });
+
+                        });
+
+                    });
+
+                });
+
+            } // getLookupValues
+
+        } // postLink
+
+    } // Directive factory function
+
+})();
+/*
+	SPFieldWorkflowStatus - directive
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//	SPFieldWorkflowStatus
+///////////////////////////////////////
+
+angular.module('ngSharePoint').directive('spfieldWorkflowstatus', 
+
+	['SPFieldDirective', 'SPUtils',
+
+	function spfieldWorkflowstatus_DirectiveFactory(SPFieldDirective, SPUtils) {
+
+		var spfieldWorkflowstatus_DirectiveDefinitionObject = {
+
+			restrict: 'EA',
+			require: ['^spform', 'ngModel'],
+			replace: true,
+			scope: {
+				mode: '@',
+				value: '=ngModel'
+			},
+			templateUrl: 'templates/form-templates/spfield-control.html',
+
+
+			link: function($scope, $element, $attrs, controllers) {
+
+				var directive = {
+					
+					fieldTypeName: 'workflowstatus',
+					replaceAll: false,
+					displayTemplateUrl: 'templates/form-templates/spfield-workflowstatus-display.html',
+					editTemplateUrl: 'templates/form-templates/spfield-workflowstatus-display.html'
+
+//						$scope.choices = $scope.schema.Choices.results;
+				};
+				
+				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+				$scope.getWorkflowStatusDisplayValue = function() {
+
+					if ($scope.value !== void 0 && $scope.value !== null) {
+						return $scope.schema.Choices.results[$scope.value];
+					} else {
+						return '';
+					}
+				};
+			}
+
+		}; // Directive definition object
+
+
+		return spfieldWorkflowstatus_DirectiveDefinitionObject;
+
+	} // Directive factory
+
+]);
+
+/*
 	SPField - directive
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -10766,9 +11714,9 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
 angular.module('ngSharePoint').directive('spform', 
 
-    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', 'SPExpressionResolver', 'SPListItem',
+    ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', '$injector', 'SPExpressionResolver', 'SPListItem',
 
-    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, SPExpressionResolver, SPListItem) {
+    function spform_DirectiveFactory(SPUtils, $compile, $templateCache, $http, $q, $timeout, $injector, SPExpressionResolver, SPListItem) {
 
         var spform_DirectiveDefinitionObject = {
 
@@ -10779,19 +11727,7 @@ angular.module('ngSharePoint').directive('spform',
                 item: '=item',
                 mode: '=mode',
                 extendedSchema: '=',
-                onPreSave: '&',
-                onPostSave: '&',
-                onCancel: '&'
-                // NOTE: The functions 'onPreSave', 'onPostSave' and 'onCancel' must be 
-                //       function references (without parenthesis).
-                //       Using this technique allows us to pass the right argument values.
-                //
-                //       e.g. assigning the function directly (WRONG):
-                //              <spform ... on-pre-save="myOnPreSaveFn()" ... ></spform>
-                //
-                //       e.g. assigning the function reference (CORRECT):
-                //              <spform ... on-pre-save="myOnPreSaveFn" ... ></spform>
-                //
+                extendedController: '=',
             },
             templateUrl: 'templates/form-templates/spform.html',
 
@@ -10833,35 +11769,62 @@ angular.module('ngSharePoint').directive('spform',
 
                         var fieldSchema = this.getFieldSchema(fieldName);
 
-                        // Set field default value.
-                        switch(fieldSchema.TypeAsString) {
+                        SPExpressionResolver.resolve(fieldSchema.DefaultValue, $scope).then(function(solvedDefaultValue) {
 
-                            case 'MultiChoice':
-                                $scope.item[fieldName] = { results: [] };
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName].results.push(fieldSchema.DefaultValue);
-                                }
-                                break;
+                            // Set field default value.
+                            switch(fieldSchema.TypeAsString) {
 
-                            case 'DateTime':
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName] = new Date(); //-> [today]
-                                    // TODO: Hay que controlar el resto de posibles valores por defecto.
-                                }
-                                break;
+                                case 'MultiChoice':
+                                    $scope.item[fieldName] = { results: [] };
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName].results.push(solvedDefaultValue);
+                                    }
+                                    break;
 
-                            case 'Boolean':
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName] = fieldSchema.DefaultValue == '1';
-                                }
-                                break;
+                                case 'DateTime':
+                                    var value;
 
-                            default:
-                                if (fieldSchema.DefaultValue !== null) {
-                                    $scope.item[fieldName] = fieldSchema.DefaultValue;
-                                }
-                                break;
-                        }
+                                    switch(solvedDefaultValue) {
+                                        case '[today]':
+                                            value = new Date();
+                                            break;
+
+                                        case 'undefined':
+                                        case undefined:
+                                        case null:
+                                            value = undefined;
+                                            break;
+
+                                        default:
+                                            value = new Date(solvedDefaultValue);
+                                            break;
+                                    }
+
+
+                                    $scope.item[fieldName] = value;
+                                    break;
+
+                                case 'Boolean':
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName] = solvedDefaultValue == '1';
+                                    }
+                                    break;
+
+                                case 'Lookup':
+                                case 'User':
+                                    if (solvedDefaultValue !== null) {
+                                        $scope.item[fieldName + 'Id'] = parseInt(solvedDefaultValue);
+                                    }
+                                    break;
+
+                                default:
+                                    if (solvedDefaultValue !== null && solvedDefaultValue != 'undefined') {
+                                        $scope.item[fieldName] = solvedDefaultValue;
+                                    }
+                                    break;
+                            }
+
+                        });
                     }
                 };
 
@@ -10882,7 +11845,8 @@ angular.module('ngSharePoint').directive('spform',
 
                     } else {
 
-                        return $scope.schema[fieldName];
+                        // returns the content type field or list field (workflow fields and other hand added fields to list)
+                        return $scope.schema[fieldName] || $scope.item.list.Fields[fieldName] || undefined;
                     }
 
                 };
@@ -11091,8 +12055,8 @@ angular.module('ngSharePoint').directive('spform',
                     });
 
 
-                    // Invoke 'onPreSave' function and pass the 'item' and the 'originalItem' as arguments.
-                    $q.when(($scope.onPreSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
+                    // Invoke 'onPreSave' function
+                    $q.when(SPUtils.callFunctionWithParams($scope.onPreSave, $scope)).then(function(result) {
 
                         // If the 'onPreSave' function returns FALSE, cancels the save operation.
                         if (result !== false) {
@@ -11101,8 +12065,8 @@ angular.module('ngSharePoint').directive('spform',
 
                                 $scope.formStatus = this.status.IDLE;
 
-                                // Invoke 'onPostSave' function and pass the 'item' and the 'originalItem' as arguments.
-                                $q.when(($scope.onPostSave || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
+                                // Invoke 'onPostSave' function.
+                                $q.when(SPUtils.callFunctionWithParams($scope.onPostSave, $scope)).then(function(result) {
 
                                     if (result !== false) {
 
@@ -11189,8 +12153,8 @@ angular.module('ngSharePoint').directive('spform',
 
                     $scope.formStatus = this.status.PROCESSING;
 
-                    // Invoke 'onCancel' function and pass the 'item' and the 'originalItem' as arguments.
-                    $q.when(($scope.onCancel || angular.noop)()($scope.item, $scope.originalItem)).then(function(result) {
+                    // Invoke 'onCancel' function
+                    $q.when(SPUtils.callFunctionWithParams($scope.onCancel, $scope)).then(function(result) {
 
                         if (result !== false) {
 
@@ -11274,7 +12238,9 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (newValue === void 0 || newValue === oldValue) return;
 
-                            loadItemTemplate();
+                            loadItemInfrastructure().then(function() {
+                                loadItemTemplate();
+                            });
 
                         });
 
@@ -11295,19 +12261,29 @@ angular.module('ngSharePoint').directive('spform',
                             // Instead, create a 'new SPListItem(@list, @data)' that use the 'angular.extend' method.
                             $scope.originalItem = new SPListItem($scope.item.list, $scope.item);
 
-                            loadItemTemplate();
+                            loadItemInfrastructure().then(function() {
+                                loadItemTemplate();
+                            });
 
                         });
 
 
+                        function loadItemInfrastructure() {
 
-                        function loadItemTemplate() {
-                            
+                            var self = this;
+                            var def = $q.defer();
+
                             // Checks if the form is already being processed.
-                            if ($scope.formStatus === spformController.status.PROCESSING) return;
+                            if ($scope.formStatus === spformController.status.PROCESSING) {
+                                def.reject();
+                                return def.promise;
+                            }
 
                             // Ensure item has a value
-                            if (!angular.isDefined($scope.item)) return;
+                            if (!angular.isDefined($scope.item)) {
+                                def.reject();
+                                return def.promise;
+                            }
 
                             // Ensure mode has a value
                             if (!angular.isDefined($scope.mode)) {
@@ -11316,10 +12292,15 @@ angular.module('ngSharePoint').directive('spform',
 
                             }
 
-
                             // Update form status
                             $scope.formStatus = spformController.status.PROCESSING;
 
+
+                            // Extend the formController with the extendedController (if exists)
+                            if (angular.isDefined($scope.extendedController)) {
+
+                                utils.extend($scope, $scope.extendedController);
+                            }
 
                             // Gets the schema (fields) of the list.
                             // Really, gets the fields of the list content type specified in the 
@@ -11342,102 +12323,146 @@ angular.module('ngSharePoint').directive('spform',
 
                                             }
 
-                                            // Sets the final schema
-                                            $scope.schema = fields;
-
-                                            // Checks for an 'extendedSchema' and applies it.
-                                            if (angular.isDefined($scope.extendedSchema) && angular.isDefined($scope.extendedSchema.Fields)) {
-
-                                                // The next instruction replaces the entire field definition. Wrong way!
-                                                //angular.extend($scope.schema, $scope.extendedSchema.Fields);
-
-                                                /*
-                                                 * Temporary solution:
-                                                 *
-                                                 * Expand all the existent fields individually and then add the
-                                                 * inexistent ones.
-                                                 *
-                                                 */
-
-                                                angular.forEach($scope.extendedSchema.Fields, function(extendedField, fieldName) {
-
-                                                    var fieldSchema = $scope.schema[fieldName];
-
-                                                    if (angular.isDefined(fieldSchema)) {
-
-                                                        extendedField.hasExtendedSchema = true;
-                                                        extendedField.originalTypeAsString = fieldSchema.TypeAsString;
-
-                                                        angular.extend($scope.schema[fieldName], extendedField);
-
-                                                    } else {
-
-                                                        extendedField.isVirtualField = true;
-                                                        $scope.schema[fieldName] = extendedField;
-
-                                                    }
-
-                                                });
-
-                                                /*
-                                                 * TODO:
-                                                 *
-                                                 * Make a deep angular.extend without replacing existing properties and, optionally, 
-                                                 * with a limit of recursion levels to avoid infinite loops due to redundant objects.
-                                                 *
-                                                 */
-
-                                            }
-
-                                            // Search for the 'transclusion-container' attribute in the 'spform' template elements.
-                                            var elements = $element.find('*');
-                                            var transclusionContainer;
-
-                                            angular.forEach(elements, function(elem) {
-                                                if (elem.attributes['transclusion-container'] !== void 0) {
-                                                    transclusionContainer = angular.element(elem);
-                                                }
+                                            // Set the originalTypeAsString
+                                            angular.forEach(fields, function(field) {
+                                                field.originalTypeAsString = field.TypeAsString;
                                             });
 
+                                            // Sets schema
+                                            $scope.schema = fields;
 
-                                            // Ensure 'transclusion' element.
-                                            if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
-                                                transclusionContainer = $element;
+                                            // There are dialog args ?
+                                            var dialogExtendedSchema = {};
+
+                                            var dlg = SP.UI.ModalDialog.get_childDialog();
+                                            if (dlg !== null) {
+                                                var args = dlg.get_args();
+                                                if (args !== null && args.extendedSchema !== undefined) {
+
+                                                    dialogExtendedSchema = args.extendedSchema;
+                                                }
                                             }
 
+                                            $scope.extendedSchema = utils.deepExtend({Fields: {}}, $scope.extendedSchema, dialogExtendedSchema);
 
+
+                                            // Resolve expressions
                                             /*
-                                            // Remove the 'loading animation' element
-                                            var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
-                                            if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                            SPExpressionResolver.resolve(angular.toJson($scope.extendedSchema), $scope).then(function(extendedSchemaSolved) {
+
+                                                var solvedExtendedSchema = angular.fromJson(extendedSchemaSolved);
+
+                                                // Extend original schema with extended properties
+                                                $scope.schema = utils.deepExtend({}, $scope.schema, solvedExtendedSchema.Fields);
+
+                                                def.resolve();
+                                            });
                                             */
 
+                                            // Extend original schema with extended properties
+                                            $scope.schema = utils.deepExtend({}, $scope.schema, $scope.extendedSchema.Fields);
 
-                                            transclusionContainer.empty(); // Needed?
+                                            def.resolve();
+
+                                        }); // contentType.getFields
+
+                                    }); // lit.getContentType
+
+                                }); // list.getFields
+
+                            }); // list.getProperties
 
 
-                                            // Check for 'templateUrl' attribute
-                                            if ($attrs.templateUrl) {
+                            return def.promise;
 
-                                                // Apply the 'templateUrl' attribute
-                                                $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+                        }   // loadItemInfrastructure
 
-                                                    parseRules(transclusionContainer, angular.element(html), false).then(function() {
 
-                                                        /*
-                                                        $compile(transclusionContainer)($scope);
-                                                        $scope.formStatus = spformController.status.IDLE;
-                                                        dialogResize();
-                                                        */
 
-                                                        compile(transclusionContainer);
+                        function loadItemTemplate() {
 
-                                                    });
+                            $q.when(SPUtils.callFunctionWithParams($scope.onPreBind, $scope)).then(function(result) {
 
-                                                }).error(function(data, status, headers, config, statusText) {
+                                // Search for the 'transclusion-container' attribute in the 'spform' template elements.
+                                var elements = $element.find('*');
+                                var transclusionContainer;
 
-                                                    $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+                                angular.forEach(elements, function(elem) {
+                                    if (elem.attributes['transclusion-container'] !== void 0) {
+                                        transclusionContainer = angular.element(elem);
+                                    }
+                                });
 
+
+                                // Ensure 'transclusion' element.
+                                if (transclusionContainer === void 0 || transclusionContainer.length === 0) {
+                                    transclusionContainer = $element;
+                                }
+
+
+                                /*
+                                // Remove the 'loading animation' element
+                                var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
+                                if (loadingAnimation !== void 0) angular.element(loadingAnimation).remove();
+                                */
+
+
+                                transclusionContainer.empty(); // Needed?
+
+
+                                // Check for 'templateUrl' attribute
+                                if ($attrs.templateUrl) {
+
+                                    // Apply the 'templateUrl' attribute
+                                    $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+
+                                        parseRules(transclusionContainer, angular.element(html), false).then(function() {
+
+                                            /*
+                                            $compile(transclusionContainer)($scope);
+                                            $scope.formStatus = spformController.status.IDLE;
+                                            dialogResize();
+                                            */
+
+                                            compile(transclusionContainer);
+
+                                        });
+
+                                    }).error(function(data, status, headers, config, statusText) {
+
+                                        $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
+
+                                        /*
+                                        $compile(transclusionContainer)($scope);
+                                        $scope.formStatus = spformController.status.IDLE;
+                                        dialogResize();
+                                        */
+
+                                        compile(transclusionContainer);
+
+                                    });
+
+                                } else {
+
+                                    // Apply transclusion
+                                    transcludeFn($scope, function(clone) {
+                                        
+                                        parseRules(transclusionContainer, clone, true).then(function() {
+
+                                            // If no content was detected within the 'spform' element, generates a default form template.
+                                            if (transclusionContainer[0].children.length === 0) {
+
+                                                $scope.fields = [];
+
+                                                angular.forEach($scope.schema, function(field) {
+                                                    if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
+                                                        $scope.fields.push(field);
+                                                    }
+                                                });
+
+                                                $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+
+                                                    transclusionContainer.append(html);
                                                     /*
                                                     $compile(transclusionContainer)($scope);
                                                     $scope.formStatus = spformController.status.IDLE;
@@ -11450,55 +12475,17 @@ angular.module('ngSharePoint').directive('spform',
 
                                             } else {
 
-                                                // Apply transclusion
-                                                transcludeFn($scope, function(clone) {
-                                                    
-                                                    parseRules(transclusionContainer, clone, true).then(function() {
+                                                /*
+                                                $scope.formStatus = spformController.status.IDLE;
+                                                dialogResize();
+                                                */
 
-                                                        // If no content was detected within the 'spform' element, generates a default form template.
-                                                        if (transclusionContainer[0].children.length === 0) {
-
-                                                            $scope.fields = [];
-
-                                                            angular.forEach($scope.schema, function(field) {
-                                                                if (!field.Hidden && !field.Sealed && !field.ReadOnlyField && field.InternalName !== 'ContentType') {
-                                                                    $scope.fields.push(field);
-                                                                }
-                                                            });
-
-                                                            $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
-
-                                                                transclusionContainer.append(html);
-                                                                /*
-                                                                $compile(transclusionContainer)($scope);
-                                                                $scope.formStatus = spformController.status.IDLE;
-                                                                dialogResize();
-                                                                */
-
-                                                                compile(transclusionContainer);
-
-                                                            });
-
-                                                        } else {
-
-                                                            /*
-                                                            $scope.formStatus = spformController.status.IDLE;
-                                                            dialogResize();
-                                                            */
-
-                                                            compile(transclusionContainer);
-
-                                                        }
-                                                    });
-                                                });
+                                                compile(transclusionContainer);
 
                                             }
-
                                         });
-
                                     });
-
-                                });
+                                }
 
                             });
 
@@ -11694,7 +12681,6 @@ angular.module('ngSharePoint').directive('spform',
                             }
 
                         } // dialogResize
-
 
                     } // compile.post-link
 
@@ -11931,6 +12917,37 @@ angular.module('ngSharePoint').directive('spworkingonit',
 ]);
 
 /*
+	boolean - filter
+	
+	Pau Codina (pau.codina@kaldeera.com)
+	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+	Copyright (c) 2014
+	Licensed under the MIT License
+*/
+
+
+
+///////////////////////////////////////
+//  boolean
+///////////////////////////////////////
+
+angular.module('ngSharePoint').filter('boolean', 
+
+    [ 
+
+    function boolean_Filter($) {
+
+        return function(val) {
+
+        	return val ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+
+        };
+        
+    }
+]);
+
+/*
 	newlines - filter
 	
 	Pau Codina (pau.codina@kaldeera.com)
@@ -12114,6 +13131,27 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                 // Load dependencies
                                 loadDependencies(item).then(function(formDefinition) {
 
+                                    var hideRibbon = formDefinition.hideRibbon;
+                                    var dlg = SP.UI.ModalDialog.get_childDialog();
+                                    if (dlg !== null) {
+                                        var args = dlg.get_args();
+                                        if (args !== null && args.hideRibbon !== undefined) {
+                                            hideRibbon = args.hideRibbon;
+                                        }
+                                    }
+
+                                    if (typeof hideRibbon === 'function') {
+
+                                        hideRibbon = hideRibbon();
+                                    }
+
+                                    if (hideRibbon === true) {
+
+                                        var ribbon = $('#s4-ribbonrow');
+                                        ribbon.next().height(ribbon.next().height() + ribbon.height());
+                                        ribbon.remove();
+                                    }
+
                                     if (formDefinition.formModesOverride) {
 
                                         $scope.mode = formDefinition.formModesOverride[controlMode] || currentMode;
@@ -12130,35 +13168,19 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                     // Try to get the template
                                     getTemplateUrl().then(function(templateUrl) {
 
-                                        var formController = formDefinition.formController;
-                                        var useControllerAsSyntax = formDefinition.useControllerAsSyntax;
                                         var spformHTML = '';
 
                                         $scope.extendedSchema = formDefinition.extendedSchema || {};
+                                        $scope.controller = formDefinition.controller || {};
 
-                                        if (!angular.isDefined(formController)) {
-
-                                            spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" template-url="' + templateUrl + '"></div>';
-
-                                        } else {
-
-                                            spformHTML = '<div ng-controller="' + formController + (useControllerAsSyntax ? ' as appCtrl">' : '">') +
-                                                         '    <div data-spform="true" mode="mode" item="item" extended-schema="$parent.extendedSchema" on-pre-save="appCtrl.onPreSave" on-post-save="appCtrl.onPostSave" on-cancel="appCtrl.onCancel" template-url="' + templateUrl + '"></div>' +
-                                                         '</div>';
-                                        }
-
+                                        spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" extended-controller="controller" template-url="' + templateUrl + '"></div>';
 
                                         var newElement = $compile(spformHTML)($scope);
                                         $element.replaceWith(newElement);
                                         $element = newElement;
 
-
-                                        preBind(item).finally(function() {
-
-                                            // Sets the item
-                                            $scope.item = item;
-
-                                        });
+                                        // Sets the item
+                                        $scope.item = item;
 
                                     });
 
@@ -12272,52 +13294,36 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                         if (formDefinition !== void 0) {
 
-                            var formDefinitionScope = $scope.$new();
-                            formDefinitionScope.item = item;
+                            // Process AngularJS modules dependencies.
+                            angular.forEach(formDefinition.angularModules, function(module) {
 
-                            SPExpressionResolver.resolve(angular.toJson(formDefinition), formDefinitionScope).then(function(formDefinitionResolved) {
+                                dependencies.push(replaceWebRelativeUrls(module));
 
-                                // Destroys the scope
-                                formDefinitionScope.$destroy();
+                            });
 
-                                // Replaces the token ~site with the site relative url
-                                formDefinitionResolved = formDefinitionResolved.replace(/~site/g, $scope.web.url.rtrim('/'));
+                            // Process JavaScript dependencies (Non AngularJS scripts).
+                            angular.forEach(formDefinition.jsIncludes, function(js) {
 
-                                // Converts back the JSON object resolved to a real object.
-                                formDefinition = angular.fromJson(formDefinitionResolved);
+                                dependencies.push(replaceWebRelativeUrls(js));
 
-                                // Process AngularJS modules dependencies.
-                                angular.forEach(formDefinition.angularModules, function(module) {
-
-                                    dependencies.push(module);
-
-                                });
-
-                                // Process JavaScript dependencies (Non AngularJS scripts).
-                                angular.forEach(formDefinition.jsIncludes, function(js) {
-
-                                    dependencies.push(js);
-
-                                });
+                            });
 
 
-                                // Process CSS dependencies.
-                                angular.forEach(formDefinition.cssIncludes, function(css) {
+                            // Process CSS dependencies.
+                            angular.forEach(formDefinition.cssIncludes, function(css) {
 
-                                    dependencies.push(css);
+                                dependencies.push(replaceWebRelativeUrls(css));
 
-                                });
-
-
-                                // Process other.
-                                // ...
+                            });
 
 
-                                $ocLazyLoad.load(dependencies).then(function() {
+                            // Process other.
+                            // ...
 
-                                    deferred.resolve(formDefinition);
 
-                                });
+                            $ocLazyLoad.load(dependencies).then(function() {
+
+                                deferred.resolve(formDefinition);
 
                             });
 
@@ -12335,21 +13341,27 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 } // loadDependencies
 
 
+                function replaceWebRelativeUrls(module) {
 
-                function preBind(item) {
+                    if (module === void 0) return module;
 
-                    var elementScope = $element.scope();
-                    var onPreBind;
+                    if (module.files) {
 
-                    if (angular.isDefined(elementScope.appCtrl)) {
+                        if (angular.isArray(module.files)) {
 
-                        onPreBind = elementScope.appCtrl.onPreBind;
+                            for(var r=0; r < module.files.length; r++) {
 
+                                module.files[r] = module.files[r].replace(/~site/g, $scope.web.url.rtrim('/'));
+                            }
+
+                        } else if (angular.isString(module.files)) {
+
+                            module.files = module.files.replace(/~site/g, $scope.web.url.rtrim('/'));
+                        }
                     }
 
-                    return $q.when((onPreBind || angular.noop)(item));
-                    
-                } // preBind
+                    return module;
+                }
 
             }
 
@@ -12360,10 +13372,3 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 ]);
 
 
-/*
-var element = document.querySelector('[data-spformpage]');
-
-if (element) {
-    angular.bootstrap(element, ['ngSharePointFormPage']);
-}
-*/
