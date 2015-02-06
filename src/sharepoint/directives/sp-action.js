@@ -218,6 +218,10 @@
             // Default SAVE form action
             function save() {
 
+                if (SP.UI.ModalDialog.get_childDialog()) {
+                    scope.dialogResult = SP.UI.DialogResult.OK;
+                }
+
                 return scope.formCtrl.save(redirectUrl);
 
             }
@@ -226,6 +230,10 @@
 
             // Default CANCEL form action
             function cancel() {
+
+                if (SP.UI.ModalDialog.get_childDialog()) {
+                    scope.dialogResult = SP.UI.DialogResult.cancel;
+                }
 
                 return scope.formCtrl.cancel(redirectUrl);
 
@@ -262,52 +270,83 @@
 
                             if (redirectUrl) {
 
+                                var item = scope.formCtrl.getItem();
+                                var list = item.list;
+
                                 // Checks for pre-defined values in the redirect url.
                                 switch(redirectUrl.toLowerCase()) {
 
                                     case 'display':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/new|edit/, 'display');
                                         // NOTA: No sirve porque la url del formulario por defecto para 'Display' 
                                         //       puede ser '.../lo-que-sea.aspx'.
                                         // TODO: Get the right default 'DispForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'display' form.
-                                
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultDisplayFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+                                
                                         break;
 
 
                                     case 'edit':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/disp|new/, 'edit');
                                         // TODO: Get the right default 'EditForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'edit' form.
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultEditFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+
                                         break;
 
 
                                     case 'new':
-                                        redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
+                                        //redirectUrl = window.location.href.toLowerCase().replace(/disp|edit/, 'new');
                                         // TODO: Get the right default 'NewForm' url.
                                         //       Use spList.getProperties({$expand: 'Forms'}) to get the list forms.
                                         //       Use CSOM to get the default 'new' form.
 
-                                        // Redirects to the correct url
-                                        window.location = redirectUrl;
+                                        list.getDefaultNewFormUrl().then(function(url) {
+
+                                            // Redirects to the correct url
+                                            window.location = url + window.location.search;
+                                            
+                                        });
+
                                         break;
 
 
                                     case 'default':
+                                                
+                                        var dialog = SP.UI.ModalDialog.get_childDialog();
 
-                                        if (SP.UI.ModalDialog.get_childDialog()) {
+                                        if (dialog) {
 
                                             $timeout(function() {
 
-                                                SP.UI.ModalDialog.get_childDialog().close();
+                                                try {
+
+                                                    scope.dialogReturnValue = 'Valor devuelto desde un cuadro de diálogo al cerrar...';
+
+                                                    // NOTE: The next call will throw an error if the dialog wasn't opened with the method
+                                                    //       SP.UI.ModalDialog.commonModalDialogOpen(url, options, callback, args)
+                                                    dialog.commonModalDialogClose(scope.dialogResult, scope.dialogReturnValue);
+
+                                                } catch(e) {
+
+                                                    dialog.close(scope.dialogResult);
+
+                                                }
 
                                             });
 
