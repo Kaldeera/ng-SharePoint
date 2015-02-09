@@ -45,6 +45,10 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                 if (typeof data === 'object' && data.concat === void 0) { //-> is object && not is array
 
+                    if (data.list !== void 0) {
+                        delete data.list;
+                    }
+                    
                     utils.cleanDeferredProperties(data);
                     angular.extend(this, data);
 

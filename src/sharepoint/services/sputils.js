@@ -505,12 +505,6 @@ angular.module('ngSharePoint').factory('SPUtils',
                     var annotations = $injector.annotate(fn);
                     result = $injector.invoke(fn, scope, scope);
 
-                    /*
-                    for(var r=0; r < annotations.length; r++) {
-                        annotations[r] = $injector.get(annotations[r]);
-                    }
-                    result = fn(annotations);
-                    */
                 }
 
                 return result;
