@@ -752,6 +752,64 @@ angular.module('ngSharePoint').factory('SPList',
 
 
         // ****************************************************************************
+        // getDefaultViewUrl
+        //
+        // Gets the default edit form url
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListObj.prototype.getDefaultViewUrl = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.defaultViewUrl !== void 0) {
+
+                def.resolve(this.defaultViewUrl);
+                return def.promise;
+            }
+
+            var listGuid = self.Id;
+
+            self.context = new SP.ClientContext(self.web.url);
+            var web = self.context.get_web();
+
+            if (self.Id !== void 0) {
+                self._list = web.get_lists().getById(self.Id);
+            } else {
+                self._list = web.get_lists().getByTitle(self.listName);
+            }
+
+            self.context.load(self._list, 'DefaultViewUrl');
+
+            self.context.executeQueryAsync(function() {
+
+
+                self.defaultViewUrl = self._list.get_defaultViewUrl();
+                def.resolve(self.defaultViewUrl);
+
+
+            }, function(sender, args) {
+
+                var err = {
+                    Code: args.get_errorCode(),
+                    Details: args.get_errorDetails(),
+                    TypeName: args.get_errorTypeName(),
+                    Value: args.get_errorValue(),
+                    message: args.get_message(),
+                    request: args.get_request(),
+                    stackTrace: args.get_stackTrace()
+                };
+
+                def.reject(err);
+
+            });
+
+            return def.promise;
+
+        };   // getDefaultViewUrl
+
+
+        // ****************************************************************************
         // getDefaultEditFormUrl
         //
         // Gets the default edit form url

@@ -445,7 +445,7 @@ angular.module('ngSharePoint').directive('spform',
                 };
 
 
-                this.cancel = function(redirectUrl) {
+                this.cancel = function() {
 
                     var self = this;
                     var def = $q.defer();
@@ -465,7 +465,8 @@ angular.module('ngSharePoint').directive('spform',
 
                             // Restore the item to its 'original' value.
                             //$scope.item = angular.copy($scope.originalItem);
-                            $scope.item = new SPListItem($scope.originalItem.list, $scope.originalItem);
+//                            $scope.item = new SPListItem($scope.originalItem.list, $scope.originalItem);
+                            $scope.item = new SPListItem($scope.originalItem.list, angular.copy($scope.originalItem));
 
                             def.resolve(result);
 
@@ -561,7 +562,8 @@ angular.module('ngSharePoint').directive('spform',
                             //$scope.originalItem = angular.copy(newValue);
 
                             // Instead, create a 'new SPListItem(@list, @data)' that use the 'angular.extend' method.
-                            $scope.originalItem = new SPListItem($scope.item.list, $scope.item);
+                            // $scope.originalItem = new SPListItem($scope.item.list, $scope.item);
+                            $scope.originalItem = new SPListItem($scope.item.list, angular.copy($scope.item));
 
                             loadItemInfrastructure().then(function() {
                                 loadItemTemplate();
