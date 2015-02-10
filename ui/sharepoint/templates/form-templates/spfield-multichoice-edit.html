@@ -1,13 +1,22 @@
 <table cellpadding="0" cellspacing="1">
-	<tbody>
-		<tr ng-repeat="choice in schema.Choices.results">
-			<td>
-				<span class="ms-RadioText" title="{{choice}}">
-					<input type="checkbox" id="{{schema.Title}}_{{$index}}" ng-click="toggleCheckbox(choice)" ng-checked="choices.indexOf(choice) != -1" />
-					<label for="{{schema.Title}}_{{$index}}">{{choice}}</label>
-				</span>
-			</td>
-		</tr>
-	</tbody>
+    <tbody>
+        <tr ng-repeat="choice in schema.Choices.results">
+            <td>
+                <span class="ms-RadioText" title="{{choice}}">
+                    <input type="checkbox" id="{{schema.Title}}_{{$index}}" ng-click="toggleCheckbox(choice)" ng-checked="choices.indexOf(choice) != -1" />
+                    <label for="{{schema.Title}}_{{$index}}">{{choice}}</label>
+                </span>
+            </td>
+        </tr>
+        <tr ng-if="schema.FillInChoice">
+            <td>
+                <div class="ms-RadioText">
+                    <input id="{{schema.InternalName}}_{{schema.Id}}_FillInRadio" type="checkbox" ng-model="$parent.fillInChoiceCheckbox" ng-change="fillInChoiceCheckboxChanged()" />
+                    <label for="{{schema.InternalName}}_{{schema.Id}}_FillInRadio" ng-bind="choiceFillInDisplayText"></label>
+                </div>
+                <input type="text" maxlength="255" id="{{schema.InternalName}}_{{schema.Id}}FillInText" tabindex="-1" ng-model="$parent.fillInChoiceValue" ng-focus="fillInChoiceCheckbox = true" style="margin: 3px 0 0 25px;">
+            </td>
+        </tr>
+    </tbody>
 </table>
 <spfield-validation-messages></spfield-validation-messages>

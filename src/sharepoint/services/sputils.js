@@ -495,7 +495,7 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
             /**
-            * This function calls the fn function injecting her params (services)
+            * This function calls the 'fn' function injecting the params (services)
             */
             callFunctionWithParams: function(fn, scope) {
 

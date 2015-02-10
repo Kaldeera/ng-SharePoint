@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldUser', 
 
-	['SPFieldDirective', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils',
+	['SPFieldDirective', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils', '$compile',
 
-	function spfieldUser_DirectiveFactory(SPFieldDirective, $q, $timeout, $filter, SharePoint, SPUtils) {
+	function spfieldUser_DirectiveFactory(SPFieldDirective, $q, $timeout, $filter, SharePoint, SPUtils, $compile) {
 
 		var spfieldUserDirectiveDefinitionObject = {
 
@@ -55,7 +55,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 						} else {
 
-							//directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
+							directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
 							// NOTE: Required validator is implicitly applied when no multiple values.
 
 							// Checks for 'peoplePicker' due to when in 'display' mode it's not created.
@@ -94,6 +94,10 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 							$timeout(function() {
 								initializePeoplePicker(peoplePickerElementId);
+
+					            // Sync the model controller with the form controller control
+					            $scope.$parent.ngFormCtrl.$addControl($scope.modelCtrl);
+
 							});
 						}
 
@@ -232,66 +236,6 @@ angular.module('ngSharePoint').directive('spfieldUser',
 						$scope.selectedUserItems = [];
 
 						// Gets the user items and populate the selected items array
-						/*
-						getUserItems().then(function(items) {
-
-							if ($scope.schema.AllowMultipleValues) {
-
-								angular.forEach($scope.value.results, function(selectedItem) {
-
-									var selectedUserItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
-
-									if (selectedUserItem !== void 0) {
-
-										var userItem = {
-											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
-											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
-											data: selectedUserItem
-										};
-
-										$scope.selectedUserItems.push(userItem);
-									}
-
-								});
-
-							} else {
-
-								// If no value returns an empty object for corrent binding
-								var userItem = {
-									Title: '',
-									url: '',
-									data: null
-								};
-
-
-								if ($scope.value === null || $scope.value === 0) {
-
-									$scope.selectedUserItems.push(userItem);
-
-								} else {
-
-									var selectedUserItem = $filter('filter')(items, { Id: $scope.value }, true)[0];
-
-									if (selectedUserItem !== void 0) {
-
-										userItem = {
-											Title: selectedUserItem[$scope.schema.LookupField] || selectedUserItem.Title,
-											url: selectedUserItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + $scope.value + '&Source=' + encodeURIComponent(window.location),
-											data: selectedUserItem
-										};
-
-										$scope.selectedUserItems.push(userItem);
-									}
-								}
-							}
-
-							def.resolve($scope.selectedUserItems);
-
-						}, function() {
-							def.reject();
-						});
-						*/
-
 						var getUserItemsPromises = [];
 
 						if ($scope.schema.AllowMultipleValues) {
@@ -559,6 +503,18 @@ angular.module('ngSharePoint').directive('spfieldUser',
 					    		updateModel(resolvedValues);
 					    	}
 				    	};
+
+
+				    	// Set the focus element for the validate
+				    	var editorElement = document.getElementById($scope.peoplePicker.EditorElementId);
+
+				    	if (editorElement) {
+
+				    	 	editorElement.setAttribute('data-spfield-focus-element', 'true');
+				    	 	$compile(angular.element(editorElement))($scope);
+
+				    	}
+
 				    }
 				}
 
