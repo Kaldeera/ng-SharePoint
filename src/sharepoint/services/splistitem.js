@@ -564,7 +564,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                 angular.forEach(self.list.Fields, function(field) {
                     
                     if (field.TypeAsString === 'Computed' || field.ReadOnlyField) {
-                        delete saveObj[field.InternalName];
+                        // delete saveObj[field.InternalName];
+                        delete saveObj[field.EntityPropertyName];
                     }
 
                     // NOTA DE MEJORA!
@@ -584,7 +585,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                     if (field.Required === true) {
 
                         var fieldType = field.originalTypeAsString || field.TypeAsString;
-                        var fieldName = field.InternalName;
+                        // var fieldName = field.InternalName;
+                        var fieldName = field.EntityPropertyName;
                         if (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti') {
                             fieldName = fieldName + 'Id';
                         }
