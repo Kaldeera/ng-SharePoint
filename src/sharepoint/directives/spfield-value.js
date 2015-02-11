@@ -10,9 +10,10 @@
 
 
 
-///////////////////////////////////////
+//////////////////////////////////////////////////
 //  SPFieldValue
-///////////////////////////////////////
+//  Shows a item field (display mode)
+//////////////////////////////////////////////////
 
 (function() {
     
@@ -149,84 +150,85 @@
 
                     return lookupWeb.getList(scope.field.LookupList).then(function(lookupList) {
 
-                        var query = {};
+                        var query = {
+                            $expand: 'Fields'
+                        };
 
                         // Expand 'Forms' property for Lookup and LookupMulti fields.
                         if (scope.field.TypeAsString == 'Lookup' || scope.field.TypeAsString == 'LookupMulti') {
 
-                            query.$expand = 'Forms';
+                            query.$expand += ',Forms';
 
                         }
 
                         return lookupList.getProperties(query).then(function() {
 
-                            return lookupList.getFields().then(function() {
+                            var promises = [];
 
-                                var promises = [];
+                            angular.forEach(values, function(lookupValue) {
 
-                                angular.forEach(values, function(lookupValue) {
+                                var lookupPromise = lookupList.getItemById(lookupValue).then(function(lookupItem) {
 
-                                    var lookupPromise = lookupList.getItemById(lookupValue).then(function(lookupItem) {
+                                    if (scope.field.LookupField === '') {
+                                        scope.field.LookupField = 'Title';
+                                    }
+                                    var displayValue = lookupItem[scope.field.LookupField];
+                                    var fieldSchema = lookupList.Fields[scope.field.LookupField];
 
-                                        var displayValue = lookupItem[scope.field.LookupField];
-                                        var fieldSchema = lookupList.Fields[scope.field.LookupField];
+                                    if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
+                                        var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+                                        var date = new Date(displayValue);
+                                        displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+                                    }
 
-                                        if (fieldSchema.TypeAsString === 'DateTime' && displayValue !== null) {
-                                            var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
-                                            var date = new Date(displayValue);
-                                            displayValue = $filter('date')(date, cultureInfo.dateTimeFormat.ShortDatePattern + (fieldSchema.DisplayFormat === 0 ? '' :  ' ' + cultureInfo.dateTimeFormat.ShortTimePattern));
+                                    if (fieldSchema.TypeAsString === 'Number') {
+                                        if (fieldSchema.Percentage) {
+                                            displayValue += '%';
                                         }
-
-                                        if (fieldSchema.TypeAsString === 'Number') {
-                                            if (fieldSchema.Percentage) {
-                                                displayValue += '%';
-                                            }
-                                        }
+                                    }
 
 
-                                        // When the field is a Computed field, shows its title.
-                                        // TODO: Resolve computed fields.
-                                        if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
-                                            displayValue = lookupItem.Title;
-                                        }
+                                    // When the field is a Computed field, shows its title.
+                                    // TODO: Resolve computed fields.
+                                    if (fieldSchema.TypeAsString === 'Computed' && displayValue !== null) {
+                                        displayValue = lookupItem.Title;
+                                    }
 
 
-                                        // Gets the lookup url
-                                        var url = '';
+                                    // Gets the lookup url
+                                    var url = '';
 
-                                        if (scope.field.TypeAsString == 'User' || scope.field.TypeAsString == 'UserMulti') {
+                                    if (scope.field.TypeAsString == 'User' || scope.field.TypeAsString == 'UserMulti') {
 
-                                            url = lookupItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
+                                        url = lookupItem.list.web.url.rtrim('/') + '/_layouts/15/userdisp.aspx' + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
 
-                                        } else {
+                                    } else {
 
-                                            url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
-                                            
-                                        }
+                                        url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
+                                        
+                                    }
 
 
-                                        // Set the final field value.
-                                        resolvedValues.push({
+                                    // Set the final field value.
+                                    resolvedValues.push({
 
-                                            title: displayValue,
-                                            url: url
-
-                                        });
-
-                                        return true;
+                                        title: displayValue,
+                                        url: url
 
                                     });
 
-                                    promises.push(lookupPromise);
+                                    return true;
 
                                 });
 
+                                promises.push(lookupPromise);
 
-                                return $q.all(promises).then(function() {
+                            });
 
-                                    return resolvedValues;
 
-                                });
+                            return $q.all(promises).then(function() {
+
+                                return resolvedValues;
 
                             });
 
