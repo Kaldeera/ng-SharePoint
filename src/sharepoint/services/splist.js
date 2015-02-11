@@ -167,6 +167,21 @@ angular.module('ngSharePoint').factory('SPList',
                         SPCache.setCacheValue('SPListFieldsCache', self.apiUrl, fields);
                     }
 
+                    if (self.ContentTypes !== void 0 && self.ContentTypes.results !== void 0) {
+
+                        // process contenttypes --> $expand: 'ContentTypes'
+
+                        var contentTypes = [];
+
+                        angular.forEach(self.ContentTypes.results, function(contentType) {
+
+                            contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
+
+                        });
+
+                        self.ContentTypes = contentTypes;
+                    }
+
                     def.resolve(d);
                 }, 
 
@@ -347,48 +362,55 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
 
-            // We don't cache the content types due to that the user can 
-            // change its order (the default content type) anytime.
+            if (this.ContentTypes !== void 0) {
 
-            executor.executeAsync({
+                def.resolve(this.ContentTypes);
 
-                url: self.apiUrl + '/ContentTypes',
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
-                },
+            } else {
 
-                success: function(data) {
+                var executor = new SP.RequestExecutor(self.web.url);
 
-                    var d = utils.parseSPResponse(data);
-                    var contentTypes = [];
+                // We don't cache the content types due to that the user can 
+                // change its order (the default content type) anytime.
 
-                    angular.forEach(d, function(contentType) {
+                executor.executeAsync({
 
-                        contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
+                    url: self.apiUrl + '/ContentTypes',
+                    method: 'GET',
+                    headers: {
+                        "Accept": "application/json; odata=verbose"
+                    },
 
-                    });
+                    success: function(data) {
 
-                    self.ContentTypes = contentTypes;
+                        var d = utils.parseSPResponse(data);
+                        var contentTypes = [];
 
-                    def.resolve(contentTypes);
+                        angular.forEach(d, function(contentType) {
 
-                },
+                            contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
 
-                error: function(data, errorCode, errorMessage) {
+                        });
 
-                    var err = utils.parseError({
-                        data: data,
-                        errorCode: errorCode,
-                        errorMessage: errorMessage
-                    });
+                        self.ContentTypes = contentTypes;
 
-                    def.reject(err);
-                }
-            });
+                        def.resolve(contentTypes);
 
+                    },
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+            }
 
             return def.promise;
 
@@ -402,7 +424,8 @@ angular.module('ngSharePoint').factory('SPList',
         //
         // Gets a list content type by its ID.
         //
-        // @contentTypeId: The ID of the content type to retrieve.
+        // @contentTypeId: The ID of the content type to retrieve if this parameter is
+        // undefined, the function returns the default content type.
         // @returns: Promise with the result of the REST query.
         //
         SPListObj.prototype.getContentType = function(contentTypeId) {

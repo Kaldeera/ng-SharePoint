@@ -115,7 +115,11 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                         $scope.list = list;
 
-                        list.getProperties().then(function(props) {
+                        list.getProperties({
+
+                            $expand: 'Fields,ContentTypes,ContentTypes/Fields'
+
+                        }).then(function(props) {
 
                             getItem(itemId).then(function(item) {
 
