@@ -55,6 +55,20 @@ angular.module('ngSharePoint').factory('SPContentType',
 
             // Init the content type properties (if exists)
             if (contentTypeProperties !== void 0) {
+
+                if (contentTypeProperties.Fields !== void 0 && contentTypeProperties.Fields.results !== void 0) {
+
+                    // process fields --> $expand: 'Fields'
+
+                    var fields = {};
+
+                    angular.forEach(contentTypeProperties.Fields.results, function(field) {
+                        fields[field.InternalName] = field;
+                    });
+
+                    contentTypeProperties.Fields = fields;
+                }
+
                 utils.cleanDeferredProperties(contentTypeProperties);
                 angular.extend(this, contentTypeProperties);
             }
