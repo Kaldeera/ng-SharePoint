@@ -309,133 +309,140 @@ angular.module('ngSharePoint').directive('spform',
                     // Change the form to a 'dirty' state.
                     $scope.ngFormCtrl.$setDirty();
 
+
                     // Check the form validity broadcasting a 'validate' event to all the fields.
-                    if (!$scope.ngFormCtrl.$valid) {
+                    $q.when($scope.$broadcast('validate')).then(function(result) {
 
-                        $q.when($scope.$broadcast('validate')).then(function(result) {
+                        // Set the focus in the first invalid field.
+                        var fieldFocused = self.setFieldFocus();
 
-                            // Set the focus in the first invalid field.
-                            var fieldFocused = self.setFieldFocus();
+                        $scope.$broadcast('postValidate', fieldFocused);
+                        $scope.$emit('postValidate', fieldFocused);
 
-                            $scope.$broadcast('postValidate', fieldFocused);
-                            $scope.$emit('postValidate', fieldFocused);
+
+                        // Check if the form is valid after validate all the fields
+                        if (!$scope.ngFormCtrl.$valid) {
+
+                            // Check if 'force' option is enabled.
+                            // If so, continues with the saving process even if there are invalid fields.
+                            // Otherwise, cancel the saving process.
+                            //
+                            // NOTE: Must check if there are fields that will generate an error when saving the item.
+                            //       e.g. If the user sets an string in a numeric field and so on.
+                            //
+                            if (options.force !== true) {
+
+                                def.reject();
+                                return def.promise;
+
+                            }
+
+                        }
+
+
+                        // Start the 'save' process...
+                        $scope.formStatus = this.status.PROCESSING;
+
+
+                        // Shows the 'Working on it...' dialog.
+                        if (options.silent !== true) {
+                            dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
+                        }
+
+
+                        // Removes all the custom 'virtual' fields.
+                        angular.forEach($scope.schema, function(field, key) {
+
+                            if (field.isVirtualField) {
+
+                                delete $scope.item[key];
+
+                            }
 
                         });
 
-                        // Check if 'force' option is enabled.
-                        // If so, continues with the saving process even if there are invalid fields.
-                        // Otherwise, cancel the saving process.
-                        //
-                        // NOTE: Must check if there are fields that will generate an error when saving the item.
-                        //       e.g. If the user sets an string in a numeric field and so on.
-                        //
-                        if (options.force !== true) {
 
-                            def.reject();
-                            return def.promise;
+                        // Invoke 'onPreSave' function
+                        $q.when(SPUtils.callFunctionWithParams($scope.onPreSave, $scope)).then(function(result) {
 
-                        }
-                    }
+                            // If the 'onPreSave' function returns FALSE, cancels the save operation.
+                            if (result !== false) {
 
-                    $scope.formStatus = this.status.PROCESSING;
+                                $scope.item.save().then(function(data) {
 
-                    // Shows the 'Working on it...' dialog.
-                    if (options.silent !== true) {
-                        dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
-                    }
+                                    $scope.formStatus = this.status.IDLE;
 
+                                    // Invoke 'onPostSave' function.
+                                    $q.when(SPUtils.callFunctionWithParams($scope.onPostSave, $scope)).then(function(result) {
 
-                    // Removes all the custom 'virtual' fields.
-                    angular.forEach($scope.schema, function(field, key) {
+                                        if (result !== false) {
 
-                        if (field.isVirtualField) {
+                                            // Default 'post-save' action.
+                                            //self.closeForm(options.redirectUrl);
+                                            def.resolve(result);
 
-                            delete $scope.item[key];
+                                        } else {
 
-                        }
+                                            def.reject();
 
-                    });
+                                        }
 
+                                        // Close the 'Working on it...' dialog.
+                                        closeDialog();
+                                        
+                                    }, function() {
 
-                    // Invoke 'onPreSave' function
-                    $q.when(SPUtils.callFunctionWithParams($scope.onPreSave, $scope)).then(function(result) {
+                                        // At this point, the 'OnPostSave' promise has been rejected 
+                                        // due to an exception or manually by the user.
 
-                        // If the 'onPreSave' function returns FALSE, cancels the save operation.
-                        if (result !== false) {
-
-                            $scope.item.save().then(function(data) {
-
-                                $scope.formStatus = this.status.IDLE;
-
-                                // Invoke 'onPostSave' function.
-                                $q.when(SPUtils.callFunctionWithParams($scope.onPostSave, $scope)).then(function(result) {
-
-                                    if (result !== false) {
-
-                                        // Default 'post-save' action.
-                                        //self.closeForm(options.redirectUrl);
-                                        def.resolve(result);
-
-                                    } else {
-
+                                        closeDialog();
                                         def.reject();
+                                        
+                                    });
 
-                                    }
+                                }, function(err) {
 
-                                    // Close the 'Working on it...' dialog.
+                                    // At this point, the 'item.save' promise has been rejected 
+                                    // due to an exception.
+
+                                    console.error(err);
                                     closeDialog();
-                                    
-                                }, function() {
 
-                                    // At this point, the 'OnPostSave' promise has been rejected 
-                                    // due to an exception or manually by the user.
+                                    // Shows a popup with the error details.
+                                    var dom = document.createElement('div');
+                                    dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
 
-                                    closeDialog();
-                                    def.reject();
-                                    
+                                    SP.UI.ModalDialog.showModalDialog({
+                                        title: SP.Res.dlgTitleError,
+                                        html: dom,
+                                        showClose: true,
+                                        autoSize: true,
+                                        dialogReturnValueCallback: function() {
+                                            def.reject();
+                                        }
+                                    });
+
                                 });
 
-                            }, function(err) {
+                            } else {
 
-                                // At this point, the 'item.save' promise has been rejected 
-                                // due to an exception.
+                                // At this point, the 'OnPreSave' promise has been canceled 
+                                // by the user (By the 'onPreSave' method implemented by the user).
 
-                                console.error(err);
                                 closeDialog();
+                                def.reject();
 
-                                // Shows a popup with the error details.
-                                var dom = document.createElement('div');
-                                dom.innerHTML = '<div style="color:brown">' + err.code + '<br/><strong>' + err.message + '</strong></div>';
+                            }
+                            
+                        }, function() {
 
-                                SP.UI.ModalDialog.showModalDialog({
-                                    title: SP.Res.dlgTitleError,
-                                    html: dom,
-                                    showClose: true,
-                                    autoSize: true,
-                                    dialogReturnValueCallback: function() {
-                                        def.reject();
-                                    }
-                                });
-
-                            });
-
-                        } else {
-
-                            // At this point, the 'OnPreSave' promise has been canceled 
-                            // by the user (By the 'onPreSave' method implemented by the user).
+                            // At this point, the 'OnPreSave' promise has been rejected 
+                            // due to an exception or manually by the user.
 
                             closeDialog();
                             def.reject();
 
-                        }
-                        
-                    }, function() {
-
-                        // At this point, the 'OnPreSave' promise has been rejected 
-                        // due to an exception or manually by the user.
-
-                        closeDialog();
-                        def.reject();
+                        });
 
                     });
 

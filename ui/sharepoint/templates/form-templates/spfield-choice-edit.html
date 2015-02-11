@@ -1,15 +1,34 @@
 <div ng-switch="schema.EditFormat">
 
-	<select ng-switch-when="0" ng-model="$parent.value" data-spfield-focus-element="true" ng-options="option for option in choices" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ></select>
-
+	<div ng-switch-when="0">
+		<span ng-if="schema.FillInChoice"><input id="{{schema.InternalName}}_{{schema.Id}}_DropDownButton" type="radio" value="DropDownButton" ng-model="$parent.$parent.selectedOption"></span>
+		<select ng-model="$parent.dropDownValue" data-spfield-focus-element="true" ng-options="option for option in choices" ng-required="{{schema.Required}}" title="{{schema.Title}}" class="ms-RadioText" ng-change="dropDownChanged()" ng-click="dropDownClick()"></select>
+		<div ng-if="schema.FillInChoice">
+			<div class="ms-RadioText">
+				<input id="{{schema.InternalName}}_{{schema.Id}}_FillInButton" type="radio" value="FillInButton" ng-model="$parent.$parent.selectedOption" />
+				<label for="{{schema.InternalName}}_{{schema.Id}}_FillInButton" ng-bind="choiceFillInDisplayText"></label>
+			</div>
+			<input type="text" maxlength="255" id="{{schema.InternalName}}_{{schema.Id}}_$FillInChoice" tabindex="-1" ng-model="$parent.$parent.fillInChoiceValue" ng-click="fillInChoiceClick()" style="margin: 3px 0 0 25px;">
+		</div>
+	</div>
+	
 	<table ng-switch-when="1" cellpadding="0" cellspacing="1">
 		<tbody>
 			<tr ng-repeat="option in choices">
 				<td>
 					<span>
-						<input type="radio" ng-model="$parent.$parent.value" ng-value="option" id="{{schema.InternalName}}_{{$index}}" />
+						<input type="radio" ng-model="$parent.$parent.selectedOption" ng-value="option" id="{{schema.InternalName}}_{{$index}}" />
 						<label for="{{schema.InternalName}}_{{$index}}" ng-bind="option"></label>
 					</span>
+				</td>
+			</tr>
+			<tr ng-if="schema.FillInChoice">
+				<td>
+					<div class="ms-RadioText">
+						<input id="{{schema.InternalName}}_{{schema.Id}}_FillInButton" type="radio" value="FillInButton" ng-model="$parent.$parent.selectedOption" />
+						<label for="{{schema.InternalName}}_{{schema.Id}}_FillInButton" ng-bind="choiceFillInDisplayText"></label>
+					</div>
+					<input type="text" maxlength="255" id="{{schema.InternalName}}_{{schema.Id}}_$FillInChoice" tabindex="-1" ng-model="$parent.$parent.fillInChoiceValue" ng-click="fillInChoiceClick()" style="margin: 3px 0 0 25px;">
 				</td>
 			</tr>
 		</tbody>
