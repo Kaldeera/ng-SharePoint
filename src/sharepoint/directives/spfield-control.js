@@ -52,7 +52,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     
 
                     // Sets the default value for the field
-                    spformController.initField(name);
+                    spformController.initField(schema.EntityPropertyName);
 
                     // NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize 
                     //       the field with it's default value, but without showing it up in the form.
@@ -66,7 +66,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     if (fieldType === 'UserMulti') fieldType = 'User';
 
                     // Gets the field name
-                    var fieldName = name + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+                    var fieldName = schema.EntityPropertyName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
 
                     fieldType = schema.TypeAsString;
                     if (fieldType === 'UserMulti') fieldType = 'User';
