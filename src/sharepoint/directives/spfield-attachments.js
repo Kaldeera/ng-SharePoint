@@ -44,7 +44,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 						$scope.DeleteAttachmentText = STSHtmlEncode(Strings.STS.L_DeleteDocItem_Text);
 						$scope.AttachFileText = Resources.core.cui_ButAttachFile;
-						$scope.L_Menu_LCID = L_Menu_LCID;
+						$scope.LanguageID = (L_Menu_LCID || _spPageContextInfo.currentLanguage || "1033").toString();
 					},
 
 					watchValueFn: function(newValue) {

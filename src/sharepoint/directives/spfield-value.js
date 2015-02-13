@@ -82,7 +82,7 @@
                         if (fieldValue === void 0 || fieldValue === null) {
                             fieldValue = { results: [] };
                         }
-                        scope.fieldValue = '<span>' + fieldValue.results.join(', ') + '</span>';
+                        scope.fieldValue = '<span>' + fieldValue.results.join('; ') + '</span>';
                         break;
 
                     case 'Boolean':

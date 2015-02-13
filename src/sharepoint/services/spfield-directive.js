@@ -285,9 +285,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
 
-                    // Sync the model controller with the form controller control
-                    //$scope.$parent.ngFormCtrl.$addControl($scope.modelCtrl);
-
                 });
 
             };
