@@ -314,13 +314,16 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				function getLookupDataForEdit() {
 
 					var def = $q.defer();
-					var $query = void 0;
+					var $query = {
+						$orderby: $scope.schema.LookupField
+					};
 
 					if ($scope.dependency !== void 0) {
 						$query = {
 							$select: '*, ' + $scope.dependency.fieldName + '/Id',
 							$expand: $scope.dependency.fieldName + '/Id',
 							$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
+							$orderby: $scope.schema.LookupField
 						};
 					}
 
