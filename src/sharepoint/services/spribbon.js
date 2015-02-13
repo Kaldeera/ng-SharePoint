@@ -652,6 +652,16 @@
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Commit.Cancel');
             unregisterComponentCommands('WebPartWPQ2', 'Ribbon.ListForm.Edit.Actions.AttachFile');
 
+            // NOTE: The 'pageManager.$2o_1' property is an object that contains all the components 
+            //       by name and we could try to get the correct component id from it but we can't 
+            //       ensure that this property ($2o_1) always will have this name.
+            //
+
+            // Unregister the commands for SharePoint 2013 FOUNDATION !?
+            unregisterComponentCommands('WebPartWPQ1', 'Ribbon.ListForm.Edit.Commit.Publish');
+            unregisterComponentCommands('WebPartWPQ1', 'Ribbon.ListForm.Edit.Commit.Cancel');
+            unregisterComponentCommands('WebPartWPQ1', 'Ribbon.ListForm.Edit.Actions.AttachFile');
+
 
             // Register classes and initialize page component
             ngSharePointPageComponent.registerClass('ngSharePointPageComponent', CUI.Page.PageComponent);
