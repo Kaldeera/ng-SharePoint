@@ -206,21 +206,31 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                 //
                 function OnIframeLoadFinish() {
 
-                    var self = this; //-> IFRAME element
-                    var resultfunc = this.resultfunc;
+                    var picker = this.Picker; // IFRAME element
 
-                    // Wraps the default IFRAME.resultfunc
-                    this.resultfunc = function() {
+                    if (typeof picker !== undefined && picker !== null) {
 
-                        resultfunc();
+                        var resultfunc = picker.resultfunc;
 
-                        // Updates the model with the selected value from the DatePicker iframe.
-                        $timeout(function() {
-                            $scope.$apply(function() {
-                                $scope.dateOnlyModel = self.resultfield.value;
+                        // Wraps the default IFRAME.resultfunc
+                        picker.resultfunc = function() {
+
+                            resultfunc();
+
+                            // Updates the model with the selected value from the DatePicker iframe.
+                            $timeout(function() {
+                                $scope.$apply(function() {
+                                    $scope.dateOnlyModel = picker.resultfield.value;
+                                });
                             });
-                        });
-                    };
+                        };
+                        
+                    } else {
+
+                        // Can't catch the result value from the DatetimePicker IFRAME...
+                        // :(
+
+                    }
                 }
 
 
