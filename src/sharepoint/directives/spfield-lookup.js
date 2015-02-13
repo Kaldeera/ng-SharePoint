@@ -201,19 +201,12 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 								$scope.lookupList = list;
 
-								list.getProperties({ $expand: 'Forms' }).then(function() {
+								list.getProperties({ $expand: 'Forms,Fields' }).then(function() {
 
-									list.getFields().then(function() {
-
-										// TODO: Add the list to the form's cache when resolved
-										//SPCache.setCacheValue(<form_identifier>, $scope.schema.LookupList, $scope.lookupList);
-										
-										def.resolve($scope.lookupList);
-
-									}, function(err) {
-
-										def.reject(err);
-									});
+									// TODO: Add the list to the form's cache when resolved
+									//SPCache.setCacheValue(<form_identifier>, $scope.schema.LookupList, $scope.lookupList);
+									
+									def.resolve($scope.lookupList);
 
 								}, function(err) {
 
@@ -335,13 +328,16 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						
 						getLookupList().then(function(list) {
 
-							var $query = void 0;
+							var $query = {
+								$orderby: $scope.schema.LookupField
+							};
 
 							if ($scope.dependency !== void 0) {
 								$query = {
 									$select: '*, ' + $scope.dependency.fieldName + '/Id',
 									$expand: $scope.dependency.fieldName + '/Id',
 									$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
+									$orderby: $scope.schema.LookupField
 								};
 							}
 
