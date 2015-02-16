@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').directive('spfieldNote', 
 
-    ['SPFieldDirective', 'SPUtils', '$q',
+    ['SPFieldDirective', 'SPUtils', '$q', '$timeout',
 
-    function spfielNote_DirectiveFactory(SPFieldDirective, SPUtils, $q) {
+    function spfielNote_DirectiveFactory(SPFieldDirective, SPUtils, $q, $timeout) {
 
         var spfieldNote_DirectiveDefinitionObject = {
 
@@ -45,6 +45,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
                         var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
                         $scope.rteFullHtml = xml.documentElement.getAttribute('RichTextMode') == 'FullHtml';
                         $scope.rteHelpMessage = STSHtmlEncode(Strings.STS.L_RichTextHelpLink);
+                        $scope.rteLabelText = STSHtmlEncode(Strings.STS.L_RichTextHiddenLabelText);
                         $scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 
                         // Check if the field have the option "Append Changes to Existing Text" activated.
@@ -59,18 +60,55 @@ angular.module('ngSharePoint').directive('spfieldNote',
                                 getFieldVersions().then(function(versions) {
 
                                     $scope.versions = versions || [];
-                                    console.log($scope.versions);
 
                                 });
 
                             });
 
                         }
+
+                    },
+
+
+                    postRenderFn: function() {
+
+                        if ($scope.rteFullHtml) {
+
+                            $timeout(function() {
+
+                                var rteElement = document.getElementById($scope.schema.EntityPropertyName + '_' + $scope.schema.Id + '_$TextField_inplacerte');
+
+                                if (rteElement) {
+
+                                    // Init the 'contenteditable' value
+                                    rteElement.innerHTML = $scope.value || '';
+
+                                }
+
+                            });
+
+                        }
+
                     }
+
                 };
 
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+
+
+                $scope.updateModel = function($event) {
+
+                    var rteElement = document.getElementById($scope.schema.EntityPropertyName + '_' + $scope.schema.Id + '_$TextField_inplacerte');
+
+                    if (rteElement) {
+
+                        $scope.value = rteElement.innerHTML;
+
+                    }
+
+                };
 
 
 
