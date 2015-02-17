@@ -70,6 +70,16 @@ angular.module('ngSharePoint').directive('spform',
                     this.formFields.push(fieldControl);
                 };
 
+                this.unregisterField = function(fieldControl) {
+
+                    for(var r=this.formFields.length -1; r >= 0; r--) {
+
+                        if (this.formFields[r].name === fieldControl.name) {
+                            this.formFields.splice(r, 1);
+                        }
+                    }
+                };
+
                 this.initField = function(fieldName) {
 
                     if (this.isNew()) {

@@ -139,10 +139,15 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             $scope.formCtrl = controllers[0];
             $scope.modelCtrl = controllers[1];
             $scope.name = $attrs.name;
+            directive.name = $scope.name;
             $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
             $scope.item = $scope.formCtrl.getItem(); // Needed?
 
             $scope.formCtrl.registerField(this);
+
+            $scope.$on('$destroy', function() {
+                $scope.formCtrl.unregisterField(directive);
+            });
 
 
             // Apply the directive initializacion if specified.
@@ -316,6 +321,8 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             // Validate the field.
             //
             directive.validate = function() {
+
+                if ($scope.currentMode !== 'edit') return;
 
                 var deferred = $q.defer();
 
