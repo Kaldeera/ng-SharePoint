@@ -64,6 +64,11 @@ angular.module('ngSharePoint').directive('spform',
                     return $scope.item.isNew();
                 };
 
+                this.registerField = function(fieldControl) {
+
+                    this.formFields = this.formFields || [];
+                    this.formFields.push(fieldControl);
+                };
 
                 this.initField = function(fieldName) {
 
@@ -310,8 +315,23 @@ angular.module('ngSharePoint').directive('spform',
                     $scope.ngFormCtrl.$setDirty();
 
 
+                    // Check the form validity
+                    $scope.$broadcast('validate');
+
+                    // Make a call to all form fields validation function
+                    var validationPromises = [];
+
+                    angular.forEach(this.formFields, function(formField) {
+
+                        if (formField.validate !== undefined) {
+
+                            var promise = $q.when(formField.validate());
+                            validationPromises.push(promise);
+                        }
+                    });
+
                     // Check the form validity broadcasting a 'validate' event to all the fields.
-                    $q.when($scope.$broadcast('validate')).then(function(result) {
+                    $q.all(validationPromises).then(function() {
 
                         // Set the focus in the first invalid field.
                         var fieldFocused = self.setFieldFocus();
@@ -472,7 +492,7 @@ angular.module('ngSharePoint').directive('spform',
 
                             // Restore the item to its 'original' value.
                             //$scope.item = angular.copy($scope.originalItem);
-//                            $scope.item = new SPListItem($scope.originalItem.list, $scope.originalItem);
+                            //$scope.item = new SPListItem($scope.originalItem.list, $scope.originalItem);
                             $scope.item = new SPListItem($scope.originalItem.list, angular.copy($scope.originalItem));
 
                             def.resolve(result);

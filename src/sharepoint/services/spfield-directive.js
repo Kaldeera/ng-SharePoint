@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').service('SPFieldDirective', 
 
-    ['$compile', '$http', '$templateCache', '$q',
+    ['$compile', '$http', '$templateCache', '$q', 'SPUtils',
 
-    function SPFieldDirective_Factory($compile, $http, $templateCache, $q) {
+    function SPFieldDirective_Factory($compile, $http, $templateCache, $q, SPUtils) {
 
         // ****************************************************************************
         // Private functions
@@ -141,6 +141,8 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             $scope.name = $attrs.name;
             $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
             $scope.item = $scope.formCtrl.getItem(); // Needed?
+
+            $scope.formCtrl.registerField(this);
 
 
             // Apply the directive initializacion if specified.
@@ -311,6 +313,51 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
             // ****************************************************************************
+            // Validate the field.
+            //
+            directive.validate = function() {
+
+                var deferred = $q.defer();
+
+                defaultOnValidateFn.apply($scope, arguments);
+
+                if (angular.isFunction(directive.onValidateFn)) {
+
+                    $q.when(directive.onValidateFn.apply(directive, arguments)).then(function() {
+
+                        if ($scope.schema.onValidate !== undefined) {
+
+                            $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
+
+                                deferred.resolve();
+                            });
+
+                        } else {
+
+                            deferred.resolve();
+                        }
+                    });
+
+                } else {
+
+                    if ($scope.schema.onValidate !== undefined) {
+
+                        $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
+
+                            deferred.resolve();
+                        });
+
+                    } else {
+
+                        deferred.resolve();
+                    }
+                }
+
+                return deferred.promise;
+            };
+
+
+            // ****************************************************************************
             // Watch for form mode changes.
             //
             $scope.$watch(function() {
@@ -347,14 +394,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
 
-            // ****************************************************************************
-            // Validate the field.
-            //
-            $scope.unregisterValidateFn = $scope.$on('validate', function() {
 
-                defaultOnValidateFn.apply($scope, arguments);
-                if (angular.isFunction(directive.onValidateFn)) directive.onValidateFn.apply(directive, arguments);
-            });
 
 
         }; // baseLinkFn
