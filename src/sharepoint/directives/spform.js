@@ -861,6 +861,29 @@ angular.module('ngSharePoint').directive('spform',
                             deferred = deferred || $q.defer();
                             terminalRuleAdded = terminalRuleAdded || false;
 
+                            var forceRuleParam = utils.getQueryStringParamByName('rule');
+                            if (forceRuleParam !== undefined) {
+
+                                forceRuleParam = parseInt(forceRuleParam);
+
+                                for (var r=0, count=0; r < sourceElements.length; r++) {
+
+                                    if (sourceElements[r].tagName !== void 0 && sourceElements[r].tagName.toLowerCase() === 'spform-rule') {
+
+                                        count++;
+
+                                        if (count === forceRuleParam) {
+
+                                            targetElement.append(sourceElements[r]);
+
+                                            deferred.resolve();
+                                            return deferred.promise;                                
+                                            
+                                        }
+                                    }
+                                }
+                            }
+
                             // Gets the element to parse.
                             var elem = sourceElements[elementIndex++];
 
