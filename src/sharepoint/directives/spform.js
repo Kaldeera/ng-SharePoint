@@ -862,26 +862,37 @@ angular.module('ngSharePoint').directive('spform',
                             terminalRuleAdded = terminalRuleAdded || false;
 
                             var forceRuleParam = utils.getQueryStringParamByName('rule');
+                            var forceRuleElement = '';
+
                             if (forceRuleParam !== undefined) {
 
                                 forceRuleParam = parseInt(forceRuleParam);
 
                                 for (var r=0, count=0; r < sourceElements.length; r++) {
 
-                                    if (sourceElements[r].tagName !== void 0 && sourceElements[r].tagName.toLowerCase() === 'spform-rule') {
+                                    forceRuleElement = sourceElements[r];
+
+                                    if (forceRuleElement.tagName !== void 0 && forceRuleElement.tagName.toLowerCase() === 'spform-rule') {
 
                                         count++;
+                                        if (count === forceRuleParam) break;
 
-                                        if (count === forceRuleParam) {
-
-                                            targetElement.append(sourceElements[r]);
-
-                                            deferred.resolve();
-                                            return deferred.promise;                                
-                                            
-                                        }
                                     }
                                 }
+
+                                if (forceRuleElement !== '') {
+                                    
+                                    return SPExpressionResolver.resolve(forceRuleElement.outerHTML, $scope).then(function(elemResolved) {
+
+                                        targetElement.append(angular.element(elemResolved)[0]);
+
+                                        deferred.resolve();
+                                        return deferred.promise;
+
+                                    });
+
+                                }
+
                             }
 
                             // Gets the element to parse.
