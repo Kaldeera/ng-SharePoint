@@ -129,6 +129,14 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         }
 
                     });
+
+
+                    // Clean up the validation attributes if the field is in 'display' mode.
+                    if ($attrs.mode === 'display') {
+
+                        validationAttributes = '';
+
+                    }
                     
 
                     // Mount the field directive HTML
