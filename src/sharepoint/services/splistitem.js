@@ -559,6 +559,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                     });
                 }
 
+                // This process will fail if the user has selected more than one file.
+                // In that case, server returns an error because there are multiple updates at the same item.
                 $q.all(promises).then(function() {
 
                     // Clean up the attachments arrays
