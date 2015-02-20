@@ -33,7 +33,7 @@ angular.module("templates/form-templates/spfield-attachments-edit.html", []).run
     "\n" +
     "	<a href=\"#\" file-select=\"onFileSelect($files, $event)\" data-multiple=\"true\">\n" +
     "		<span style=\"width: 16px; height: 16px; overflow: hidden; display: inline-block; position: relative; top: 3px;\">\n" +
-    "			<img alt=\"\" ng-src=\"/_layouts/15/{{L_Menu_LCID}}/images/formatmap16x16.png?rev=23\" style=\"position: absolute; top: -235px; left: -235px;\" />\n" +
+    "			<img alt=\"\" ng-src=\"/_layouts/15/{{LanguageID}}/images/formatmap16x16.png?rev=23\" style=\"position: absolute; top: -235px; left: -235px;\" />\n" +
     "		</span>\n" +
     "		<span ng-bind=\"AttachFileText\"></span>\n" +
     "	</a>\n" +
@@ -65,16 +65,35 @@ angular.module("templates/form-templates/spfield-choice-edit.html", []).run(["$t
   $templateCache.put("templates/form-templates/spfield-choice-edit.html",
     "<div ng-switch=\"schema.EditFormat\">\n" +
     "\n" +
-    "	<select ng-switch-when=\"0\" ng-model=\"$parent.value\" data-spfield-focus-element=\"true\" ng-options=\"option for option in choices\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-RadioText\" ></select>\n" +
-    "\n" +
+    "	<div ng-switch-when=\"0\">\n" +
+    "		<span ng-if=\"schema.FillInChoice\"><input id=\"{{schema.InternalName}}_{{schema.Id}}_DropDownButton\" type=\"radio\" value=\"DropDownButton\" ng-model=\"$parent.$parent.selectedOption\"></span>\n" +
+    "		<select ng-model=\"$parent.dropDownValue\" data-spfield-focus-element=\"true\" ng-options=\"option for option in choices\" ng-required=\"{{schema.Required}}\" title=\"{{schema.Title}}\" class=\"ms-RadioText\" ng-change=\"dropDownChanged()\" ng-click=\"dropDownClick()\"></select>\n" +
+    "		<div ng-if=\"schema.FillInChoice\">\n" +
+    "			<div class=\"ms-RadioText\">\n" +
+    "				<input id=\"{{schema.InternalName}}_{{schema.Id}}_FillInButton\" type=\"radio\" value=\"FillInButton\" ng-model=\"$parent.$parent.selectedOption\" />\n" +
+    "				<label for=\"{{schema.InternalName}}_{{schema.Id}}_FillInButton\" ng-bind=\"choiceFillInDisplayText\"></label>\n" +
+    "			</div>\n" +
+    "			<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$FillInChoice\" tabindex=\"-1\" ng-model=\"$parent.$parent.fillInChoiceValue\" ng-click=\"fillInChoiceClick()\" style=\"margin: 3px 0 0 25px;\">\n" +
+    "		</div>\n" +
+    "	</div>\n" +
+    "	\n" +
     "	<table ng-switch-when=\"1\" cellpadding=\"0\" cellspacing=\"1\">\n" +
     "		<tbody>\n" +
     "			<tr ng-repeat=\"option in choices\">\n" +
     "				<td>\n" +
     "					<span>\n" +
-    "						<input type=\"radio\" ng-model=\"$parent.$parent.value\" ng-value=\"option\" id=\"{{schema.InternalName}}_{{$index}}\" />\n" +
+    "						<input type=\"radio\" ng-model=\"$parent.$parent.selectedOption\" ng-value=\"option\" id=\"{{schema.InternalName}}_{{$index}}\" />\n" +
     "						<label for=\"{{schema.InternalName}}_{{$index}}\" ng-bind=\"option\"></label>\n" +
     "					</span>\n" +
+    "				</td>\n" +
+    "			</tr>\n" +
+    "			<tr ng-if=\"schema.FillInChoice\">\n" +
+    "				<td>\n" +
+    "					<div class=\"ms-RadioText\">\n" +
+    "						<input id=\"{{schema.InternalName}}_{{schema.Id}}_FillInButton\" type=\"radio\" value=\"FillInButton\" ng-model=\"$parent.$parent.selectedOption\" />\n" +
+    "						<label for=\"{{schema.InternalName}}_{{schema.Id}}_FillInButton\" ng-bind=\"choiceFillInDisplayText\"></label>\n" +
+    "					</div>\n" +
+    "					<input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}_$FillInChoice\" tabindex=\"-1\" ng-model=\"$parent.$parent.fillInChoiceValue\" ng-click=\"fillInChoiceClick()\" style=\"margin: 3px 0 0 25px;\">\n" +
     "				</td>\n" +
     "			</tr>\n" +
     "		</tbody>\n" +
@@ -214,16 +233,25 @@ angular.module("templates/form-templates/spfield-multichoice-display.html", []).
 angular.module("templates/form-templates/spfield-multichoice-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-multichoice-edit.html",
     "<table cellpadding=\"0\" cellspacing=\"1\">\n" +
-    "	<tbody>\n" +
-    "		<tr ng-repeat=\"choice in schema.Choices.results\">\n" +
-    "			<td>\n" +
-    "				<span class=\"ms-RadioText\" title=\"{{choice}}\">\n" +
-    "					<input type=\"checkbox\" id=\"{{schema.Title}}_{{$index}}\" ng-click=\"toggleCheckbox(choice)\" ng-checked=\"choices.indexOf(choice) != -1\" />\n" +
-    "					<label for=\"{{schema.Title}}_{{$index}}\">{{choice}}</label>\n" +
-    "				</span>\n" +
-    "			</td>\n" +
-    "		</tr>\n" +
-    "	</tbody>\n" +
+    "    <tbody>\n" +
+    "        <tr ng-repeat=\"choice in schema.Choices.results\">\n" +
+    "            <td>\n" +
+    "                <span class=\"ms-RadioText\" title=\"{{choice}}\">\n" +
+    "                    <input type=\"checkbox\" id=\"{{schema.Title}}_{{$index}}\" ng-click=\"toggleCheckbox(choice)\" ng-checked=\"choices.indexOf(choice) != -1\" />\n" +
+    "                    <label for=\"{{schema.Title}}_{{$index}}\">{{choice}}</label>\n" +
+    "                </span>\n" +
+    "            </td>\n" +
+    "        </tr>\n" +
+    "        <tr ng-if=\"schema.FillInChoice\">\n" +
+    "            <td>\n" +
+    "                <div class=\"ms-RadioText\">\n" +
+    "                    <input id=\"{{schema.InternalName}}_{{schema.Id}}_FillInRadio\" type=\"checkbox\" ng-model=\"$parent.fillInChoiceCheckbox\" ng-change=\"fillInChoiceCheckboxChanged()\" />\n" +
+    "                    <label for=\"{{schema.InternalName}}_{{schema.Id}}_FillInRadio\" ng-bind=\"choiceFillInDisplayText\"></label>\n" +
+    "                </div>\n" +
+    "                <input type=\"text\" maxlength=\"255\" id=\"{{schema.InternalName}}_{{schema.Id}}FillInText\" tabindex=\"-1\" ng-model=\"$parent.fillInChoiceValue\" ng-focus=\"fillInChoiceCheckbox = true\" style=\"margin: 3px 0 0 25px;\">\n" +
+    "            </td>\n" +
+    "        </tr>\n" +
+    "    </tbody>\n" +
     "</table>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
     "");
@@ -231,19 +259,67 @@ angular.module("templates/form-templates/spfield-multichoice-edit.html", []).run
 
 angular.module("templates/form-templates/spfield-note-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-note-display.html",
-    "<div ng-bind-html=\"value | unsafe\" class=\"field-display-value\"></div>\n" +
-    "");
+    "<div ng-if=\"!schema.AppendOnly\" ng-bind-html=\"value | unsafe\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"schema.AppendOnly\">\n" +
+    "    <div ng-repeat=\"version in versions\">\n" +
+    "        <span class=\"ms-noWrap\">\n" +
+    "            <span class=\"ms-imnSpan\">\n" +
+    "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink ms-spimn-presenceLink\">\n" +
+    "                    <span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
+    "                        <img name=\"imnmark\" class=\"ms-spimn-img ms-spimn-presence-disconnected-10x10x32\" title=\"\" showofflinepawn=\"1\" src=\"/_layouts/15/images/spimn.png?rev=23\" alt=\"No presence information\" />\n" +
+    "                    </span>\n" +
+    "                </a>\n" +
+    "            </span>\n" +
+    "            <span class=\"ms-noWrap ms-imnSpan\">\n" +
+    "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink\" tabindex=\"-1\">\n" +
+    "                    <img name=\"imnmark\" class=\"ms-hide\" title=\"\" showofflinepawn=\"1\" src=\"/_layouts/15/images/blank.gif?rev=23\" alt=\"\" />\n" +
+    "                </a>\n" +
+    "                <a class=\"ms-subtleLink\" onclick=\"GoToLinkOrDialogNewWindow(this);return false;\" href=\"/_layouts/15/userdisp.aspx?ID={{version.editor.id}}\" ng-bind=\"version.editor.name\"></a>\n" +
+    "            </span>\n" +
+    "        </span>\n" +
+    "        (<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): <span ng-bind-html=\"version.value | unsafe\"></span>\n" +
+    "    </div>\n" +
+    "</div>");
 }]);
 
 angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-note-edit.html",
-    "<span dir=\"ltr\">\n" +
-    "	<textarea ng-model=\"value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\"></textarea>\n" +
+    "<span dir=\"ltr\" ng-if=\"!rteFullHtml\">\n" +
+    "	<textarea ng-model=\"$parent.value\" data-spfield-focus-element=\"true\" maxlength=\"{{schema.MaxLength}}\" ng-maxlength=\"{{schema.MaxLength}}\" ng-required=\"{{schema.Required}}\" rows=\"{{schema.NumberOfLines}}\" cols=\"20\" title=\"{{schema.Title}}\" class=\"ms-long\"></textarea>\n" +
     "</span>\n" +
-    "<br/>\n" +
+    "<br ng-if=\"!rteFullHtml\" />\n" +
+    "\n" +
+    "<div ng-if=\"rteFullHtml\" class=\"ms-rtestate-field ms-rtefield ms-inputBox\" id=\"{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_topDiv\">\n" +
+    "    <div id=\"{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte_label\" style=\"display:none\" ng-bind=\"$parent.rteLabelText\"></div>\n" +
+    "    <div ng-model=\"$parent.value\" ng-blur=\"$parent.updateModel($event)\" ng-keyup=\"$parent.updateModel($event)\" ng-change=\"$parent.updateModel($event)\" contenteditable=\"true\" data-spfield-focus-element=\"true\" class=\"ms-rtestate-write ms-rteflags-0 ms-rtestate-field\" id=\"{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte\" style=\"min-height:84px\" aria-labelledby=\"{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte_label\" role=\"textbox\" aria-autocomplete=\"both\" aria-haspopup=\"true\" aria-multiline=\"true\"></div>\n" +
+    "    <div style=\"clear : both;\"></div>\n" +
+    "</div>\n" +
+    "\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +
-    "<div class=\"ms-formdescription\" ng-if=\"schema.RichText && currentMode == 'edit'\">\n" +
-    "    <a href=\"javascript:HelpWindowKey('nsrichtext')\">Click for help about adding basic HTML formatting.</a>\n" +
+    "\n" +
+    "<div class=\"ms-formdescription\" ng-if=\"schema.RichText && !rteFullHtml\">\n" +
+    "    <a href=\"javascript:HelpWindowKey('nsrichtext')\" ng-bind=\"rteHelpMessage\"></a>\n" +
+    "</div>\n" +
+    "\n" +
+    "<div ng-if=\"schema.AppendOnly\">\n" +
+    "    <div ng-repeat=\"version in versions\">\n" +
+    "        <span class=\"ms-noWrap\">\n" +
+    "            <span class=\"ms-imnSpan\">\n" +
+    "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink ms-spimn-presenceLink\">\n" +
+    "                    <span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
+    "                        <img name=\"imnmark\" class=\"ms-spimn-img ms-spimn-presence-disconnected-10x10x32\" title=\"\" showofflinepawn=\"1\" src=\"/_layouts/15/images/spimn.png?rev=23\" alt=\"No presence information\" />\n" +
+    "                    </span>\n" +
+    "                </a>\n" +
+    "            </span>\n" +
+    "            <span class=\"ms-noWrap ms-imnSpan\">\n" +
+    "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink\" tabindex=\"-1\">\n" +
+    "                    <img name=\"imnmark\" class=\"ms-hide\" title=\"\" showofflinepawn=\"1\" src=\"/_layouts/15/images/blank.gif?rev=23\" alt=\"\" />\n" +
+    "                </a>\n" +
+    "                <a class=\"ms-subtleLink\" onclick=\"GoToLinkOrDialogNewWindow(this);return false;\" href=\"/_layouts/15/userdisp.aspx?ID={{version.editor.id}}\" ng-bind=\"version.editor.name\"></a>\n" +
+    "            </span>\n" +
+    "        </span>\n" +
+    "        (<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): <span ng-bind-html=\"version.value | unsafe\"></span>\n" +
+    "    </div>\n" +
     "</div>\n" +
     "");
 }]);
@@ -387,7 +463,7 @@ angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templa
 
 angular.module("templates/form-templates/spform.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform.html",
-    "<form novalidate=\"true\" class=\"spform\">\n" +
+    "<form novalidate=\"true\" class=\"spform spform-{{mode}}\">\n" +
     "    <div id=\"form-loading-animation-wrapper-{{$id}}\" ng-show=\"!isInDesignMode\"><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>\n" +
     "    <div transclusion-container=\"\"></div>\n" +
     "</form>\n" +
