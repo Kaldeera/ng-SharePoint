@@ -646,7 +646,11 @@ angular.module('ngSharePoint').directive('spform',
                             // Gets the schema (fields) of the list.
                             // Really, gets the fields of the list content type specified in the 
                             // item or, if not specified, the default list content type.
-                            $scope.item.list.getProperties().then(function() {
+                            $scope.item.list.getProperties({
+                            
+                                $expand: 'Fields,ContentTypes,ContentTypes/Fields'
+
+                            }).then(function() {
 
                                 $scope.item.list.getFields().then(function(listFields) {
 

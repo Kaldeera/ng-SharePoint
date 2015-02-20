@@ -125,6 +125,19 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 				//
 				function refreshData() {
 
+					// If we are in display mode, there are not a extended template (that probably shows
+					// additional information), and there are the FieldValuesAsHtml ... we can show
+					// directly this value improving performance.
+					if ($scope.currentMode === 'display' && !angular.isDefined($scope.schema.extendedTemplate)) {
+
+                        var fieldName = $scope.name.replace(/_/g, '_x005f_');
+						if ($scope.item.FieldValuesAsHtml !== void 0 && $scope.item.FieldValuesAsHtml[fieldName] !== void 0) {
+
+							directive.setElementHTML($scope.item.FieldValuesAsHtml[fieldName]);
+							return;
+						}
+					}
+
 					// Adjust the model if no value is provided
 					if ($scope.value === null || $scope.value === void 0) {
 						$scope.value = { results: [] };

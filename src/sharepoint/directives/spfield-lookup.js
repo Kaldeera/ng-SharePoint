@@ -103,7 +103,22 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				// Refresh the lookup data and render the field.
 				//
 				function refreshData() {
-					
+
+					// If we are in display mode, there are not a extended template (that probably shows
+					// additional information), and there are the FieldValuesAsHtml ... we can show
+					// directly this value improving performance.
+					if ($scope.currentMode === 'display' && !angular.isDefined($scope.schema.extendedTemplate)) {
+
+                        var fieldName = $scope.name.replace(/_/g, '_x005f_');
+						if ($scope.item.FieldValuesAsHtml !== void 0 && $scope.item.FieldValuesAsHtml[fieldName] !== void 0) {
+
+							directive.setElementHTML($scope.item.FieldValuesAsHtml[fieldName]);
+							return;
+						}
+					}
+
+					// if not ... performs the default behavior
+
 					// Show loading animation.
 					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
@@ -146,7 +161,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						}
 					});
 
-				}
+				}	// refreshData
 
 
 

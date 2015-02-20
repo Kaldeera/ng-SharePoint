@@ -113,15 +113,21 @@ angular.module('ngSharePoint').factory('SPListItem',
         //
         // @returns: Promise with the result of the REST query.
         //
-        SPListItemObj.prototype.getProperties = function() {
+        SPListItemObj.prototype.getProperties = function(expandProperties) {
 
             var self = this;
             var def = $q.defer();
+            var query = {};
+
+            if (expandProperties !== void 0) {
+                query.$expand = expandProperties;
+            }
+
             var executor = new SP.RequestExecutor(self.list.web.url);
 
             executor.executeAsync({
 
-                url: self.getAPIUrl(),
+                url: self.getAPIUrl() + utils.parseQuery(query),
                 method: 'GET', 
                 headers: { 
                     "Accept": "application/json; odata=verbose"
@@ -180,6 +186,61 @@ angular.module('ngSharePoint').factory('SPListItem',
             return def.promise;
 
         }; // getProperties
+
+
+
+        // ****************************************************************************     
+        // getFieldValuesAsHtml
+        //
+        // Gets FieldValuesAsHtml properties of the item.
+        //
+        // This method performs a REST call to _api/web/list/item/FieldValuesAsHtml
+        // Thats different to expand the property when executes getProperties.
+        // That method makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
+        // Expanding this property does not retrieve detailed information lookup 
+        // values neither user fields. Is necessary to call this method.
+        //
+        // @returns: Promise with the result of the REST query.
+        //
+        SPListItemObj.prototype.getFieldValuesAsHtml = function() {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.list.web.url);
+
+            executor.executeAsync({
+
+                url: self.getAPIUrl() + '/FieldValuesAsHtml',
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }, 
+
+                success: function(data) {
+
+                    var d = utils.parseSPResponse(data);
+
+                    utils.cleanDeferredProperties(d);
+                    self.FieldValuesAsHtml = d;
+                    def.resolve(this);
+                }, 
+
+                error: function(data, errorCode, errorMessage) {
+
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }
+            });
+
+            return def.promise;
+
+        };  // getFieldValuesAsHtml
+
 
 
 
@@ -603,6 +664,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                 delete saveObj.attachments;
                 delete saveObj.AttachmentFiles;
                 delete saveObj.ContentType;
+                delete saveObj.FieldValuesAsHtml;
 
                 angular.extend(body, saveObj);
 

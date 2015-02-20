@@ -222,7 +222,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                     } else {
 
-                        $scope.list.getItemById(itemId).then(function(item) {
+                        $scope.list.getItemById(itemId, 'FieldValuesAsHtml').then(function(item) {
 
                             deferred.resolve(item);
 
