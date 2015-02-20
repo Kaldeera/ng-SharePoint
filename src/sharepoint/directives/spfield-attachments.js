@@ -48,7 +48,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 					},
 
-					watchValueFn: function(newValue) {
+					watchValueFn: function(newValue, oldValue) {
 
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');

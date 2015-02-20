@@ -30,7 +30,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
             // Update the model property '$viewValue' to change the model state to $dirty and
             // force to run $parsers, which include validators.
-            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue || null);
+            this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue);
         }
 
 
