@@ -135,8 +135,6 @@ angular.module('ngSharePoint').directive('spfieldNote',
                         contentType: "text/xml;charset='utf-8'",
                         complete: function(result, status) {
 
-                            console.log(result);
-
                             if (result.status == 200) {
 
                                 var resultXml = SPUtils.parseXmlString(result.responseText);

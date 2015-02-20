@@ -123,7 +123,28 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
+
+
+            if (this.Created !== undefined) {
+
+                var infoIsOk = true;
+
+                // The list properties are already here
+                if (query.$expand !== undefined) {
+
+                    if (query.$expand.toLowerCase().indexOf('fields') >= 0 && this.Fields === undefined) infoIsOk = false;
+                    if (query.$expand.toLowerCase().indexOf('contenttypes') >= 0 && this.ContentTypes === undefined) infoIsOk = false;
+                }
+
+                if (infoIsOk) {
+
+                    def.resolve(this);
+                    return def.promise;
+                }                
+            }
+
             var executor = new SP.RequestExecutor(self.web.url);
+
             var defaultExpandProperties = 'Views';
             // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
             // que si la lista es la 'SiteUserInfoList' se genera un error porque no 
@@ -686,7 +707,7 @@ angular.module('ngSharePoint').factory('SPList',
             var self = this;
             var def = $q.defer();
             var executor = new SP.RequestExecutor(self.web.url);
-            var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+            var defaultExpandProperties = 'ContentType,File,File/ParentFolder,Folder,Folder/ParentFolder';
             var query = {
                 $expand: defaultExpandProperties + (expandProperties ? ', ' + expandProperties : '')
             };
