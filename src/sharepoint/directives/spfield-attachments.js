@@ -50,6 +50,10 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 					watchValueFn: function(newValue, oldValue) {
 
+						// Check if the old and new values really differ.
+						if (newValue === null && oldValue === undefined) return;
+
+
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 

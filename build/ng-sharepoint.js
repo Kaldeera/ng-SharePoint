@@ -5209,6 +5209,24 @@ angular.module('ngSharePoint').factory('SPListItem',
 
             SPUtils.getFileBinary(file).then(function(binaryData) {
 
+                // Set the headers for the REST API call.
+                // ----------------------------------------------------------------------------
+                var headers = {
+                    "Accept": "application/json; odata=verbose"
+                };
+
+
+
+                var requestDigest = document.getElementById('__REQUESTDIGEST');
+                // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+                // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+                if (requestDigest !== null) {
+                    headers['X-RequestDigest'] = requestDigest.value;
+                }
+
+
+
                 executor.executeAsync({
 
                     url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + file.name + "')",
@@ -5216,15 +5234,14 @@ angular.module('ngSharePoint').factory('SPListItem',
                     binaryStringRequestBody: true,
                     body: binaryData,
                     state: "Update",
-                    headers: { 
-                        "Accept": "application/json; odata=verbose"
-                    },
+                    headers: headers,
 
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
-
+                        
                         def.resolve(d);
+
                     }, 
 
                     error: function(data, errorCode, errorMessage) {
@@ -5270,6 +5287,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                 "X-HTTP-Method": "DELETE"
             };
 
+
+
             var requestDigest = document.getElementById('__REQUESTDIGEST');
             // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
             // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
@@ -5277,6 +5296,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             if (requestDigest !== null) {
                 headers['X-RequestDigest'] = requestDigest.value;
             }
+
 
 
             executor.executeAsync({
@@ -5290,6 +5310,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     var d = utils.parseSPResponse(data);
 
                     def.resolve(d);
+
                 }, 
 
                 error: function(data, errorCode, errorMessage) {
@@ -5328,38 +5349,101 @@ angular.module('ngSharePoint').factory('SPListItem',
             var def = $q.defer();
 
 
+
+            function processAttachmentsInternal(attachmentsOperations, index, deferred) {
+
+                index = index || 0;
+                deferred = deferred || $q.defer();
+
+                var attachmentOperation = attachmentsOperations[index++];
+
+                if (attachmentOperation === void 0) {
+
+                    deferred.resolve();
+                    return deferred.promise;
+
+                }
+
+                switch(attachmentOperation.operation.toLowerCase()) {
+
+                    case 'add':
+                        self.addAttachment(attachmentOperation.file).finally(function() {
+
+                            processAttachmentsInternal(attachmentsOperations, index, deferred);
+
+                        }).catch(function(err) {
+
+                            try {
+
+                                var errorStatus = err.data.statusCode + ' (' + err.data.statusText + ')';
+                                alert(attachmentOperation.file.name + '\n\n' + err.code + '\n' + errorStatus + '\n\n' + err.message);
+
+                            } catch(e) {
+
+                                console.log(err);
+                                alert('Error attaching the file ' + attachmentOperation.file.name);
+
+                            }
+
+                        });
+                        break;
+
+                    case 'remove':
+                        self.removeAttachment(attachmentOperation.fileName).finally(function() {
+
+                            processAttachmentsInternal(attachmentsOperations, index, deferred);
+
+                        });
+                        break;
+
+                }
+
+                return deferred.promise;
+
+            } // processAttachmentsInternal
+
+
+
             // Check if the attachments property has been initialized
             if (this.attachments !== void 0) {
 
-                var promises = [];
-
-                if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
-                    angular.forEach(this.attachments.add, function(file) {
-                        promises.push(self.addAttachment(file));
-                    });
-                }
+                var attachmentsOperations = [];
 
                 if (this.attachments.remove !== void 0 && this.attachments.remove.length > 0) {
                     angular.forEach(this.attachments.remove, function(fileName) {
-                        promises.push(self.removeAttachment(fileName));
+                        attachmentsOperations.push({
+                            operation: 'remove',
+                            fileName: fileName
+                        });
                     });
                 }
 
-                // This process will fail if the user has selected more than one file.
-                // In that case, server returns an error because there are multiple updates at the same item.
-                $q.all(promises).then(function() {
+                if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
+                    angular.forEach(this.attachments.add, function(file) {
+                        attachmentsOperations.push({
+                            operation: 'add',
+                            file: file
+                        });
+                    });
+                }
+
+
+                // Process the attachments operations sequentially with promises.
+                processAttachmentsInternal(attachmentsOperations).then(function() {
 
                     // Clean up the attachments arrays
                     self.attachments.add = [];
                     self.attachments.remove = [];
 
                     def.resolve();
+
                 });
 
             } else {
 
                 // Nothing to do
                 def.resolve();
+
             }
 
 
@@ -5418,7 +5502,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     }
 
                     // NOTA DE MEJORA!
-                    // Se pueden controlar los campos e tipo Lookup y User para que convierta los valores
+                    // Se pueden controlar los campos de tipo Lookup y User para que convierta los valores
                     // al nombre de campo correcto (si es que están mal)
                     // 
                     // Ej. un campo que se llama Sala y el objeto tiene
@@ -7968,6 +8052,10 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					},
 
 					watchValueFn: function(newValue, oldValue) {
+
+						// Check if the old and new values really differ.
+						if (newValue === null && oldValue === undefined) return;
+
 
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
