@@ -261,8 +261,13 @@ angular.module("templates/form-templates/spfield-note-display.html", []).run(["$
   $templateCache.put("templates/form-templates/spfield-note-display.html",
     "<div ng-if=\"!schema.AppendOnly\" ng-bind-html=\"value | unsafe\" class=\"field-display-value\"></div>\n" +
     "<div ng-if=\"schema.AppendOnly\">\n" +
+<<<<<<< HEAD
     "    <div ng-repeat=\"version in versions\">\n" +
     "        <span class=\"ms-noWrap\">\n" +
+=======
+    "    <div ng-repeat=\"version in versions\" class=\"accumulated-wrapper\">\n" +
+    "        <span class=\"ms-noWrap accumulated-user\">\n" +
+>>>>>>> master
     "            <span class=\"ms-imnSpan\">\n" +
     "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink ms-spimn-presenceLink\">\n" +
     "                    <span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
@@ -277,7 +282,11 @@ angular.module("templates/form-templates/spfield-note-display.html", []).run(["$
     "                <a class=\"ms-subtleLink\" onclick=\"GoToLinkOrDialogNewWindow(this);return false;\" href=\"/_layouts/15/userdisp.aspx?ID={{version.editor.id}}\" ng-bind=\"version.editor.name\"></a>\n" +
     "            </span>\n" +
     "        </span>\n" +
+<<<<<<< HEAD
     "        (<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): <span ng-bind-html=\"version.value | unsafe\"></span>\n" +
+=======
+    "        <span class=\"accumulated-date\">(<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): </span><span class=\"accumulated-text\" ng-bind-html=\"version.value | unsafe\"></span>\n" +
+>>>>>>> master
     "    </div>\n" +
     "</div>");
 }]);
@@ -302,8 +311,13 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
     "</div>\n" +
     "\n" +
     "<div ng-if=\"schema.AppendOnly\">\n" +
+<<<<<<< HEAD
     "    <div ng-repeat=\"version in versions\">\n" +
     "        <span class=\"ms-noWrap\">\n" +
+=======
+    "    <div ng-repeat=\"version in versions\" class=\"accumulated-wrapper\">\n" +
+    "        <span class=\"ms-noWrap accumulated-user\">\n" +
+>>>>>>> master
     "            <span class=\"ms-imnSpan\">\n" +
     "                <a href=\"#\" onclick=\"IMNImageOnClick(event);return false;\" class=\"ms-imnlink ms-spimn-presenceLink\">\n" +
     "                    <span class=\"ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10\">\n" +
@@ -318,7 +332,11 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
     "                <a class=\"ms-subtleLink\" onclick=\"GoToLinkOrDialogNewWindow(this);return false;\" href=\"/_layouts/15/userdisp.aspx?ID={{version.editor.id}}\" ng-bind=\"version.editor.name\"></a>\n" +
     "            </span>\n" +
     "        </span>\n" +
+<<<<<<< HEAD
     "        (<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): <span ng-bind-html=\"version.value | unsafe\"></span>\n" +
+=======
+    "        <span class=\"accummulated-date\">(<a href=\"/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072\" ng-bind=\"version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern\"></a>): </span><span class=\"accumulated-text\" ng-bind-html=\"version.value | unsafe\"></span>\n" +
+>>>>>>> master
     "    </div>\n" +
     "</div>\n" +
     "");

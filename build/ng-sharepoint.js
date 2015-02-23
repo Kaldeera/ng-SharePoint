@@ -1704,7 +1704,14 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
             // Update the model property '$viewValue' to change the model state to $dirty and
             // force to run $parsers, which include validators.
+<<<<<<< HEAD
             this.modelCtrl.$setViewValue(this.modelCtrl.$viewValue);
+=======
+            var value = this.modelCtrl.$viewValue;
+            if (!angular.isDefined(value)) value = null;
+
+            this.modelCtrl.$setViewValue(value);
+>>>>>>> master
         }
 
 
@@ -5206,6 +5213,24 @@ angular.module('ngSharePoint').factory('SPListItem',
 
             SPUtils.getFileBinary(file).then(function(binaryData) {
 
+                // Set the headers for the REST API call.
+                // ----------------------------------------------------------------------------
+                var headers = {
+                    "Accept": "application/json; odata=verbose"
+                };
+
+
+
+                var requestDigest = document.getElementById('__REQUESTDIGEST');
+                // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
+                // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
+
+                if (requestDigest !== null) {
+                    headers['X-RequestDigest'] = requestDigest.value;
+                }
+
+
+
                 executor.executeAsync({
 
                     url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + file.name + "')",
@@ -5213,15 +5238,14 @@ angular.module('ngSharePoint').factory('SPListItem',
                     binaryStringRequestBody: true,
                     body: binaryData,
                     state: "Update",
-                    headers: { 
-                        "Accept": "application/json; odata=verbose"
-                    },
+                    headers: headers,
 
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
-
+                        
                         def.resolve(d);
+
                     }, 
 
                     error: function(data, errorCode, errorMessage) {
@@ -5267,6 +5291,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                 "X-HTTP-Method": "DELETE"
             };
 
+
+
             var requestDigest = document.getElementById('__REQUESTDIGEST');
             // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
             // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
@@ -5274,6 +5300,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             if (requestDigest !== null) {
                 headers['X-RequestDigest'] = requestDigest.value;
             }
+
 
 
             executor.executeAsync({
@@ -5287,6 +5314,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     var d = utils.parseSPResponse(data);
 
                     def.resolve(d);
+
                 }, 
 
                 error: function(data, errorCode, errorMessage) {
@@ -5325,38 +5353,107 @@ angular.module('ngSharePoint').factory('SPListItem',
             var def = $q.defer();
 
 
-            // Check if the attachments property has been initialized
-            if (this.attachments !== void 0) {
 
-                var promises = [];
+            function processAttachmentsInternal(attachmentsOperations, index, deferred) {
 
-                if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
-                    angular.forEach(this.attachments.add, function(file) {
-                        promises.push(self.addAttachment(file));
-                    });
-                }
+                index = index || 0;
+                deferred = deferred || $q.defer();
 
-                if (this.attachments.remove !== void 0 && this.attachments.remove.length > 0) {
-                    angular.forEach(this.attachments.remove, function(fileName) {
-                        promises.push(self.removeAttachment(fileName));
-                    });
-                }
+                var attachmentOperation = attachmentsOperations[index++];
 
+<<<<<<< HEAD
                 // This process will fail if the user has selected more than one file.
                 // In that case, server returns an error because there are multiple updates at the same item.
                 $q.all(promises).then(function() {
+=======
+                if (attachmentOperation === void 0) {
+>>>>>>> master
+
+                    deferred.resolve();
+                    return deferred.promise;
+
+                }
+
+                switch(attachmentOperation.operation.toLowerCase()) {
+
+                    case 'add':
+                        self.addAttachment(attachmentOperation.file).finally(function() {
+
+                            processAttachmentsInternal(attachmentsOperations, index, deferred);
+
+                        }).catch(function(err) {
+
+                            try {
+
+                                var errorStatus = err.data.statusCode + ' (' + err.data.statusText + ')';
+                                alert(attachmentOperation.file.name + '\n\n' + err.code + '\n' + errorStatus + '\n\n' + err.message);
+
+                            } catch(e) {
+
+                                console.log(err);
+                                alert('Error attaching the file ' + attachmentOperation.file.name);
+
+                            }
+
+                        });
+                        break;
+
+                    case 'remove':
+                        self.removeAttachment(attachmentOperation.fileName).finally(function() {
+
+                            processAttachmentsInternal(attachmentsOperations, index, deferred);
+
+                        });
+                        break;
+
+                }
+
+                return deferred.promise;
+
+            } // processAttachmentsInternal
+
+
+
+            // Check if the attachments property has been initialized
+            if (this.attachments !== void 0) {
+
+                var attachmentsOperations = [];
+
+                if (this.attachments.remove !== void 0 && this.attachments.remove.length > 0) {
+                    angular.forEach(this.attachments.remove, function(fileName) {
+                        attachmentsOperations.push({
+                            operation: 'remove',
+                            fileName: fileName
+                        });
+                    });
+                }
+
+                if (this.attachments.add !== void 0 && this.attachments.add.length > 0) {
+                    angular.forEach(this.attachments.add, function(file) {
+                        attachmentsOperations.push({
+                            operation: 'add',
+                            file: file
+                        });
+                    });
+                }
+
+
+                // Process the attachments operations sequentially with promises.
+                processAttachmentsInternal(attachmentsOperations).then(function() {
 
                     // Clean up the attachments arrays
                     self.attachments.add = [];
                     self.attachments.remove = [];
 
                     def.resolve();
+
                 });
 
             } else {
 
                 // Nothing to do
                 def.resolve();
+
             }
 
 
@@ -5415,7 +5512,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     }
 
                     // NOTA DE MEJORA!
-                    // Se pueden controlar los campos e tipo Lookup y User para que convierta los valores
+                    // Se pueden controlar los campos de tipo Lookup y User para que convierta los valores
                     // al nombre de campo correcto (si es que están mal)
                     // 
                     // Ej. un campo que se llama Sala y el objeto tiene
@@ -7670,6 +7767,7 @@ angular.module('ngSharePoint').factory('SPWeb',
                 scope.formCtrl.setFormStatus(scope.status.PROCESSING);
 
                 var promise;
+<<<<<<< HEAD
 
                 switch(scope.spAction.toLowerCase()) {
 
@@ -7803,6 +7901,141 @@ angular.module('ngSharePoint').factory('SPWeb',
                                             redirectPromise = list.getDefaultViewUrl();
                                         }
 
+=======
+
+                switch(scope.spAction.toLowerCase()) {
+
+                    case 'save':
+                    case 'cancel':
+                    case 'close':
+                        // default functions
+                        var safeActionFn = function() {
+                            try {
+                                return scope.action();
+                            } catch(e) {
+                                console.error('>>>> ngSharePoint: sp-action "' + getLabel() + '" rejected automatically due to an unhandled exception.');
+                                return $q.reject(e);
+                            }
+                        };
+
+                        promise = SPUtils.callFunctionWithParams(scope.action, scope);
+                        break;
+
+
+
+                    default:
+                        // custom function
+                        promise = SPUtils.callFunctionWithParams(scope.$parent[scope.spAction], scope.$parent);
+                        break;
+                }
+
+
+                $q.when(promise).then(function(result) {
+
+                    if (result !== false) {
+
+                        //var redirectUrl = scope.redirectUrl;
+
+                        if (redirectUrl) {
+
+                            var item = scope.formCtrl.getItem();
+                            var list = item.list;
+
+                            // Checks for pre-defined values in the redirect url.
+                            switch(redirectUrl.toLowerCase()) {
+
+                                case 'display':
+
+                                    list.getDefaultDisplayFormUrl().then(function(url) {
+
+                                        // Redirects to the correct url
+                                        var params = window.location.search;
+                                        var idParam = 'ID=' + item.Id;
+
+                                        if (params.indexOf(idParam) == -1) {
+
+                                            if (params === "") {
+                                                params = "?" + idParam;
+                                            } else {
+                                                params = "?" + idParam + '&' + params.substr(1);
+                                            }
+
+                                        }
+                                        window.location = url + params;
+                                        
+                                    });
+                            
+                                    break;
+
+
+                                case 'edit':
+
+                                    list.getDefaultEditFormUrl().then(function(url) {
+
+                                        // Redirects to the correct url
+                                        var params = window.location.search;
+                                        var idParam = 'ID=' + item.Id;
+
+                                        if (params.indexOf(idParam) == -1) {
+
+                                            if (params === "") {
+                                                params = "?" + idParam;
+                                            } else {
+                                                params = "?" + idParam + '&' + params.substr(1);
+                                            }
+
+                                        }
+                                        window.location = url + params;
+                                        
+                                    });
+
+                                    break;
+
+
+                                case 'new':
+
+                                    list.getDefaultNewFormUrl().then(function(url) {
+
+                                        // Redirects to the correct url
+                                        window.location = url;
+                                        
+                                    });
+
+                                    break;
+
+
+                                case 'default':
+                                            
+                                    var dialog = SP.UI.ModalDialog.get_childDialog();
+
+                                    if (dialog) {
+
+                                        $timeout(function() {
+
+                                            try {
+
+                                                scope.dialogReturnValue = item;
+
+                                                // NOTE: The next call will throw an error if the dialog wasn't opened with the method
+                                                //       SP.UI.ModalDialog.commonModalDialogOpen(url, options, callback, args)
+                                                dialog.commonModalDialogClose(scope.dialogResult, scope.dialogReturnValue);
+
+                                            } catch(e) {
+
+                                                dialog.close(scope.dialogResult);
+
+                                            }
+
+                                        });
+
+                                    } else {
+
+                                        var redirectPromise = utils.getQueryStringParamByName('Source');
+                                        if (redirectPromise === void 0) {
+                                            redirectPromise = list.getDefaultViewUrl();
+                                        }
+
+>>>>>>> master
                                         $q.when(redirectPromise).then(function(redirectUrl) {
 
                                             // Redirects to the correct url
@@ -7965,6 +8198,13 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 					},
 
 					watchValueFn: function(newValue, oldValue) {
+<<<<<<< HEAD
+=======
+
+						// Check if the old and new values really differ.
+						if (newValue === null && oldValue === undefined) return;
+
+>>>>>>> master
 
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
@@ -8488,6 +8728,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                             $scope.fillInChoiceValue = $scope.value;
                             $scope.selectedOption = 'FillInButton';
+<<<<<<< HEAD
 
                         } else {
 
@@ -8499,6 +8740,19 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                                     $scope.selectedOption = 'DropDownButton';
                                     break;
 
+=======
+
+                        } else {
+
+                            switch($scope.schema.EditFormat) {
+
+                                case 0:
+                                    // Dropdown
+                                    $scope.dropDownValue = $scope.value;
+                                    $scope.selectedOption = 'DropDownButton';
+                                    break;
+
+>>>>>>> master
                                 case 1:
                                     // Radio buttons
                                     $scope.selectedOption = $scope.value;
@@ -8727,6 +8981,18 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         }
 
                     });
+<<<<<<< HEAD
+
+
+                    // Clean up the validation attributes if the field is in 'display' mode.
+                    if ($attrs.mode === 'display') {
+
+                        validationAttributes = '';
+
+                    }
+                    
+=======
+>>>>>>> master
 
 
                     // Clean up the validation attributes if the field is in 'display' mode.
@@ -8882,6 +9148,22 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 angular.module('ngSharePoint').directive('spfieldDatetime', 
 
     ['SPFieldDirective', '$filter', '$timeout', '$q', 'SPUtils',
+<<<<<<< HEAD
+
+    function spfieldDatetime_DirectiveFactory(SPFieldDirective, $filter, $timeout, $q, SPUtils) {
+
+        var spfieldDatetime_DirectiveDefinitionObject = {
+
+            restrict: 'EA',
+            require: ['^spform', 'ngModel'],
+            replace: true,
+            scope: {
+                mode: '@',
+                value: '=ngModel'
+            },
+            templateUrl: 'templates/form-templates/spfield-control.html',
+            
+=======
 
     function spfieldDatetime_DirectiveFactory(SPFieldDirective, $filter, $timeout, $q, SPUtils) {
 
@@ -8898,8 +9180,19 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
             
 
             link: function($scope, $element, $attrs, controllers) {
+>>>>>>> master
 
+            link: function($scope, $element, $attrs, controllers) {
 
+<<<<<<< HEAD
+
+                var directive = {
+                    
+                    fieldTypeName: 'datetime',
+                    replaceAll: false,
+
+                    watchModeFn: function(newValue) {
+=======
                 var directive = {
                     
                     fieldTypeName: 'datetime',
@@ -8912,11 +9205,32 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                         });
                     }
                 };
+>>>>>>> master
 
+                        getData().then(function() {
+                            directive.renderField(newValue);
+                        });
+                    }
+                };
+
+<<<<<<< HEAD
+=======
+                SPFieldDirective.baseLinkFn.apply(directive, arguments);
+>>>>>>> master
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
+<<<<<<< HEAD
 
+                function getData() {
+
+                    var def = $q.defer();
+
+                    // Gets web regional settings
+                    $scope.formCtrl.getWebRegionalSettings().then(function(webRegionalSettings) {
+
+                        $scope.webRegionalSettings = webRegionalSettings;
+=======
                 function getData() {
 
                     var def = $q.defer();
@@ -8936,8 +9250,114 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             $scope.regionalSettings = regionalSettings;
                             $scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
                         });
+>>>>>>> master
+
+                        // Gets addicional properties from the Regional Settings via CSOM.
+                        //
+                        // NOTA: Mientras no se recuperen las RegionalSettings del usuario, se recupera
+                        //       la propiedad 'direction' (rtl/ltr) de aquí.
+                        //       Una vez se consigan recuperar, habrá que ver si existe este valor.
+                        //
+                        SPUtils.getRegionalSettings().then(function(regionalSettings) {
+                            $scope.regionalSettings = regionalSettings;
+                            $scope.direction = regionalSettings.get_isRightToLeft() ? 'rtl' : 'ltr';
+                        });
+
+<<<<<<< HEAD
+
+                        //$scope.lcid = SP.Res.lcid;
+
+                        // Gets current user language (LCID) from user regional settings configuration.
+                        //
+                        SPUtils.getCurrentUserLCID().then(function(lcid) {
+
+                            $scope.lcid = lcid;
 
 
+                            // La clase Sys.CultureInfo contiene la información de la cultura actual del servidor.
+                            // Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
+                            // se deben realizar los siguientes pasos:
+                            // 
+                            // 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
+                            //
+                            //    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
+                            //
+                            //
+                            // 2. Añadir en el web.config de la aplicación web la siguiente entrada si no existe:
+                            //    ESTE PASO REALMENTE NO ES NECESARIO.
+                            //
+                            //    <system.web>
+                            //        <globalization uiCulture="auto" culture="auto" />
+                            //        ...
+                            //
+                            //
+                            // A pesar de estos cambios, el valor de Sys.CultureInfo.CurrentCulture siempre será 'en-US' (o el idioma por defecto del servidor). Sin embargo, al
+                            // realizar los pasos anteriores, cuando la configuración regional sea diferente de la establecida en Sys.CultureInfo.CurrentCulture
+                            // se generará la variable '__cultureInfo' con la información de la cultura seleccionada en la configuración regional del usuario
+                            // y se podrán obtener los valores de formato para números y fechas correctos.
+                            //
+                            $scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+                            var minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+                            var hours12 = ["12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"];
+                            var hours24 = ["00:", "01:", "02:", "03:", "04:", "05:", "06:", "07:", "08:", "09:", "10:", "11:", "12:", "13:", "14:", "15:", "16:", "17:", "18:", "19:", "20:", "21:", "22:", "23:"];
+                            var TimeZoneDifference = '01:59:59.9999809';            // TODO: Recuperar o calcular.
+                            var WorkWeek = '0111110';                               // TODO: Recuperar o calcular.
+                            var MinJDay = '109207';                                 // TODO: Recuperar o calcular.
+                            var MaxJDay = '2666269';                                // TODO: Recuperar o calcular.
+                            $scope.hoursMode24 = $scope.webRegionalSettings.Time24; // TODO: Recuperar el modo de hora (12/24) de las 'RegionalSettings' del usuario.
+
+
+                            $scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+                            $scope.minutes = minutes;
+                            $scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
+                            $scope.datePickerPath = getDatePickerPath();
+                            $scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
+                                                   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
+                                                   '&lcid=' + STSHtmlEncode($scope.lcid) +                                  // Locale (User Regional Settings)
+                                                   '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) +         // Language (UI Language)
+                                                   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
+                                                   '&ww=' + STSHtmlEncode(WorkWeek) + 
+                                                   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
+                                                   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
+                                                   '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) +     // HijriAdjustment ?
+                                                   '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) +          // ShowWeekNumber ?
+                                                   '&minjday=' + STSHtmlEncode(MinJDay) + 
+                                                   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
+                                                   '&date=';
+
+                            $scope.DatePickerFrameID = g_strDatePickerFrameID;
+                            $scope.DatePickerImageID = g_strDatePickerImageID;
+
+                            // Initialize the models for data-binding.
+                            if ($scope.value !== null && $scope.value !== void 0) {
+                                
+                                $scope.dateModel = new Date($scope.value);
+                                $scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
+                                $scope.minutesModel = $scope.dateModel.getMinutes().toString();
+                                var hours = $scope.dateModel.getHours();
+                                $scope.hoursModel = hours.toString() + ($scope.hoursMode24 ? ':' : '');
+                                if (hours < 10) {
+                                    $scope.hoursModel = '0' + $scope.hoursModel;
+                                }
+
+                            } else {
+
+                                $scope.dateModel = $scope.dateOnlyModel = $scope.minutesModel = $scope.hoursModel = null;
+
+                            }
+
+
+                            // All data collected and processed, continue...
+                            def.resolve();
+
+                        });
+
+                    });
+
+
+                    return def.promise;
+=======
                         //$scope.lcid = SP.Res.lcid;
 
                         // Gets current user language (LCID) from user regional settings configuration.
@@ -9032,9 +9452,20 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                     return def.promise;
 
                 } // getData
+>>>>>>> master
+
+                } // getData
 
 
+                // ****************************************************************************
+                // Shows the date picker.
+                //
+                // Uses the SharePoint OOB 'clickDatePicker' function to show the calendar
+                // in an IFRAME (<15 DEEP>/TEMPLATE/LAYOUTS/datepicker.js).
+                //
+                $scope.showDatePicker = function($event) {
 
+<<<<<<< HEAD
                 // ****************************************************************************
                 // Shows the date picker.
                 //
@@ -9056,8 +9487,26 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             iframe.addEventListener('load', OnIframeLoadFinish, false);
                         }
                     }
+=======
+                    var fieldId = $scope.idPrefix + '_$DateTimeFieldDate';
+                    var iframe = document.getElementById(fieldId + g_strDatePickerFrameID);
 
+                    if (iframe !== null) {
+                        if (Boolean(iframe.attachEvent)) {
+                            iframe.attachEvent('onreadystatechange', OnIframeLoadFinish);
+                        }
+                        else if (Boolean(iframe.addEventListener)) {
+                            iframe.Picker = iframe;
+                            iframe.readyState = 'complete';
+                            iframe.addEventListener('load', OnIframeLoadFinish, false);
+                        }
+                    }
 
+>>>>>>> master
+
+                    clickDatePicker(fieldId, $scope.datePickerUrl, $scope.dateOnlyModel, $event.originalEvent);
+
+<<<<<<< HEAD
                     clickDatePicker(fieldId, $scope.datePickerUrl, $scope.dateOnlyModel, $event.originalEvent);
 
                     return false;
@@ -9152,6 +9601,100 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                 //
                 function getDatePickerPath() {
 
+=======
+                    return false;
+
+                };
+
+
+
+                // ****************************************************************************
+                // Catch when the DatePicker iframe load has finished.
+                //
+                function OnIframeLoadFinish() {
+
+                    var picker = this.Picker; // IFRAME element
+
+                    if (typeof picker !== undefined && picker !== null) {
+
+                        var resultfunc = picker.resultfunc;
+
+                        // Wraps the default IFRAME.resultfunc
+                        picker.resultfunc = function() {
+
+                            resultfunc();
+
+                            // Updates the model with the selected value from the DatePicker iframe.
+                            $timeout(function() {
+                                $scope.$apply(function() {
+                                    $scope.dateOnlyModel = picker.resultfield.value;
+                                });
+                            });
+                        };
+                        
+                    } else {
+
+                        // Can't catch the result value from the DatetimePicker IFRAME...
+                        // :(
+
+                    }
+                }
+
+
+
+                // ****************************************************************************
+                // Watch for changes in the model variables to update the field model ($scope.value).
+                //
+                $scope.$watch('[dateOnlyModel, hoursModel, minutesModel]', updateModel, true);
+
+
+
+                // ****************************************************************************
+                // Updates the field model with the correct value and format.
+                //
+                function updateModel(newValue, oldValue) {
+
+                    if (newValue === oldValue || $scope.dateOnlyModel === void 0 || $scope.dateOnlyModel === null) return;
+
+                    try {
+
+                        // TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+
+                        var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+                        var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+                        var dateComponents = {};
+                        
+                        for(var i = 0; i < dateParts.length; i++) {
+                            dateComponents[dateParts[i]] = dateValues[i];
+                        }
+
+                        var hours = $scope.hoursModel;
+                        if (hours !== null) {
+                            hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+                        }
+                        var minutes = $scope.minutesModel;
+                        var utcDate = Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes);
+                        var offset = new Date().getTimezoneOffset() * 60 * 1000;
+
+                        // Into the item must store a valid Date object
+                        $scope.value = new Date(utcDate + offset);
+
+                    } catch(e) {
+
+                        $scope.value = null;
+                        // TODO: Create a 'DateTimeValidator' and assigns it in 'SPFieldControl' directive when field type is 'DateTime'.
+                    }
+                }
+
+
+
+                // ****************************************************************************
+                // Gets the current web _layouts/15 url.
+                // This will be used as the base url for the IFRAME that shows the date picker.
+                //
+                function getDatePickerPath() {
+
+>>>>>>> master
                     var datePickerPath = _spPageContextInfo.webServerRelativeUrl;
 
                     if (datePickerPath === null)
@@ -10405,6 +10948,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
                     } else {
 
                         $scope.choices.push(choice);
+<<<<<<< HEAD
 
                     }
 
@@ -10435,6 +10979,152 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
                         sortedChoices.push($scope.fillInChoiceValue);
 
+                    }
+
+
+                    $scope.choices = $scope.value.results = sortedChoices;
+
+                }
+
+
+                $scope.$watch('fillInChoiceValue', function(newValue, oldValue) {
+
+                    if (newValue == oldValue) return;
+
+                    var oldValueIndex = $scope.choices.indexOf(oldValue);
+
+                    if (oldValueIndex != -1) {
+
+                        $scope.choices.splice(oldValueIndex, 1);
+
+                    }
+
+                    sortChoices();
+                    
+                });
+
+
+                $scope.fillInChoiceCheckboxChanged = function() {
+
+                    if ($scope.fillInChoiceCheckbox) {
+
+                        var fillInChoiceElement = document.getElementById($scope.schema.InternalName + '_' + $scope.schema.Id + 'FillInText');
+
+                        if (fillInChoiceElement) {
+
+                            fillInChoiceElement.focus();
+
+                        }
+
+                    }
+
+                    
+                    sortChoices();
+
+                };
+
+            } // link
+
+        }; // Directive definition object
+
+
+        return spfieldMultichoice_DirectiveDefinitionObject;
+
+    } // Directive factory
+=======
+
+                    }
+>>>>>>> master
+
+                    sortChoices();
+
+<<<<<<< HEAD
+/*
+    SPFieldNote - directive
+    
+    Pau Codina (pau.codina@kaldeera.com)
+    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+
+    Copyright (c) 2014
+    Licensed under the MIT License
+*/
+=======
+                };
+
+>>>>>>> master
+
+
+                // ****************************************************************************
+                // Sort the choices according to the definition order.
+                // NOTE: The choices are already ordered in the schema.
+                //
+                function sortChoices() {
+
+<<<<<<< HEAD
+///////////////////////////////////////
+//  SPFieldNote
+///////////////////////////////////////
+=======
+                    var sortedChoices = [];
+>>>>>>> master
+
+                    angular.forEach($scope.schema.Choices.results, function(choice) {
+
+<<<<<<< HEAD
+    ['SPFieldDirective', 'SPUtils', '$q', '$timeout',
+
+    function spfielNote_DirectiveFactory(SPFieldDirective, SPUtils, $q, $timeout) {
+
+        var spfieldNote_DirectiveDefinitionObject = {
+
+            restrict: 'EA',
+            require: ['^spform', 'ngModel'],
+            replace: true,
+            scope: {
+                mode: '@',
+                value: '=ngModel'
+            },
+            templateUrl: 'templates/form-templates/spfield-control.html',
+=======
+                        if($scope.choices.indexOf(choice) != -1) {
+                            sortedChoices.push(choice);
+                        }
+
+                    });
+
+
+                    if ($scope.schema.FillInChoice && $scope.fillInChoiceCheckbox && $scope.fillInChoiceValue) {
+>>>>>>> master
+
+                        sortedChoices.push($scope.fillInChoiceValue);
+
+<<<<<<< HEAD
+            link: function($scope, $element, $attrs, controllers) {
+
+
+                var directive = {
+                    
+                    fieldTypeName: 'note',
+                    replaceAll: false,
+
+                    init: function() {
+
+                        var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
+                        $scope.rteFullHtml = xml.documentElement.getAttribute('RichTextMode') == 'FullHtml';
+                        $scope.rteHelpMessage = STSHtmlEncode(Strings.STS.L_RichTextHelpLink);
+                        $scope.rteLabelText = STSHtmlEncode(Strings.STS.L_RichTextHiddenLabelText);
+                        $scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
+
+                        // Check if the field have the option "Append Changes to Existing Text" activated.
+                        if ($scope.schema.AppendOnly) {
+
+                            $scope.versions = [];
+
+                            $scope.item.list.getDefaultViewUrl().then(function(defaultViewUrl) {
+
+                                $scope.defaultViewUrl = defaultViewUrl;
+
+=======
                     }
 
 
@@ -10549,6 +11239,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
                                 $scope.defaultViewUrl = defaultViewUrl;
 
+>>>>>>> master
                                 getFieldVersions().then(function(versions) {
 
                                     $scope.versions = versions || [];
@@ -11002,6 +11693,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                 value: '=ngModel'
             },
             templateUrl: 'templates/form-templates/spfield-control-loading.html',
+<<<<<<< HEAD
 
 
             link: function($scope, $element, $attrs, controllers) {
@@ -11030,6 +11722,36 @@ angular.module('ngSharePoint').directive('spfieldUser',
                             //directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
                             // NOTE: Required validator is implicitly applied when no multiple values.
 
+=======
+
+
+            link: function($scope, $element, $attrs, controllers) {
+
+
+                var directive = {
+                    
+                    fieldTypeName: 'user',
+                    replaceAll: false,
+
+                    init: function() {
+
+                        $scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
+                        $scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
+                    },
+                    
+                    parserFn: function(viewValue) {
+
+                        if ($scope.schema.AllowMultipleValues) {
+
+                            var hasValue = $scope.value && $scope.value.results.length > 0;
+                            directive.setValidity('required', !$scope.schema.Required || hasValue);
+
+                        } else {
+
+                            //directive.setValidity('required', !$scope.schema.Required || !!$scope.value);
+                            // NOTE: Required validator is implicitly applied when no multiple values.
+
+>>>>>>> master
                             // Checks for 'peoplePicker' due to when in 'display' mode it's not created.
                             if ($scope.peoplePicker) {
                                 
