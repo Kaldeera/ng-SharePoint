@@ -347,7 +347,8 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 							$select: '*, ' + $scope.dependency.fieldName + '/Id',
 							$expand: $scope.dependency.fieldName + '/Id',
 							$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
-							$orderby: $scope.schema.LookupField
+							$orderby: $scope.schema.LookupField,
+							$top: 999999
 						};
 					}
 
