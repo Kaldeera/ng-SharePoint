@@ -168,7 +168,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                         $scope.extendedSchema = formDefinition.extendedSchema || {};
                                         $scope.controller = formDefinition.controller || {};
 
-                                        spformHTML = '<div data-spform="true" mode="mode" item="item" extended-schema="extendedSchema" extended-controller="controller" template-url="' + templateUrl + '"></div>';
+                                        spformHTML = '<div data-spform="true" name="spform" mode="mode" item="item" extended-schema="extendedSchema" extended-controller="controller" template-url="' + templateUrl + '"></div>';
 
                                         var newElement = $compile(spformHTML)($scope);
                                         $element.replaceWith(newElement);
@@ -277,8 +277,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                     // TODO: Hacer un $http para comprobar que exista el script de definición.
                     //       Si no existe, generar error? utilizar uno vacío? ... ???
-
-
+                    
                     SP.SOD.registerSod('formDefinition', $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
 
                     SP.SOD.executeFunc('formDefinition', null, function() {
@@ -320,6 +319,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                 deferred.resolve(formDefinition);
 
+                            }, function(err) {
+
+                                deferred.reject(err);
                             });
 
                         } else {
