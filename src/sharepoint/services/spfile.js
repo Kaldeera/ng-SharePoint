@@ -77,7 +77,7 @@ angular.module('ngSharePoint').factory('SPFile',
 
 			this.apiUrl = list.apiUrl + '/GetItemById(' + itemId + ')/file';
 
-		}; // getProperties
+		}; // updateAPIUrlById
 
 
 
@@ -553,7 +553,7 @@ angular.module('ngSharePoint').factory('SPFile',
 
 			Comment = Comment || '';
 
-			self.getList().then(function() {
+			self.getFileListItem().then(function() {
 
 				var listGuid = self.List.Id;
 				var itemId = self.ListItemAllFields.Id;

@@ -124,6 +124,8 @@ angular.module('ngSharePoint').factory('SPList',
             var self = this;
             var def = $q.defer();
 
+            query = query || {};
+
 
             if (this.Created !== undefined) {
 

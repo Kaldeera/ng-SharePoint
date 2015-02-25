@@ -118,14 +118,21 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
             var queryParts = getExpressionParts(expression);
 
-            return scope.item.list.getItemQueryById(scope.item.Id, queryParts.join('/')).then(function(data) {
+            if (queryParts.length == 1) {
 
-                return data[queryParts[queryParts.length - 1]];
-        
-            }, function() {
+                return scope.item[queryParts[0]];
 
-                return undefined;
-            });
+            } else {
+
+                return scope.item.list.getItemQueryById(scope.item.Id, queryParts.join('/')).then(function(data) {
+
+                    return data[queryParts[queryParts.length - 1]];
+            
+                }, function() {
+
+                    return undefined;
+                });
+            }
             
         }
 
