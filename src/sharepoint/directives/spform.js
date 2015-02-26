@@ -82,6 +82,8 @@ angular.module('ngSharePoint').directive('spform',
 
                 this.initField = function(fieldName) {
 
+                    var def = $q.defer();
+
                     if (this.isNew()) {
 
                         var fieldSchema = this.getFieldSchema(fieldName);
@@ -141,8 +143,16 @@ angular.module('ngSharePoint').directive('spform',
                                     break;
                             }
 
+                            def.resolve();
+
                         });
+
+                    } else {
+
+                        def.resolve();
                     }
+
+                    return def.promise;
                 };
 
 
@@ -668,11 +678,6 @@ angular.module('ngSharePoint').directive('spform',
 
                                             }
 
-                                            // Set the originalTypeAsString
-                                            angular.forEach(fields, function(field) {
-                                                field.originalTypeAsString = field.TypeAsString;
-                                            });
-
                                             // Sets schema
                                             $scope.schema = fields;
 
@@ -705,7 +710,12 @@ angular.module('ngSharePoint').directive('spform',
                                             */
 
                                             // Extend original schema with extended properties
-                                            $scope.schema = utils.deepExtend({}, $scope.schema, $scope.extendedSchema.Fields);
+                                            $scope.schema = utils.deepExtend($scope.item.list.Fields, $scope.schema, $scope.extendedSchema.Fields);
+
+                                            // Set the originalTypeAsString
+                                            angular.forEach($scope.schema, function(field) {
+                                                field.originalTypeAsString = field.TypeAsString;
+                                            });
 
                                             def.resolve();
 
