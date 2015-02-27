@@ -953,6 +953,10 @@ angular.module('ngSharePoint').directive('spform',
                                         terminalExpression = elem.getAttribute('terminal');
                                     }
 
+                                    var ruleName;
+                                    if (elem.hasAttribute('name')) {
+                                        ruleName = elem.getAttribute('name');
+                                    }
 
                                     // Resolve 'test' attribute expressions.
                                     SPExpressionResolver.resolve(testExpression, $scope).then(function(testResolved) {
@@ -989,7 +993,8 @@ angular.module('ngSharePoint').directive('spform',
                                                         testResolved: testResolved, 
                                                         terminal: terminalExpression, 
                                                         terminalResolved: terminalResolved,
-                                                        solved: true
+                                                        solved: true,
+                                                        name: ruleName
                                                     });
 
 
@@ -1020,7 +1025,8 @@ angular.module('ngSharePoint').directive('spform',
                                                 testResolved: testResolved,
                                                 terminal: terminalExpression, 
                                                 terminalResolved: 'n/a',
-                                                solved: false
+                                                solved: false,
+                                                name: ruleName
                                             });
 
 
