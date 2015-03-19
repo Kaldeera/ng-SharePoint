@@ -126,7 +126,15 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *                          
          *              watchValueFn (function): If defined, applies it after the default behavior 
          *                                       in the 'Watch for field value changes' function.
+         *                                       Deprecated: new spfield-* don't have attribute:
+         *                                          value: '=ngModel'
+         *                                       This behaviors should be done on renderFn
          *
+         *              renderFn (function):     If defined, applies it when modelController need to
+         *                                       update the view (render). By default, this function
+         *                                       set's the scope.value variable with the new value
+         *                                       (modelCtrl.$viewValue)
+
          *              onValidateFn (function): If defined, applies it after the default behavior 
          *                                       in the '$scope.$on('validate', ...)' function.
          *
@@ -145,6 +153,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             directive.name = $scope.name;
             $scope.schema = $scope.formCtrl.getFieldSchema($attrs.name);
             $scope.item = $scope.formCtrl.getItem(); // Needed?
+            $scope.currentMode = $scope.mode || $scope.formCtrl.getFormMode();
 
             $scope.formCtrl.registerField(this);
 
@@ -328,6 +337,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 if ($scope.currentMode !== 'edit') return;
 
                 var deferred = $q.defer();
+                $scope.modelCtrl.$dirty = true;
 
                 defaultOnValidateFn.apply($scope, arguments);
 
@@ -401,6 +411,20 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 if (angular.isFunction(directive.watchValueFn)) directive.watchValueFn.apply(directive, arguments);
 
             }, true);
+
+
+            // ****************************************************************************
+            // New model value ... render
+            //
+            $scope.modelCtrl.$render = function() {
+
+                if (angular.isFunction(directive.renderFn)) {
+                    directive.renderFn(directive, arguments);
+                } else {
+                    $scope.value = $scope.modelCtrl.$viewValue;
+                }
+
+            };
 
 
 

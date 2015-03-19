@@ -40,16 +40,52 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                     fieldTypeName: 'datetime',
                     replaceAll: false,
 
+/*
+                    parserFn: function(viewValue) {
+
+                        var isDate = angular.isDate($scope.value);
+                        directive.setValidity('date', !isDate || (isDate && isNaN($scope.value)));
+
+                    },
+*/
+
+                    renderFn: function() {
+
+                        getData();
+                    },
+
+                    formatterFn: function(modelValue) {
+
+                        if (typeof modelValue === 'string') {
+                            modelValue = new Date(modelValue);
+                        }
+
+                        return modelValue;
+                    },
+/*
                     watchModeFn: function(newValue) {
 
                         getData().then(function() {
                             directive.renderField(newValue);
                         });
                     }
+*/
                 };
 
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+
+                $scope.modelCtrl.$validators.date = function(modelValue, viewValue) {
+
+                    if (viewValue === void 0) return true;
+                    if (viewValue === null) return true;
+                    if (isNaN(viewValue.getTime())) return false;
+
+                    return angular.isDate(viewValue);
+                };
+
+
 
 
                 function getData() {
@@ -138,9 +174,11 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             $scope.DatePickerImageID = g_strDatePickerImageID;
 
                             // Initialize the models for data-binding.
-                            if ($scope.value !== null && $scope.value !== void 0) {
+                            var value = $scope.modelCtrl.$viewValue;
+
+                            if (value !== null && value !== void 0) {
                                 
-                                $scope.dateModel = new Date($scope.value);
+                                $scope.dateModel = new Date(value);
                                 $scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
                                 $scope.minutesModel = $scope.dateModel.getMinutes().toString();
                                 var hours = $scope.dateModel.getHours();
@@ -236,7 +274,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
 
                 // ****************************************************************************
-                // Watch for changes in the model variables to update the field model ($scope.value).
+                // Watch for changes in the model variables to update the field model.
                 //
                 $scope.$watch('[dateOnlyModel, hoursModel, minutesModel]', updateModel, true);
 
@@ -251,30 +289,36 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
                     try {
 
-                        // TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+                        if ($scope.dateOnlyModel === '') {
 
-                        var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-                        var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
-                        var dateComponents = {};
-                        
-                        for(var i = 0; i < dateParts.length; i++) {
-                            dateComponents[dateParts[i]] = dateValues[i];
+                            $scope.modelCtrl.$setViewValue(null);
+                        } else {
+                            // TODO: Hay que ajustar la fecha/hora con el TimeZone correcto.
+
+                            var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+                            var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
+                            var dateComponents = {};
+                            
+                            for(var i = 0; i < dateParts.length; i++) {
+                                dateComponents[dateParts[i]] = dateValues[i];
+                            }
+
+                            var hours = $scope.hoursModel;
+                            if (hours !== null) {
+                                hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
+                            }
+                            var minutes = $scope.minutesModel;
+                            var utcDate = Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes);
+                            var offset = new Date().getTimezoneOffset() * 60 * 1000;
+
+                            // Into the item must store a valid Date object
+                            $scope.modelCtrl.$setViewValue(new Date(utcDate + offset));
                         }
-
-                        var hours = $scope.hoursModel;
-                        if (hours !== null) {
-                            hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
-                        }
-                        var minutes = $scope.minutesModel;
-                        var utcDate = Date.UTC(dateComponents.yyyy, (dateComponents.MM || dateComponents.M) - 1, dateComponents.dd || dateComponents.d, hours, minutes);
-                        var offset = new Date().getTimezoneOffset() * 60 * 1000;
-
-                        // Into the item must store a valid Date object
-                        $scope.value = new Date(utcDate + offset);
 
                     } catch(e) {
 
-                        $scope.value = null;
+                        $scope.modelCtrl.$setViewValue(null);
+//                        $scope.value = null;
                         // TODO: Create a 'DateTimeValidator' and assigns it in 'SPFieldControl' directive when field type is 'DateTime'.
                     }
                 }

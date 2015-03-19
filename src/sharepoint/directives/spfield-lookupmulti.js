@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control-loading.html',
 
@@ -47,19 +46,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
 						$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
 
-						// Adjust the model if no value is provided
-						if ($scope.value === null || $scope.value === void 0) {
-							$scope.value = { results: [] };
-						}
 						
-					},
-					
-					parserFn: function(viewValue) {
-
-						var hasValue = $scope.value && $scope.value.results.length > 0;
-						directive.setValidity('required', !$scope.schema.Required || hasValue);
-						
-						return viewValue;
 					},
 
 					watchModeFn: function(newValue) {
@@ -67,18 +54,34 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						refreshData();
 					},
 
-					watchValueFn: function(newValue, oldValue) {
+					renderFn: function() {
 
-						if (newValue === oldValue) return;
+						$scope.value = $scope.modelCtrl.$viewValue;
+
+						// Adjust the model if no value is provided
+						if ($scope.value === null || $scope.value === void 0) {
+							$scope.value = { results: [] };
+						}
+						//if (newValue === oldValue) return;
 
 						$scope.selectedLookupItems = void 0;
-						refreshData();						
+						refreshData();
+
+
+                        // Replace standar required validator
+                        $scope.modelCtrl.$validators.required = function(modelValue, viewValue) {
+
+                            if ($scope.currentMode != 'edit') return true;
+                            if (!$scope.schema.Required) return true;
+                            if (viewValue && viewValue.results.length > 0) return true;
+
+                            return false;
+                        };
 					}
 				};
 
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
-
 
 
 				// ****************************************************************************
@@ -402,15 +405,13 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 				function updateModel() {
 
-					if ($scope.value === null || $scope.value === void 0) {
-						$scope.value = {};
-					}
-
-					$scope.value.results = [];
+					var results = [];
 
 					angular.forEach($scope.resultItems, function(item) {
-						$scope.value.results.push(item.id);
+						results.push(item.id);
 					});
+
+					$scope.value = {results: results };
 				}
 
 

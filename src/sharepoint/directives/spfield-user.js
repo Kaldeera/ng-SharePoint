@@ -107,6 +107,29 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
                 // ****************************************************************************
+                // Check for dependences.
+                //
+                if ($attrs.dependsOn !== void 0) {
+
+                    $scope.$on($attrs.dependsOn + '_changed', function(evt, newValue) {
+
+                        $scope.dependency = {
+                            fieldName: $attrs.dependsOn,
+                            value: newValue
+                        };
+
+                        // Initialize the items collection to force query the items again.
+                        $scope.lookupItems = void 0;
+
+                        refreshData();
+
+                    });
+
+                }
+
+
+
+                // ****************************************************************************
                 // Refresh the user data and render the field.
                 //
                 function refreshData() {

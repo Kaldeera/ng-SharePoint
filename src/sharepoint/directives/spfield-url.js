@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
 
@@ -48,24 +47,54 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 						$scope.Description_Text = Strings.STS.L_Description_Text;
 					},
 
-					parserFn: function(viewValue) {
-						
-						// Required validity
-						directive.setValidity('required', !$scope.schema.Required || ($scope.value && $scope.value.Url));
-						
-						// Url validity
-						var validUrlRegExp = new RegExp('^http://');
-						var isValidUrl = (!$scope.value || ($scope.value && !$scope.value.Url) || ($scope.value && $scope.value.Url && validUrlRegExp.test($scope.value.Url)));
-						directive.setValidity('url', isValidUrl);
-						
-						// TODO: Update 'spfieldValidationMessages' directive to include the url validity error message.
+					renderFn: function() {
 
-						return viewValue;
+						var value = $scope.modelCtrl.$viewValue;
+
+                        // Adjust the model if no value is provided
+                        if (value === null || value === void 0) {
+                            value = { Url: '', Description: '' };
+                        }
+
+                        $scope.Url = value.Url;
+                        $scope.Description = value.Description;
+
+                        // Replace standar required validator
+                        $scope.modelCtrl.$validators.required = function(modelValue, viewValue) {
+
+                            if ($scope.currentMode != 'edit') return true;
+                            if (!$scope.schema.Required) return true;
+                            if (viewValue) {
+
+                            	if (viewValue.Url !== void 0 && viewValue.Url !== '') return true;
+                            }
+
+                            return false;
+                        };
 					}
 				};
 
-
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+				$scope.$watch('[Url,Description]', function(newValue, oldValue) {
+
+					if (newValue === oldValue) return;
+					
+					$scope.modelCtrl.$setViewValue({
+						Url: $scope.Url,
+						Description: $scope.Description
+					});
+				});
+
+	            $scope.modelCtrl.$validators.url = function(modelValue, viewValue) {
+
+	            	if (viewValue === void 0) return true;
+	            	if (viewValue === null) return true;
+	            	if (viewValue.Url === void 0 || viewValue.Url === '') return true;
+
+					var validUrlRegExp = new RegExp('^http://');
+					return validUrlRegExp.test(viewValue.Url);
+	            };
 
 			} // link
 

@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldText',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
 

@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
             require: ['^spform', 'ngModel'],
             replace: true,
             scope: {
-                mode: '@',
-                value: '=ngModel'
+                mode: '@'
             },
             templateUrl: 'templates/form-templates/spfield-control.html',
             
@@ -48,6 +47,11 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                         $scope.selectedOption = null;
                         $scope.dropDownValue = null;
                         $scope.fillInChoiceValue = null;
+                    },
+
+                    renderFn: function() {
+
+                        $scope.value = $scope.modelCtrl.$viewValue;
 
 
                         if ($scope.schema.FillInChoice && $scope.choices.indexOf($scope.value) == -1) {
@@ -72,7 +76,6 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                             }
 
                         }
-
                     }
                 };
                 
@@ -88,7 +91,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                     if (newValue == oldValue || newValue === void 0 || newValue === null) return;
 
                     $scope.selectedOption = 'FillInButton';
-                    $scope.value = $scope.fillInChoiceValue;
+                    $scope.modelCtrl.$setViewValue(newValue);
 
                 });
 
@@ -99,7 +102,8 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                     if ($scope.selectedOption == 'FillInButton') {
 
-                        $scope.value = $scope.fillInChoiceValue;
+                        $scope.modelCtrl.$setViewValue($scope.fillInChoiceValue);
+//                        $scope.value = $scope.fillInChoiceValue;
 
                         var fillInChoiceElement = document.getElementById($scope.schema.InternalName + '_' + $scope.schema.Id + '_$FillInChoice');
 
@@ -116,11 +120,13 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                             case 0:
                                 // DropDown
                                 $scope.value = $scope.dropDownValue;
+                                $scope.modelCtrl.$setViewValue($scope.dropDownValue);
                                 break;
 
                             case 1:
                                 //Radio buttons
                                 $scope.value = $scope.selectedOption;
+                                $scope.modelCtrl.$setViewValue($scope.selectedOption);
                                 break;
 
                         }
@@ -132,6 +138,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                 $scope.dropDownChanged = function() {
 
                     $scope.selectedOption = 'DropDownButton';
+                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
                     $scope.value = $scope.dropDownValue;
 
                 };

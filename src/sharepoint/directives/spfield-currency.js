@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
 			
@@ -53,23 +52,23 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					parserFn: function(viewValue) {
 
-						// Number validity
-						directive.setValidity('number', !viewValue || (!isNaN(+viewValue) && isFinite(viewValue)));
-
-						// TODO: Update 'spfieldValidationMessages' directive to include the number validity error message.
-
 						// Adjust value to match field type 'Double' in SharePoint.
 						if (viewValue === '' || viewValue === void 0) {
 						
-							$scope.value = null;
+							viewValue = null;
 						}
 						
-						return $scope.value;
+						return viewValue;
 					}
 				};
 				
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+	            $scope.modelCtrl.$validators.number = function(modelValue, viewValue) {
+
+	            	return (viewValue === undefined) || (!isNaN(viewValue) && isFinite(viewValue));
+	            };
 
 			} // link
 
