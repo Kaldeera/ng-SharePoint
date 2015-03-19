@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
 			
@@ -40,9 +39,10 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 					fieldTypeName: 'boolean',
 					replaceAll: false,
 
-					watchValueFn: function(newValue) {
+					renderFn: function() {
 						
-						$scope.displayValue = newValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+						$scope.value = $scope.modelCtrl.$viewValue;
+						$scope.displayValue = $scope.modelCtrl.$viewValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
 					}
 				};
 

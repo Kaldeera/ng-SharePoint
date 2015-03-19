@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control-loading.html',
 			
@@ -45,9 +44,11 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						refreshData();
 					},
 
-					watchValueFn: function(newValue, oldValue) {
+					renderFn: function() {
 
-						if (newValue === oldValue) return;
+                        $scope.value = $scope.modelCtrl.$viewValue;
+
+//						if (newValue === oldValue) return;
 
 						$scope.lookupItem = void 0;
 						refreshData();
@@ -90,13 +91,29 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					if ($scope.lastValue !== $scope.value) {
 
+						var item = getItemById($scope.value);
+
 						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, $scope.lastValue);
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, $scope.lastValue, item);
 
 						$scope.lastValue = $scope.value;
 					}
 				};
 
+
+
+				// ****************************************************************************
+				// Refresh the lookup data and render the field.
+				//
+				function getItemById(id) {
+
+					for(var r=0; r <= $scope.lookupItems.length; r++) {
+						if ($scope.lookupItems[r].Id === id) return $scope.lookupItems[r];
+					}
+
+					return undefined;
+
+				}	// getItemById
 
 
 				// ****************************************************************************
@@ -406,7 +423,6 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 										}
 									}
 								}
-
 
 								$scope.valueChanged();
 

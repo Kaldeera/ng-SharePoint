@@ -1,4 +1,12 @@
-<input type="text" ng-model="value" data-spfield-focus-element="true" maxlength="{{schema.MaxLength}}" ng-required="{{schema.Required}}" size="11" title="{{schema.Title}}" class="ms-input" style="ime-mode: inactive" />
+<input 	type="text" 
+		ng-model="value" 
+		data-spfield-focus-element="true" 
+		maxlength="{{schema.MaxLength}}" 
+		ng-required="{{schema.Required}}" 
+		size="11" 
+		title="{{schema.Title}}" 
+		class="ms-input" 
+		style="ime-mode: inactive" />
 <span>&nbsp;{{cultureInfo.numberFormat.CurrencySymbol}}</span>
 <br/>
 <spfield-validation-messages></spfield-validation-messages>

@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control-loading.html',
 			
@@ -48,11 +47,12 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 					},
 
-					watchValueFn: function(newValue, oldValue) {
+					renderFn: function(newValue, oldValue) {
 
 						// Check if the old and new values really differ.
 						if (newValue === null && oldValue === undefined) return;
 
+						
 
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');

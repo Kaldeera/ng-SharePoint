@@ -98,7 +98,11 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         var dependsOnAttr = ($attrs.dependsOn ? ' depends-on="' + $attrs.dependsOn + '"' : '');
                         var hiddenAttr = ($attrs.mode == 'hidden' ? ' ng-hide="true"' : '');
                         //var validationAttributes = (angular.isDefined($attrs.required) ? ' ng-required="' + schema.Required + '"' : '');
-                        var validationAttributes = ' ng-required="' + schema.Required + '"';
+
+                        var validationAttributes = '';
+                        if (getFieldMode() == 'edit') {
+                            validationAttributes = ' ng-required="' + schema.Required + '"';
+                        }
                         
                         
                         // Specific field type validation attributes
@@ -162,6 +166,11 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
                 }
 
+
+                function getFieldMode() {
+
+                    return $attrs.mode || spformController.getFormMode();
+                }
 
                 function setEmptyElement() {
 

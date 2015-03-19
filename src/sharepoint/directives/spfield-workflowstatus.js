@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldWorkflowstatus',
 			require: ['^spform', 'ngModel'],
 			replace: true,
 			scope: {
-				mode: '@',
-				value: '=ngModel'
+				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
 

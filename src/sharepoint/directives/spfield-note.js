@@ -26,8 +26,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
             require: ['^spform', 'ngModel'],
             replace: true,
             scope: {
-                mode: '@',
-                value: '=ngModel'
+                mode: '@'
             },
             templateUrl: 'templates/form-templates/spfield-control.html',
 
@@ -69,8 +68,9 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
                     },
 
+                    renderFn: function() {
 
-                    postRenderFn: function() {
+                        $scope.value = $scope.modelCtrl.$viewValue;
 
                         if ($scope.rteFullHtml) {
 
@@ -104,7 +104,8 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
                     if (rteElement) {
 
-                        $scope.value = rteElement.innerHTML;
+                        $scope.modelCtrl.$setViewValue(rteElement.innerHTML);
+//                        $scope.value = rteElement.innerHTML;
 
                     }
 
