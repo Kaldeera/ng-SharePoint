@@ -16,9 +16,9 @@
 
 angular.module('ngSharePoint').factory('SPList', 
 
-    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider', 
 
-    function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType) {
+    function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
 
         'use strict';
 
@@ -624,7 +624,7 @@ angular.module('ngSharePoint').factory('SPList',
             var self = this;
             var def = $q.defer();
             var executor = new SP.RequestExecutor(self.web.url);
-            var defaultExpandProperties = 'ContentType, File, File/ParentFolder, Folder, Folder/ParentFolder';
+            var defaultExpandProperties = 'ContentType,File,File/ParentFolder,Folder,Folder/ParentFolder';
             var urlParams = '';
 
             if (this.$skiptoken !== void 0 && !resetPagination) {
@@ -657,6 +657,18 @@ angular.module('ngSharePoint').factory('SPList',
                     var items = [];
 
                     angular.forEach(d, function(item) {
+
+                        if (item.File !== undefined && item.File.__deferred === undefined) {
+                            var newFile = SPObjectProvider.getSPFile(self.web, item.File.ServerRelativeUrl, item.File);
+                            newFile.List = self;
+                            item.File = newFile;
+                        }
+                        if (item.Folder !== undefined && item.Folder.__deferred === undefined) {
+                            var newFolder = SPObjectProvider.getSPFolder(self.web, item.Folder.ServerRelativeUrl, item.Folder);
+                            newFolder.List = self;
+                            item.Folder = newFolder;
+                        }
+
                         var spListItem = new SPListItem(self, item);
                         items.push(spListItem);
                     });
@@ -725,6 +737,18 @@ angular.module('ngSharePoint').factory('SPList',
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
+
+                    if (d.File !== undefined && d.File.__deferred === undefined) {
+                        var newFile = SPObjectProvider.getSPFile(self.web, d.File.ServerRelativeUrl, d.File);
+                        newFile.List = self;
+                        d.File = newFile;
+                    }
+                    if (d.Folder !== undefined && d.Folder.__deferred === undefined) {
+                        var newFolder = SPObjectProvider.getSPFolder(self.web, d.Folder.ServerRelativeUrl, d.Folder);
+                        newFolder.List = self;
+                        d.Folder = newFolder;
+                    }
+
                     var spListItem = new SPListItem(self, d);
                     def.resolve(spListItem);
                 }, 

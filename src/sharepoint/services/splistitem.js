@@ -751,6 +751,8 @@ angular.module('ngSharePoint').factory('SPListItem',
                 delete saveObj.AttachmentFiles;
                 delete saveObj.ContentType;
                 delete saveObj.FieldValuesAsHtml;
+                delete saveObj.Folder;
+                delete saveObj.File;
 
                 angular.extend(body, saveObj);
 
