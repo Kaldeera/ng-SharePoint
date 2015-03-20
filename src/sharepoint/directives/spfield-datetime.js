@@ -80,6 +80,9 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
 
                     if (viewValue === void 0) return true;
                     if (viewValue === null) return true;
+                    if (typeof viewValue === 'string') {
+                        viewValue = new Date(viewValue);
+                    }
                     if (isNaN(viewValue.getTime())) return false;
 
                     return angular.isDate(viewValue);
