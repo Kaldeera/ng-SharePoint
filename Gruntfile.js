@@ -38,19 +38,11 @@ module.exports = function(grunt) {
           'src/sharepoint/ng-sharepoint-formpage.js'
         ],
         dest: 'build/<%= pkg.name %>.js'
-      },
-      formsEditor: {
-        src: [
-          'forms-editor/src/ng-sharepoint-formseditor.js',
-          'forms-editor/src/directives/**/*.js',
-          'forms-editor/src/ng-sharepoint-formseditor-bootstrap.js'
-        ],
-        dest: 'build/<%= pkg.name %>.forms-editor.js'
       }
     },
 
     jshint: {
-      all: ['Gruntfile.js', 'src/**/*.js', '!src/libs/**/*.js', 'forms-editor/src/**/*.js'],
+      all: ['Gruntfile.js', 'src/**/*.js', '!src/libs/**/*.js'],
       beforeconcat: ['src/**/*.js'],
       afterconcat: ['build/*.js'],
       options: {
@@ -76,15 +68,6 @@ module.exports = function(grunt) {
         },
         src: ['ui/bootstrap/templates/**/*.html'],
         dest: 'build/<%= pkg.name %>.bootstrap.templates.js'
-      },
-
-      editor: {
-        options: {
-          module: 'ngSharePointFormsEditor.templates',
-          base: './forms-editor/ui'
-        },
-        src: ['forms-editor/ui/templates/**/*.html'],
-        dest: 'build/<%= pkg.name %>.forms-editor.templates.js'
       }
     },
 
@@ -149,7 +132,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-html2js');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-watch');
+  //grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-copy');
   //grunt.loadNpmTasks('grunt-ng-annotate');
 

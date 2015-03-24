@@ -727,17 +727,25 @@ angular.module('ngSharePoint').factory('SPListItem',
                     // obj.SalaId = 12
                     //
 
+                    var fieldType = field.originalTypeAsString || field.TypeAsString;
+                    // var fieldName = field.InternalName;
+                    var fieldName = field.EntityPropertyName;
+                    if (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti') {
+                        fieldName = fieldName + 'Id';
+                    }
+
+                    if (fieldType == 'LookupMulti' || fieldType == 'MultiChoice' || fieldType == 'UserMulti') {
+
+                        // To prevent Collection(Edm.String)[Nullable=False] error.
+                        // This error will be thrown even if this is not a required field
+                        if (saveObj[fieldName] === null) {
+                            delete saveObj[fieldName];
+                        }
+                    }
+
                     // Required fields with null values don't allow to save the item
                     // Deleting this properties the item will be saved correctly
                     if (field.Required === true) {
-
-                        var fieldType = field.originalTypeAsString || field.TypeAsString;
-                        // var fieldName = field.InternalName;
-                        var fieldName = field.EntityPropertyName;
-                        if (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti') {
-                            fieldName = fieldName + 'Id';
-                        }
-
                         if (saveObj[fieldName] === null) {
 
                             delete saveObj[fieldName];
