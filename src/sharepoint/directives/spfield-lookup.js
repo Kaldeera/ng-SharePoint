@@ -66,6 +66,11 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				//
 				if ($attrs.dependsOn !== void 0) {
 
+					$scope.dependency = {
+						fieldName: $attrs.dependsOn,
+						value: $scope.item[$attrs.dependsOn]
+					};
+
 					$scope.$on($attrs.dependsOn + '_changed', function(evt, newValue) {
 
 						$scope.dependency = {
@@ -77,7 +82,6 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						$scope.lookupItems = void 0;
 
 						refreshData();
-
 					});
 
 				}
@@ -372,20 +376,27 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 						getLookupList().then(function(list) {
 
 							var $query = {
-								$orderby: $scope.schema.LookupField
+								$orderby: $scope.schema.LookupField,
+								$top: 999999
 							};
 
 							if ($scope.dependency !== void 0) {
+
+								if ($scope.dependency.value === void 0) {
+									// this lookup has dependency with another field and still has no value
+									def.resolve($scope.lookupItems);
+									return def.promise;
+								}
+
 								$query = {
 									$select: '*, ' + $scope.dependency.fieldName + '/Id',
 									$expand: $scope.dependency.fieldName + '/Id',
 									$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
-									$orderby: $scope.schema.LookupField,
-									$top: 999999
+									$orderby: $scope.schema.LookupField
 								};
 							}
 
-							list.getListItems($query).then(function(items) {
+							list.getListItems($query, true).then(function(items) {
 
 								$scope.lookupItems = items;
 
