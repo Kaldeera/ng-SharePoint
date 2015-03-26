@@ -1,10 +1,15 @@
-/*
- *  Module: ngSharePointFormPage
- *  Directive: spformpage
- *
- *  Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
- *
+
+/**
+ * @ngdoc module
+ * @name ngSharePointFormPage
+ * @module ngSharePointFormPage
+ * @author Pau Codina [<pau.codina@kaldeera.com>]
+ * @author Pedro Castro [<pedro.cm@gmail.com>]
+ * @description Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
+ * @license Licensed under the MIT License
+ * @copyright Copyright (c) 2014
  */
+
 
 angular.module('ngSharePointFormPage', ['ngSharePoint', 'oc.lazyLoad']);
 
@@ -160,6 +165,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                                     }
 
+
                                     // Try to get the template
                                     getTemplateUrl().then(function(templateUrl) {
 
@@ -244,9 +250,18 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                 function getTemplateUrl() {
 
                     var deferred = $q.defer();
-                    //var mode = SPClientTemplates.Utility.ControlModeToString(ctx.ControlMode);
+
+                    var templateUrl;
                     var mode = (controlMode == 'new' ? controlMode : $scope.mode);
-                    var templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
+
+                    if (formDefinition.templates !== void 0) {
+                        templateUrl = formDefinition.templates[mode];
+                    }
+
+                    if (templateUrl === void 0) {
+                        templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
+                    }
+
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
                     $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
