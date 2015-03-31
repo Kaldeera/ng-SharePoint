@@ -1,18 +1,12 @@
-/*
-	SharePoint - provider
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SharePoint
+ *
+ * @description
+ * Provides top level access to SharePoint web sites.
+ */
 
-
-
-///////////////////////////////////////
-//	SharePoint
-///////////////////////////////////////
 
 angular.module('ngSharePoint').provider('SharePoint', 
 
@@ -25,29 +19,50 @@ angular.module('ngSharePoint').provider('SharePoint',
 		var SharePoint = function($cacheFactory, $q, SPUtils, SPWeb) {
 
 
-			// ****************************************************************************		
-			// getCurrentWeb
-			//
-			// Gets the current web.
-			//
-			// @returns: Promise with a new SPWeb (factory) object that allow access to 
-			//			 web methods and properties.
-			//
+			/**
+			 * @ngdoc function
+			 * @name ngSharePoint.SharePoint#getCurrentWeb
+			 * @methodOf ngSharePoint.SharePoint
+			 * 
+			 * @description
+			 * Returns a ngSharePoint.SPWeb object initialized with the 
+			 * current SharePoint web. That means, the web context where 
+			 * this sentence is executed
+			 * 
+			 * @returns {promise} Promise with a new ngSharePoint.SPWeb object that allows to access
+			 * web methods and properties
+			 * 
+			 * @example
+			 * ```js
+			 *	SharePoint.getCurrentWeb().then(function(web) {
+			 *		.. do something with the web object
+			 *	});
+			 * ```
+			 */
 			this.getCurrentWeb = function() {
 				return this.getWeb();
 			};
 
 
-
-			// ****************************************************************************		
-			// getWeb
-			//
-			// Gets the current web.
-			//
-			// @url: The url of the web you want to retrieve.
-			// @returns: Promise with a new SPWeb (factory) object that allow access to 
-			//			 web methods and properties.
-			//
+			/**
+			 * @ngdoc function
+			 * @name ngSharePoint.SharePoint#getWeb
+			 * @methodOf ngSharePoint.SharePoint
+			 * 
+			 * @description
+			 * Returns the ngSharePoint.SPWeb specified by the required url
+			 * 
+			 * @param {string} url The url of the web that you want to retrieve
+			 * @returns {promise} Promise with a new ngSharePoint.SPWeb object that allows to access
+			 * web methods and properties
+			 * 
+			 * @example
+			 * ```js
+			 *	SharePoint.getWeb('/sites/rrhh').then(function(web) {
+			 *		.. do something with the 'rrhh' web object
+			 *	});
+			 * ```
+			 */
 			this.getWeb = function(url) {
 				var def = $q.defer();
 

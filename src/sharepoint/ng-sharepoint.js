@@ -1,36 +1,17 @@
-/*
-	ngSharePoint - module
-
-	The ngSharePoint module is an Angular wrapper for SharePoint 2013.
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-	
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-// GitHub documentation style:
 
 /**
- * @ngdoc module
+ * @ngdoc overview
  * @name ngSharePoint
- * @module ngSharePoint
- * @description
  *
- * # ngSharePoint (core module)
+ * @description 
+ * ## ngSharePoint (core module)
  * The ngSharePoint module is an Angular wrapper for SharePoint 2013.
  *
- * <div doc-module-components="ngSharePoint"></div>
+ * @author Pau Codina [<pau.codina@kaldeera.com>]
+ * @author Pedro Castro [<pedro.cm@gmail.com>]
+ * @license Licensed under the MIT License
+ * @copyright Copyright (c) 2014
  */
-
-
-
-///////////////////////////////////////
-//	ngSharePoint
-///////////////////////////////////////
 
 angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
 
@@ -53,9 +34,9 @@ angular.module('ngSharePoint').config(['$compileProvider', function($compileProv
 
 
 
-// ****************************************************************************
-// Module constants
-//
+/** 
+ * Module constants
+ */
 angular.module('ngSharePoint').value('Constants', {
 	errorTemplate: 'templates/error.html',
 	userProfileUrl: '_layouts/userdisp.aspx?ID='

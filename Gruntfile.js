@@ -71,22 +71,6 @@ module.exports = function(grunt) {
       }
     },
 
-    watch: {
-      scripts: {
-        files: ['**/*.js'],
-        tasks: ['default'],
-        options: {
-          spawn: false,
-        },
-      },
-      configFiles: {
-        files: [ 'Gruntfile.js'],
-        options: {
-          reload: true
-        }
-      }
-    },
-
     copy: {
       tocdn: {
         expand: true,
@@ -110,16 +94,42 @@ module.exports = function(grunt) {
           ]
         }      
     },
-/*
-    ngAnnotate: {
+
+    ngdocs: {
       options: {
-        singleQuotes: true,
-      }
-      app1: {
-  
+        dest: 'docs',
+        scripts: ['angular.js'],
+        html5Mode: false,
+        startPage: '/api/ngSharePoint',
+        title: "ng-SharePoint",
+        image: "ui/logo-kaldeera.png",
+        imageLink: "https://github.com/Kaldeera/ng-SharePoint",
+        titleLink: "/api/ngSharePoint",
+        bestMatch: true,
+        /*
+        analytics: {
+              account: 'UA-08150815-0',
+              domainName: 'kaldeera.com'
+        },
+        discussions: {
+              shortName: 'my',
+              url: 'http://www.kaldeera.com',
+              dev: false
+        }
+        */
+      },
+      /*
+      tutorial: {
+        src: ['documents/tutorials/*.ngdoc'],
+        title: 'Tutorial'
+      },
+      */
+      api: {
+        src: ['src/**/*.js'],
+        title: 'API Reference'
       }
     }
-*/  
+
   });
 
 /*
@@ -132,13 +142,15 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-html2js');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  //grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  //grunt.loadNpmTasks('grunt-ng-annotate');
+  grunt.loadNpmTasks('grunt-ngdocs');
+
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', /*'ngAnnotate', */'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
+  grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
+
+
 
 };

@@ -457,15 +457,10 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
             /**
-            // ****************************************************************************     
-            // getFileBinary
-            //
-            // Converts a file object to binary data string.
-            //
-            // @file: A file object from the files property of the DOM element <input type="File" ... />.
-            // @returns: Promise with the binary data.
-            //
-            */
+             * Converts a file object to binary data string.
+             * @param {file} A file object from the files property of the DOM element <input type="File" ... />.
+             * @returns {promise} Promise with the binary data.
+             */
             getFileBinary: function(file) {
 
                 var self = this;
