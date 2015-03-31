@@ -35,7 +35,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * @example
 			 * <pre>
 			 *	SharePoint.getCurrentWeb().then(function(web) {
-			 *		.. do something with the web object
+			 *		// ... do something with the web object
 			 *	});
 			 * </pre>
 			 */
@@ -59,7 +59,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * @example
 			 * <pre>
 			 *	SharePoint.getWeb('/sites/rrhh').then(function(web) {
-			 *		.. do something with the 'rrhh' web object
+			 *		// ... do something with the 'rrhh' web object
 			 *	});
 			 * </pre>
 			 */
