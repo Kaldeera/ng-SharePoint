@@ -33,11 +33,11 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * web methods and properties
 			 * 
 			 * @example
-			 * ```js
+			 * <pre>
 			 *	SharePoint.getCurrentWeb().then(function(web) {
 			 *		.. do something with the web object
 			 *	});
-			 * ```
+			 * </pre>
 			 */
 			this.getCurrentWeb = function() {
 				return this.getWeb();
@@ -57,11 +57,11 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * web methods and properties
 			 * 
 			 * @example
-			 * ```js
+			 * <pre>
 			 *	SharePoint.getWeb('/sites/rrhh').then(function(web) {
 			 *		.. do something with the 'rrhh' web object
 			 *	});
-			 * ```
+			 * </pre>
 			 */
 			this.getWeb = function(url) {
 				var def = $q.defer();
