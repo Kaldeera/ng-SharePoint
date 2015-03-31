@@ -1,11 +1,12 @@
 
 /**
- * @ngdoc module
+ * @ngdoc overview
  * @name ngSharePointFormPage
- * @module ngSharePointFormPage
+
+ * @description Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
+ 
  * @author Pau Codina [<pau.codina@kaldeera.com>]
  * @author Pedro Castro [<pedro.cm@gmail.com>]
- * @description Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
  * @license Licensed under the MIT License
  * @copyright Copyright (c) 2014
  */
