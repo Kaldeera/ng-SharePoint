@@ -371,70 +371,72 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// addFile
-		//
-		// Uploads a new binary file to current folder
-		//
-		// @fileName: The name of the new file to upload
-		// @file: A file object to upload
-		// @returns: Promise with the new SPFolder object.
-		//
-		SPFolderObj.prototype.addFile = function(fileName, file) {
+        // ****************************************************************************
+        // addFile
+        //
+        // Uploads a new binary file to current folder
+        //
+        // @fileName: The name of the new file to upload
+        // @file: A file object to upload
+        // @overwrite: A boolean value indicating if the file must be overwrited if already exists.
+        // @returns: Promise with the new SPFolder object.
+        //
+        SPFolderObj.prototype.addFile = function(fileName, file, overwrite) {
 
-			var self = this;
-			var def = $q.defer();
-			var folderPath = self.ServerRelativeUrl + '/' + fileName;
-			var url = self.apiUrl + '/files/add(url=\'' + fileName + '\',overwrite=true)';
+            var self = this;
+            var def = $q.defer();
+            var folderPath = self.ServerRelativeUrl + '/' + fileName;
+            var url = self.apiUrl + '/files/add(url=\'' + fileName + '\',overwrite=' + (overwrite === false ? 'false' : 'true') + ')';
 
-			var executor = new SP.RequestExecutor(self.web.url);
+            var executor = new SP.RequestExecutor(self.web.url);
 
-			SPUtils.getFileBinary(file).then(function (binaryData) {
+            SPUtils.getFileBinary(file).then(function (binaryData) {
 
-				var headers = {
-					'Accept': 'application/json; odata=verbose',
-					"content-type": "application/json;odata=verbose"
-				};
+                var headers = {
+                    'Accept': 'application/json; odata=verbose',
+                    "content-type": "application/json;odata=verbose"
+                };
 
-				var requestDigest = document.getElementById('__REQUESTDIGEST');
-				if (requestDigest !== null) {
-					headers['X-RequestDigest'] = requestDigest.value;
-				}
+                var requestDigest = document.getElementById('__REQUESTDIGEST');
+                if (requestDigest !== null) {
+                    headers['X-RequestDigest'] = requestDigest.value;
+                }
 
-				executor.executeAsync({
+                executor.executeAsync({
 
-					url: url,
-					method: 'POST',
-					headers: headers,
-					body: binaryData,
-					binaryStringRequestBody: true,
+                    url: url,
+                    method: 'POST',
+                    headers: headers,
+                    body: binaryData,
+                    binaryStringRequestBody: true,
 
-					success: function(data) {
+                    success: function(data) {
 
-						var d = utils.parseSPResponse(data);
-						var newFile = SPObjectProvider.getSPFile(self.web, d.ServerRelativeUrl, d);
-						newFile.List = self.List;
+                        var d = utils.parseSPResponse(data);
+                        var newFile = SPObjectProvider.getSPFile(self.web, d.ServerRelativeUrl, d);
+                        newFile.List = self.List;
 
-						def.resolve(newFile);
-					},
+                        def.resolve(newFile);
+                    },
 
-					error: function(data, errorCode, errorMessage) {
+                    error: function(data, errorCode, errorMessage) {
 
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
 
-						def.reject(err);
-					}
-				});
+                        def.reject(err);
+                    }
+                });
 
-			});
+            });
 
-			return def.promise;
+            return def.promise;
 
-		};	// addFile
+        };  // addFile
+        
 
 
 		// ******************************************
