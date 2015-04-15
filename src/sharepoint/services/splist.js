@@ -123,30 +123,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-
-            query = query || {};
-
-
-            if (this.Created !== undefined) {
-
-                var infoIsOk = true;
-
-                // The list properties are already here
-                if (query.$expand !== undefined) {
-
-                    if (query.$expand.toLowerCase().indexOf('fields') >= 0 && this.Fields === undefined) infoIsOk = false;
-                    if (query.$expand.toLowerCase().indexOf('contenttypes') >= 0 && this.ContentTypes === undefined) infoIsOk = false;
-                }
-
-                if (infoIsOk) {
-
-                    def.resolve(this);
-                    return def.promise;
-                }                
-            }
-
-            var executor = new SP.RequestExecutor(self.web.url);
-
             var defaultExpandProperties = 'Views';
             // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
             // que si la lista es la 'SiteUserInfoList' se genera un error porque no 
@@ -160,6 +136,40 @@ angular.module('ngSharePoint').factory('SPList',
                     $expand: defaultExpandProperties
                 };
             }
+
+
+            // Check if the requested properties (query.$expand) are already defined to avoid to make an unnecessary new request to the server.
+            if (this.Created !== undefined) {
+
+                var infoIsOk = true;
+
+                // The list properties are already here?
+                if (query.$expand !== undefined) {
+                    /*
+                    if (query.$expand.toLowerCase().indexOf('fields') >= 0 && this.Fields === undefined) infoIsOk = false;
+                    if (query.$expand.toLowerCase().indexOf('contenttypes') >= 0 && this.ContentTypes === undefined) infoIsOk = false;
+                    */
+                    angular.forEach(query.$expand.split(/, */g), function(expandKey) {
+
+                        infoIsOk = infoIsOk && self[expandKey] !== void 0;
+
+                    });
+
+                }
+
+
+                if (infoIsOk) {
+
+                    def.resolve(this);
+                    return def.promise;
+
+                }
+
+            }
+
+
+            // Make the query to the server.
+            var executor = new SP.RequestExecutor(self.web.url);
 
             executor.executeAsync({
 
