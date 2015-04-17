@@ -7,7 +7,7 @@
  * Represents a SPWeb object that are used to access to all SharePoint web site properties, lists and users.
  * 
  * When you instantiates a SPWeb object (with any SharePoint site url), the service is configured
- * with a pointer to a REST api of the site `http://<site url>/_api/web`.
+ * with a pointer to a REST API of the site `http://<site url>/_api/web`.
  *
  * You don't might to instantiate this object directly. You must use {@link ngSharePoint.SharePoint SharePoint} service
  * to get SPWeb instances.
@@ -15,7 +15,7 @@
  * If you instantiates a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access to all
  * web properties or get the lists, and users through his methods
  *
- * *At this moment, not all SharePoint api methods for web objects are implementeds in ngSharePoint*
+ * *At this moment, not all SharePoint API methods for web objects are implementeds in ngSharePoint*
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPList
@@ -52,7 +52,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * })
 		 * </pre>
 		 *
-		 * All methods calls to this `SPWeb` object will refer to a contents (lists, users, ...) of this site
+		 * All method calls to this `SPWeb` object will refer to a contents of this site (lists, users, ...)
 		 */
 		var SPWebObj = function(url) {
 
@@ -60,7 +60,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			return this.getApiUrl();
 
-		};
+		k};
 
 
 
@@ -135,7 +135,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 *
 		 * SharePoint REST api only returns certain web properties that have primary values. Properties with complex structures
 		 * like `SiteGroups`, `Lists` or `ContentTypes` are not returned directly by the api and you need to extend the query
-		 * to retrieve their values. You can accomplish this with the `query` param. 
+		 * to retrieve their values. You can accomplish this with the `query` param.
 		 *
 		 * @param {object} query With this parameter you can specify witch web properties you want to extend and to retrieve from server.
 		 * By default `RegionalSettings/TimeZone` properties are extended.
@@ -177,9 +177,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 *
 		 *   });
 		 * </pre>
-		 *
 		 */
-		 SPWebObj.prototype.getProperties = function(query) {
+		SPWebObj.prototype.getProperties = function(query) {
 
 			var self = this;
 			var def = $q.defer();
@@ -261,7 +260,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 *
 		 *   });
 		 * </pre>
-		*/
+		 */
 		SPWebObj.prototype.getLists = function() {
 
 			var self = this;
@@ -315,14 +314,6 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************		
-		// getList
-		//
-		// Gets a SPList object (SPList factory)
-		//
-		// @listName: String or Guid with the name or GUID of the list.
-		// @returns: SPList instance.
-		//
 		/**
 	     * @ngdoc function
 	     * @name ngSharePoint.SPWeb#getList
@@ -354,7 +345,6 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 *    web.getList('12fa20d2-1bb8-489c-bea3-b81797ddfeaf').then(function(list) {
 	     *        alert(list.Title);
 		 *    });
-
 		 * </pre>
 		 *
 		*/
@@ -368,13 +358,28 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************	
-		// getCurrentUser
-		//
-		// Gets a SPUser object (SPUser factory)
-		//
-		// @returns: SPUser instance.
-		//
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getCurrentUser
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves the current user from SharePoint
+	     *
+	     * @returns {promise} promise with a {@link ngSharePoint.SPUser SPUser} object
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 * // previously initiated web object ...
+		 * web.getCurrentUser().then(function(user) {
+		 *   
+		 *    if (user.IsSiteAdmin) {
+		 *      // some stuff ... 
+		 *    }
+		 * });
+		 * </pre>
+		*/
 		SPWebObj.prototype.getCurrentUser = function() {
 
 			var def = $q.defer();
@@ -396,14 +401,29 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 
 
-		// ****************************************************************************	
-		// getUserById
-		//
-		// Gets a SPUser object (SPUser factory)
-		//
-		// @userId: Id of the user to search
-		// @returns: SPUser instance.
-		//
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getUserById
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves a specified user from SharePoint
+	     *
+	     * @param {int} userId User id of the desired user to retrieve
+	     * @returns {promise} promise with a {@link ngSharePoint.SPUser SPUser} object
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 * // previously initiated web object ...
+		 * web.getUser(12).then(function(user) {
+		 *   
+		 *    if (user.IsSiteAdmin) {
+		 *      // some stuff ... 
+		 *    }
+		 * });
+		 * </pre>
+		*/
 		SPWebObj.prototype.getUserById = function(userId) {
 
 			var def = $q.defer();
