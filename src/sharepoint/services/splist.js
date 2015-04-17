@@ -1,18 +1,16 @@
-/*
-    SPList - factory
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPList
+ *
+ * @description
+ * Represents a SPList object that you could use to access to all SharePoint list properties and data.
+ *
+ * You can create new SPList objects or use a {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
+ *
+ * *At this moment, not all SharePoint API methods for list objects are implementeds in ngSharePoint*
+ *
+ */
 
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPList
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPList', 
 
@@ -29,6 +27,30 @@ angular.module('ngSharePoint').factory('SPList',
         // @web: SPWeb instance that contains the list in SharePoint.
         // @listName: Name or Guid of the list you want to instantiate.
         //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#constructor
+         * @constructor
+         * @methodOf ngSharePoint.SPList
+         * 
+         * @description
+         * Instantiates a new SPList object that points to a specific SharePoint list. With this
+         * list instance you could access to their properties and get list items.
+         * 
+         * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the list is located
+         * @param {string} listId|listName List id or list name.
+
+         * You can specify "UserInfoList" to refer the system list with all site users.
+         * @param {object} listProperties Properties to initialize the object
+         * 
+         * @example
+         * <pre>
+         * new SPList(web, 'Shared documents').then(function(docs) {
+         *   // ... do something with the docs object
+         * })
+         * </pre>
+         *
+         */
         var SPListObj = function(web, listName, listProperties) {
 
             if (web === void 0) {
