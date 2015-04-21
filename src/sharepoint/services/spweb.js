@@ -60,7 +60,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			return this.getApiUrl();
 
-		k};
+		};
 
 
 
