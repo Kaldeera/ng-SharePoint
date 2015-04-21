@@ -49,10 +49,6 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						
 					},
 
-					watchModeFn: function(newValue) {
-
-						refreshData();
-					},
 
 					renderFn: function() {
 
@@ -342,10 +338,39 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					var def = $q.defer();
 					var $query = {
-						$orderby: $scope.schema.LookupField
+						$orderby: $scope.schema.LookupField,
+						$top: 999999
 					};
 
+					if ($scope.schema.query !== undefined) {
+						angular.extend($query, $scope.schema.query);
+					}
+
 					if ($scope.dependency !== void 0) {
+
+						if ($query.select !== undefined) {
+							$query.$select += ',';
+						} else {
+							$query.$select = '*,';	
+						}
+						$query.$select += $scope.dependency.fieldName + '/Id';
+
+						if ($query.$expand !== undefined) {
+							$query.$expand += ',';
+						} else {
+							$query.$expand = '';
+						}
+						$query.$expand += $scope.dependency.fieldName + '/Id';
+						
+						if ($query.$filter !== undefined) {
+							$query.$filter += ' and';
+						} else {
+							$query.$filter = '';
+						}
+						$query.$filter += $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value;
+
+
+						/*
 						$query = {
 							$select: '*, ' + $scope.dependency.fieldName + '/Id',
 							$expand: $scope.dependency.fieldName + '/Id',
@@ -353,6 +378,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 							$orderby: $scope.schema.LookupField,
 							$top: 999999
 						};
+						*/
 					}
 
 					getLookupItems($query).then(function(candidateItems) {

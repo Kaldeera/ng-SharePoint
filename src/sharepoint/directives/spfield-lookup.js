@@ -41,7 +41,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 
 					watchModeFn: function(newValue) {
 
-						refreshData();
+//						refreshData();
 					},
 
 					renderFn: function() {
@@ -111,7 +111,7 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 				//
 				function getItemById(id) {
 
-					for(var r=0; r <= $scope.lookupItems.length; r++) {
+					for(var r=0; r < $scope.lookupItems.length; r++) {
 						if ($scope.lookupItems[r].Id === id) return $scope.lookupItems[r];
 					}
 
@@ -380,6 +380,10 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 								$top: 999999
 							};
 
+							if ($scope.schema.query !== void 0) {
+								angular.extend($query, $scope.schema.query);
+							}
+
 							if ($scope.dependency !== void 0) {
 
 								if ($scope.dependency.value === void 0) {
@@ -388,12 +392,35 @@ angular.module('ngSharePoint').directive('spfieldLookup',
 									return def.promise;
 								}
 
+								if ($query.select !== undefined) {
+									$query.$select += ',';
+								} else {
+									$query.$select = '*,';	
+								}
+								$query.$select += $scope.dependency.fieldName + '/Id';
+
+								if ($query.$expand !== undefined) {
+									$query.$expand += ',';
+								} else {
+									$query.$expand = '';
+								}
+								$query.$expand += $scope.dependency.fieldName + '/Id';
+								
+								if ($query.$filter !== undefined) {
+									$query.$filter += ' and';
+								} else {
+									$query.$filter = '';
+								}
+								$query.$filter += $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value;
+
+								/*
 								$query = {
 									$select: '*, ' + $scope.dependency.fieldName + '/Id',
 									$expand: $scope.dependency.fieldName + '/Id',
 									$filter: $scope.dependency.fieldName + '/Id eq ' + $scope.dependency.value,
 									$orderby: $scope.schema.LookupField
 								};
+								*/
 							}
 
 							list.getListItems($query, true).then(function(items) {
