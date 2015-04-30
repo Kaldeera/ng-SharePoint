@@ -32,7 +32,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * current SharePoint web. That means, the web context where 
 			 * this sentence is executed
 			 * 
-			 * @returns {promise} Promise with a new {@link ngSharePoint.SPWeb SPWeb} object that allows to access
+			 * @returns {promise} Promise with a new {@link ngSharePoint.SPWeb SPWeb} object that allows access to
 			 * web methods and properties
 			 * 
 			 * @example
@@ -56,7 +56,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * Returns the {@link ngSharePoint.SPWeb SPWeb} specified by the required url
 			 * 
 			 * @param {string} url The url of the web that you want to retrieve
-			 * @returns {promise} Promise with a new {@link ngSharePoint.SPWeb SPWeb} object that allows to access
+			 * @returns {promise} Promise with a new {@link ngSharePoint.SPWeb SPWeb} object that allows access to
 			 * web methods and properties
 			 * 
 			 * @example
