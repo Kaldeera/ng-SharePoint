@@ -20,15 +20,16 @@
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPList
  * @requires ngSharePoint.SPUser
+ * @requires ngSharePoint.SPFolder
  * 
  */
 
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPUtils', 'SPList', 'SPUser',
+	['$q', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
 
-	function SPWeb_Factory($q, SPUtils, SPList, SPUser) {
+	function SPWeb_Factory($q, SPUtils, SPList, SPUser, SPFolder) {
 
 		'use strict';
 
@@ -359,6 +360,64 @@ angular.module('ngSharePoint').factory('SPWeb',
 		};
 
 
+
+		/**
+		 * @ngdoc function
+		 * @name ngSharePoint.SPWeb#getRootFolder
+		 * @methodOf ngSharePoint.SPWeb
+		 *
+		 * @description
+		 * Use this method to get a reference of the web root folder.
+		 *
+		 * @returns {promise} promise with a {@link ngSharePoint.SPFolder SPFolder} object
+		 *
+		*/
+		SPWebObj.prototype.getRootFolder = function() {
+
+            var self = this;
+            var def = $q.defer();
+
+            if (this.RootFolder !== void 0) {
+
+                def.resolve(this.RootFolder);
+
+            } else {
+
+                var executor = new SP.RequestExecutor(self.url);
+
+                executor.executeAsync({
+
+                    url: self.apiUrl + '/RootFolder',
+                    method: 'GET', 
+                    headers: { 
+                        "Accept": "application/json; odata=verbose"
+                    }, 
+
+                    success: function(data) {
+
+                        var d = utils.parseSPResponse(data);
+                        this.RootFolder = new SPFolder(self, d.ServerRelativeUrl, d);
+                        this.RootFolder.web = self;
+
+                        def.resolve(this.RootFolder);
+                    }, 
+
+                    error: function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    }
+                });
+            }
+
+            return def.promise;
+
+		};
 
 		/**
 	     * @ngdoc function
