@@ -264,14 +264,15 @@ angular.module('ngSharePoint').factory('SPUtils',
             },
 
 
-            refreshDigestValue: function() {
+            refreshDigestValue: function(baseUrl) {
 
                 var self = this;
                 var deferred = $q.defer();
 
+                var url = (baseUrl || _spPageContextInfo.webAbsoluteUrl) + '/_api/contextinfo';
                 $http({
 
-                    url: _spPageContextInfo.webAbsoluteUrl + "/_api/contextinfo",
+                    url: url,
                     method: "POST",
                     headers: { "Accept": "application/json; odata=verbose"}
 
