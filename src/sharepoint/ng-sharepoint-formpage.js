@@ -41,9 +41,9 @@ angular.module('ngSharePointFormPage').config(
 
 angular.module('ngSharePointFormPage').directive('spformpage', 
 
-    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', 'SPExpressionResolver', 
+    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', 'SPExpressionResolver', '$window', 
 
-    function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, SPExpressionResolver) {
+    function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, SPExpressionResolver, $window) {
         
         return {
 
@@ -184,6 +184,25 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                         // Sets the item
                                         $scope.item = item;
 
+                                        // We can observe item.ContentTypeId, catch the changes and refresh completely the form ...
+                                        $scope.$watch('item.ContentTypeId', function(newValue, oldValue) {
+
+                                            if (newValue === oldValue) return;
+
+                                            /**
+                                             * If user changes the ContentType the complete
+                                             * form must be refreshed
+                                             */
+                                            var currentContentType = utils.getQueryStringParameter('ContentTypeId');
+                                            if (currentContentType === newValue) return;
+
+                                            if (currentContentType === undefined) {
+                                                $window.location.href = $window.location.href + '&ContentTypeId=' + newValue;
+                                            } else {
+                                                $window.location.href = $window.location.href.replace(currentContentType, newValue);
+                                            }
+                                        });
+
                                     });
 
                                 }, function(err) {
@@ -230,6 +249,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     } else {
 
                         $scope.list.getItemById(itemId, 'FieldValuesAsHtml').then(function(item) {
+
+                            var ct = utils.getQueryStringParamByName('ContentTypeId');
+                            if (ct !== undefined) item.ContentTypeId = ct;
 
                             deferred.resolve(item);
 
