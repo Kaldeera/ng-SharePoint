@@ -45,9 +45,14 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 
 					// Default label
 					// If no 'label' attribute specified assigns the 'Title' property from the field schema as label.
-					// NOTE: If field don't exists, assigns an empty label or code will crash when try to access the schema.
-					//	     As alternative could assign the 'name' attribute as label.
-					$scope.label = ($scope.schema ? $scope.schema.Title : '');
+					$scope.$watch(function() {
+
+						return ($scope.schema ? $scope.schema.Title : '');
+
+					}, function(newValue) {
+
+						$scope.label = newValue;
+					});
 				}
 
 

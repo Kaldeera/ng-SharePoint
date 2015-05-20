@@ -1,0 +1,9 @@
+<div>
+	<select ng-model="value" 
+			ng-options="ct.StringId as ct.Name for ct in ContentTypes" 
+			ng-required="true" 
+			title="{{schema.Title}}"
+			class="ms-RadioText"
+			ng-change="contentTypeChanged()"></select>
+</div>
+<spfield-validation-messages></spfield-validation-messages>

@@ -712,7 +712,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     
                     if (field.TypeAsString === 'Computed' || field.ReadOnlyField) {
                         // delete saveObj[field.InternalName];
-                        delete saveObj[field.EntityPropertyName];
+                        if (field.EntityPropertyName !== 'ContentTypeId') delete saveObj[field.EntityPropertyName];
                     }
 
                     // NOTA DE MEJORA!
