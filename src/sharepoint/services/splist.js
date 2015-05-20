@@ -600,7 +600,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                 angular.forEach(self.ContentTypes, function(ct) {
 
-                    if (ct.Id === contentTypeId) {
+                    if (ct.StringId === contentTypeId) {
 
                         contentType = ct;
 
