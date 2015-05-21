@@ -399,13 +399,6 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-        // ****************************************************************************
-        // getFields
-        //
-        // Gets list fields
-        //
-        // @returns: Promise with the result of the REST query.
-        //
         /**
          * @ngdoc function
          * @name ngSharePoint.SPList#getFields
