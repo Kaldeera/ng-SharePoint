@@ -49,7 +49,10 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						
 					},
 
-
+                    watchModeFn: function(newValue) {
+                    	// to prevent default behavior
+                    },
+                     
 					renderFn: function() {
 
 						$scope.value = $scope.modelCtrl.$viewValue;
