@@ -354,27 +354,63 @@ angular.module('ngSharePoint').factory('SPFile',
 				'Accept': 'application/json; odata=verbose'
 			};
 
+			var requestDigest = document.getElementById('__REQUESTDIGEST');
+			if (requestDigest !== null) {
+				headers['X-RequestDigest'] = requestDigest.value;
+			}
+			
 			var url = self.apiUrl + '/moveto(newurl=\'' + pathToMove + '/' + self.Name + '\',flags=1)';
 
-			var executor = new SP.RequestExecutor(self.web.url);
+			/**
+				This 'standard' SharePoint code will crash on IE10 due a InvalidClientQueryException (incorrect JSON format)
 
-			executor.executeAsync({
-				url: url,
+				var executor = new SP.RequestExecutor(self.web.url);
+				executor.executeAsync({
+					url: url,
+					method: 'POST',
+					headers: headers,
+
+					success: function () {
+						def.resolve();
+					},
+
+					error: function (data, errorCode, errorMessage) {
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+
+			**/
+
+			/**
+				The same call through a simple $http call works well :-)
+			**/
+			$http({
+
 				method: 'POST',
+				url: url,
+				headers: headers
 
-				success: function () {
-					def.resolve();
-				},
+			}).then(function() {
 
-				error: function (data, errorCode, errorMessage) {
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+				def.resolve();
 
-					def.reject(err);
-				}
+			}, function(error) {
+
+				var err = utils.parseError({
+					data: error.data.error,
+					errorCode: error.data.error.code,
+					errorMessage: error.data.error.message
+				});
+				err.data.body = err.data.message.value;
+				err.message = err.data.code;
+
+				def.reject(err);
 			});
 
 			return def.promise;
@@ -406,26 +442,58 @@ angular.module('ngSharePoint').factory('SPFile',
 
 			var url = self.apiUrl + '/copyto(strnewurl=\'' + pathToCopy + '/' + self.Name + '\',boverwrite=true)';
 
-			var executor = new SP.RequestExecutor(self.web.url);
+			/**
+				This 'standard' SharePoint code will crash on IE10 due a InvalidClientQueryException (incorrect JSON format)
 
-			executor.executeAsync({
-				url: url,
+				var executor = new SP.RequestExecutor(self.web.url);
+				executor.executeAsync({
+					url: url,
+					method: 'POST',
+					headers: headers,
+
+					success: function () {
+						def.resolve();
+					},
+
+					error: function (data, errorCode, errorMessage) {
+						var err = utils.parseError({
+							data: data,
+							errorCode: errorCode,
+							errorMessage: errorMessage
+						});
+
+						def.reject(err);
+					}
+				});
+			**/
+
+			/**
+				The same call through a simple $http call works well :-)
+			**/
+
+			$http({
+
 				method: 'POST',
+				url: url,
+				headers: headers
 
-				success: function () {
-					def.resolve();
-				},
+			}).then(function() {
 
-				error: function (data, errorCode, errorMessage) {
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
+				def.resolve();
 
-					def.reject(err);
-				}
+			}, function(error) {
+
+				var err = utils.parseError({
+					data: error.data.error,
+					errorCode: error.data.error.code,
+					errorMessage: error.data.error.message
+				});
+				err.data.body = err.data.message.value;
+				err.message = err.data.code;
+
+				def.reject(err);
 			});
+
 
 			return def.promise;
 		}; // copyFile
