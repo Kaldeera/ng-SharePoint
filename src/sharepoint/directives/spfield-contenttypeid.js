@@ -67,7 +67,23 @@ angular.module('ngSharePoint').directive('spfieldContenttypeid',
 
 				$scope.contentTypeChanged = function() {
 
-					$scope.modelCtrl.$setViewValue($scope.value);
+					if ($scope.value !== $scope.modelCtrl.$viewValue) {
+
+                        /**
+                         * If user changes the ContentType the complete
+                         * form must be refreshed
+                         */
+                        var currentContentType = utils.getQueryStringParameter('ContentTypeId');
+                        if (currentContentType === $scope.value) return;
+
+                        if (currentContentType === undefined) {
+                            $window.location.href = $window.location.href + '&ContentTypeId=' + $scope.value;
+                        } else {
+                            $window.location.href = $window.location.href.replace(currentContentType, $scope.value);
+                        }
+                    }
+
+//					$scope.modelCtrl.$setViewValue($scope.value);
 				};
 
 			} // link
