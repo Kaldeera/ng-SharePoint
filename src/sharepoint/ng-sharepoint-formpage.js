@@ -184,25 +184,6 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                                         // Sets the item
                                         $scope.item = item;
 
-                                        // We can observe item.ContentTypeId, catch the changes and refresh completely the form ...
-                                        $scope.$watch('item.ContentTypeId', function(newValue, oldValue) {
-
-                                            if (newValue === oldValue) return;
-
-                                            /**
-                                             * If user changes the ContentType the complete
-                                             * form must be refreshed
-                                             */
-                                            var currentContentType = utils.getQueryStringParameter('ContentTypeId');
-                                            if (currentContentType === newValue) return;
-
-                                            if (currentContentType === undefined) {
-                                                $window.location.href = $window.location.href + '&ContentTypeId=' + newValue;
-                                            } else {
-                                                $window.location.href = $window.location.href.replace(currentContentType, newValue);
-                                            }
-                                        });
-
                                     });
 
                                 }, function(err) {
