@@ -306,6 +306,16 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                                 dateComponents[dateParts[i]] = dateValues[i];
                             }
 
+                            if (dateComponents.yyyy !== undefined) {
+                                /**
+                                  * if user enter a short year with only two digits (ex: 12/9/15)
+                                  * we add the two digits of the millennium
+                                  **/
+                                if (dateComponents.yyyy.length == 2) {
+                                    dateComponents.yyyy = new Date().getUTCFullYear().toString().substr(0,2) + dateComponents.yyyy;
+                                }
+                            }
+
                             var hours = $scope.hoursModel;
                             if (hours !== null) {
                                 hours = ($scope.hoursMode24 ? hours.substr(0, hours.length - 1) : hours.substr(0, 2));
