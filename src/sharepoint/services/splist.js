@@ -7,46 +7,45 @@
  *
  * You can create new SPList objects or use a {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
  *
- * *At this moment, not all SharePoint API methods for list objects are implementeds in ngSharePoint*
+ * *At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint*
  *
  */
 
 
-angular.module('ngSharePoint').factory('SPList', 
+angular.module('ngSharePoint').factory('SPList',
 
-    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider', 
+    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider',
 
     function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
 
         'use strict';
 
 
-        // ****************************************************************************
-        // SPList constructor
-        //
-        // @web: SPWeb instance that contains the list in SharePoint.
-        // @listName: Name or Guid of the list you want to instantiate.
-        //
         /**
          * @ngdoc function
          * @name ngSharePoint.SPList#constructor
          * @constructor
          * @methodOf ngSharePoint.SPList
-         * 
+         *
          * @description
-         * Instantiates a new SPList object that points to a specific SharePoint list. With this
-         * list instance you could access to their properties and get list items.
-         * 
+         * Instantiates a new `SPList` object that points to a specific SharePoint list. With this
+         * list instance you can access their properties and get list items.
+         *
+         * *Note*: this method only instantiates a new `SPList` object initialized for future access to
+         * list related API (get list items, folders, documents) . This method doesn't retrieve any
+         * list properties or information. If you need list properties you need to use the
+         * {@link ngSharePoint.SPList#getProperties getProperties} method.
+         *
          * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the list is located
          * @param {string} listId|listName List id or list name.
 
-         * You can specify "UserInfoList" to refer the system list with all site users.
+         * Also, you can specify "UserInfoList" to refer the system list with all site users.
          * @param {object} listProperties Properties to initialize the object
-         * 
+         *
          * @example
          * <pre>
          * new SPList(web, 'Shared documents').then(function(docs) {
-         *   // ... do something with the docs object
+         *   // ... do something with the 'docs' object
          * })
          * </pre>
          *
@@ -101,14 +100,14 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-        // ****************************************************************************
-        // getListItemEntityTypeFullName
-        //
-        // Gets the 'ListItemEntityTypeFullName' for the list and attach to 'this' object.
-        // This property is needed for CRUD operations.
-        //
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * Gets the 'ListItemEntityTypeFullName' property for the list and attach it
+         * to 'this' object.
+         *
+         * This property is required for CRUD operations.
+         *
+         * This method is used internally.
+         */
         SPListObj.prototype.getListItemEntityTypeFullName = function() {
 
             var self = this;
@@ -124,7 +123,7 @@ angular.module('ngSharePoint').factory('SPList',
                 self.getProperties().then(function() {
                     def.resolve(self.ListItemEntityTypeFullName);
                 });
-                
+
             }
 
             return def.promise;
@@ -133,28 +132,63 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-        // ****************************************************************************
-        // getProperties
-        //
-        // Gets list properties and attach it to 'this' object.
-        //
-        // http://msdn.microsoft.com/es-es/library/office/jj164022(v=office.15).aspx
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#getProperties
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * Makes a call to the SharePoint server and collects all the list properties.
+         * The current object is extended with the recovered properties. This means that when you have executed this
+         * method, you will have direct access to their values. ex: `list.Title`, `list.BaseTemplate`, `list.AllowContentTypes`, etc.
+         *
+         * For a complete list of list properties go to Microsoft
+         * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531433.aspx#bk_ListProperties list api reference}
+         *
+         * SharePoint REST api only returns certain list properties that have primary values. Properties with complex structures
+         * like `ContentTypes`, `EffectiveBasePermissions` or `Fields` are not returned directly by the api and you need to extend the query
+         * to retrieve their values. You can accomplish this with the `query` param.
+         *
+         * @param {object} query With this parameter you can specify which list properties you want to extend and to retrieve from the server.
+         * By default `Views` property is extended.
+         *
+         * @returns {promise} promise with an object with all list properties
+         *
+         * @example
+         * This example shows how to retrieve the list properties:
+         * <pre>
+         *
+         *   SharePoint.getCurrentWeb(function(web) {
+         *
+         *     web.getList("Orders").then(function(list) {
+         *
+         *        list.getProperties().then(function() {
+         *
+         *            // at this point we have all list properties
+         *            if (!list.EnableAttachments) {
+         *                alert("You can't attach any file");
+         *            }
+         *        });
+         *     });
+         *
+         *   });
+         * </pre>
+         *
+         */
         SPListObj.prototype.getProperties = function(query) {
 
             var self = this;
             var def = $q.defer();
             var defaultExpandProperties = 'Views';
-            // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a 
-            // que si la lista es la 'SiteUserInfoList' se genera un error porque no 
+            // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a
+            // que si la lista es la 'SiteUserInfoList' se genera un error porque no
             // tiene formularios sino que se utiliza la página /_layouts/15/UserDisp.aspx
             // para visualizar un usuario y un popup para la edición.
 
             if (query) {
                 query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
             } else {
-                query = { 
+                query = {
                     $expand: defaultExpandProperties
                 };
             }
@@ -196,10 +230,10 @@ angular.module('ngSharePoint').factory('SPList',
             executor.executeAsync({
 
                 url: self.apiUrl + utils.parseQuery(query),
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -238,7 +272,7 @@ angular.module('ngSharePoint').factory('SPList',
                     }
 
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -259,15 +293,38 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-
-        // ****************************************************************************
-        // updateProperties
-        //
-        // Updates the list properties
-        //
-        // @properties: Object with the properties to update.
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#updateProperties
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * With this method, you can modify list properties. The method recives an object
+         * with the new property values and makes a call to the server API to modify it.
+         *
+         * @param {object} properties A object with all the properties to modify
+         * @returns {promise} promise with an object that contains all modified list properties
+         *
+         * @example
+         * <pre>
+         *   SharePoint.getCurrentWeb(function(web) {
+         *
+         *     web.getList("Orders").then(function(list) {
+         *
+         *         list.updateProperties({
+         *
+         *             EnableAttachments: true,
+         *             ForceCheckout: false
+         *
+         *         }).then(function() {
+         *             // ...
+         *         });
+         *     });
+         *
+         *   });
+         * </pre>
+         *
+         */
         SPListObj.prototype.updateProperties = function(properties) {
 
             var self = this;
@@ -290,7 +347,7 @@ angular.module('ngSharePoint').factory('SPList',
                 "Accept": "application/json; odata=verbose",
                 "content-type": "application/json;odata=verbose",
                 "X-HTTP-Method": "MERGE",
-                "IF-MATCH": "*" // Overwrite any changes in the item. 
+                "IF-MATCH": "*" // Overwrite any changes in the item.
                                 // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
             };
 
@@ -320,7 +377,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     def.resolve(properties);
 
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -335,20 +392,69 @@ angular.module('ngSharePoint').factory('SPList',
             });
 
 
-            return def.promise;            
+            return def.promise;
 
         }; // updateProperties
 
 
 
 
-        // ****************************************************************************
-        // getFields
-        //
-        // Gets list fields
-        //
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#getFields
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * This method retrieves the Fields collection of the list and creates a new object property
+         * called "Fields" that contains a named property for every field.
+         *
+         * After you call this method, you will have access to the schema of every field in the list and all
+         * their properties (default values, validation expressions, choice values or lookup properties).
+         *
+         * For a complete list of field properties go to Microsoft
+         * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldProperties field api reference}.
+         * Also, there are additional field specific properties that you can consult
+         * based on the field type:
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCalculated FieldCalculated},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCollection FieldCollection},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldComputed FieldComputed},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldDateTime FieldDateTime},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGeolocation FieldGeolocation},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGuid FieldGuid},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldLookup FieldLookup and FieldUser},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiChoice FieldMultiChoice, FieldChoice, and FieldRatingScale},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiLineText FieldMultiLineText},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldNumber FieldNumber and FieldCurrency},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldText FieldText},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldUrl FieldUrl},
+         *
+         * With all of this information, you might construct new interfaces (views, forms, etc) that follow
+         * definitions of any SharePoint list.
+         *
+         * @returns {promise} promise with an object that contains all oh the fields schema
+         *
+         * @example
+         * <pre>
+         *   // a pre-initialized "list" object ...
+         *   list.getFields().then(function() {
+         *
+         *       // at this point, you have access to the definition of any list field
+         *       console.log(list.Fields.Title.DefaultValue);
+         *       // this returns '' or any defined value
+         *
+         *       console.log(list.Fields.DueDate.Required);                 
+         *       // this returns true or false
+         *
+         *       console.log(list.Fields.Editor.ReadOnlyField);
+         *       // this returns true
+         *
+         *       console.log(list.Fields.ProjectStatus.Choices.results);
+         *       // this returns on array with available choices ['Open', 'Closed', 'Draft']
+         *   });
+         *
+         * </pre>
+         *
+         */
         SPListObj.prototype.getFields = function() {
 
             var self = this;
@@ -398,7 +504,7 @@ angular.module('ngSharePoint').factory('SPList',
                     }
                 });
             }
-            
+
             return def.promise;
 
         }; // getFields
@@ -406,13 +512,31 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-        // ****************************************************************************
-        // getContentTypes
-        //
-        // Gets the list content types
-        //
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#getContentTypes
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * This method retrieves the list of all content types of the list.
+         *
+         * If you call this method, a new `ContentType` property will be set with the array of content types.
+         * 
+         * @returns {promise} promise with an array of all content types associated with the list.
+         * Every element on the array is a {@link ngSharePoint.SPContentType SPContentType} object.
+         *
+         * @example
+         * <pre>
+         *   list.getContentTypes().then(function() {
+         *
+         *     // ContentTypes property are set in the list object
+         *     list.ContentTypes.forEach(function(ct) {
+         *       console.log(ct.Name);
+         *     });
+         *   });
+         * </pre>
+         *
+        */
         SPListObj.prototype.getContentTypes = function() {
 
             var self = this;
@@ -426,7 +550,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                 var executor = new SP.RequestExecutor(self.web.url);
 
-                // We don't cache the content types due to that the user can 
+                // We don't cache the content types due to that the user can
                 // change its order (the default content type) anytime.
 
                 executor.executeAsync({
@@ -473,16 +597,33 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-
-        // ****************************************************************************
-        // getContentType
-        //
-        // Gets a list content type by its ID.
-        //
-        // @contentTypeId: The ID of the content type to retrieve if this parameter is
-        // undefined, the function returns the default content type.
-        // @returns: Promise with the result of the REST query.
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#getContentType
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * Use this method to get a specified content type by his Id or name.
+         *
+         * Internally, this method makes a call to {@link ngSharePoint.SPList#getContentTypes getContentTypes} method.
+         *
+         * @param {string=} Id|name The Id or the name of the content type to will be retrieved. If this parameter is not
+         * specified, the method returns the default content type.
+         * @returns {promise} promise with the {@link ngSharePoint.SPContentType SPContentType} object.
+         *
+         * @example
+         * This example retrieves the associated Issue content type and logs all his field titles
+         * <pre>
+         *   list.getContentType('Issue').then(function(issueCt) {
+         *
+         *     angular.forEach(issueCt.Fields, function(field) {
+         *       console.log(field.Title);
+         *     });
+         *
+         *   });
+         * </pre>
+         *
+        */
         SPListObj.prototype.getContentType = function(contentTypeId) {
 
             var self = this;
@@ -498,6 +639,11 @@ angular.module('ngSharePoint').factory('SPList',
 
                         contentType = ct;
 
+                    }
+
+                    if (ct.Name === contentTypeId) {
+
+                        contentType = ct;
                     }
 
                 });
@@ -557,10 +703,10 @@ angular.module('ngSharePoint').factory('SPList',
                 executor.executeAsync({
 
                     url: self.apiUrl + '/RootFolder',
-                    method: 'GET', 
-                    headers: { 
+                    method: 'GET',
+                    headers: {
                         "Accept": "application/json; odata=verbose"
-                    }, 
+                    },
 
                     success: function(data) {
 
@@ -569,7 +715,7 @@ angular.module('ngSharePoint').factory('SPList',
                         this.RootFolder.List = self;
 
                         def.resolve(this.RootFolder);
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -591,7 +737,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
         // ****************************************************************************
-        // getSchema
+        // getWorkflowAssociationByName
         //
         // Gets list content type fields
         //
@@ -611,16 +757,16 @@ angular.module('ngSharePoint').factory('SPList',
             executor.executeAsync({
 
                 url: self.apiUrl + '/WorkflowAssociations' + params,
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
                 },
-                
+
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -668,7 +814,7 @@ angular.module('ngSharePoint').factory('SPList',
                 if (query) {
                     query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
                 } else {
-                    query = { 
+                    query = {
                         $expand: defaultExpandProperties
                     };
                 }
@@ -679,10 +825,10 @@ angular.module('ngSharePoint').factory('SPList',
             executor.executeAsync({
 
                 url: self.apiUrl + '/Items' + urlParams,
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
                     var d = utils.parseSPResponse(data);
@@ -718,7 +864,7 @@ angular.module('ngSharePoint').factory('SPList',
                     // Returns an array of initialized 'SPListItem' objects.
                     def.resolve(items);
 
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -741,10 +887,10 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // getItemById
         //
-        // Gets an item from the list by its ID. 
+        // Gets an item from the list by its ID.
         //
         // @id: {Counter} The id of the item.
-        // @expandProperties: {String} Comma separated values with the properties to 
+        // @expandProperties: {String} Comma separated values with the properties to
         //                    expand in the REST query.
         // @returns: Promise with the result of the REST query.
         //
@@ -761,10 +907,10 @@ angular.module('ngSharePoint').factory('SPList',
             executor.executeAsync({
 
                 url: self.apiUrl + '/getItemById(' + id + ')' + utils.parseQuery(query),
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -783,7 +929,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     var spListItem = new SPListItem(self, d);
                     def.resolve(spListItem);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -806,7 +952,7 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // getItemQueryById
         //
-        // Gets an item property value from the list by item ID. 
+        // Gets an item property value from the list by item ID.
         //
         // @id: {Counter} The id of the item.
         // @query: {String} The REST query after '.../getItemById(<id>)/'
@@ -824,16 +970,16 @@ angular.module('ngSharePoint').factory('SPList',
             executor.executeAsync({
 
                 url: self.apiUrl + '/getItemById(' + id + ')/' + query.ltrim('/'),
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
                     var d = utils.parseSPResponse(data);
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -1090,7 +1236,7 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // createItem
         //
-        // Creates an item in the list. 
+        // Creates an item in the list.
         //
         // @returns: Promise with the result of the REST query.
         //
@@ -1139,14 +1285,14 @@ angular.module('ngSharePoint').factory('SPList',
                     url: self.apiUrl + '/items',
                     method: 'POST',
                     body: angular.toJson(body),
-                    headers: headers, 
+                    headers: headers,
 
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
 
                         def.resolve(d);
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -1172,7 +1318,7 @@ angular.module('ngSharePoint').factory('SPList',
         // ****************************************************************************
         // updateItem
         //
-        // Creates an item in the list. 
+        // Creates an item in the list.
         //
         // @id: {counter} The ID of the item to update.
         // @properties: {Object} The item properties to update.
@@ -1206,7 +1352,7 @@ angular.module('ngSharePoint').factory('SPList',
                     "Accept": "application/json; odata=verbose",
                     "content-type": "application/json;odata=verbose",
                     "X-HTTP-Method": "MERGE",
-                    "IF-MATCH": "*" // Overwrite any changes in the item. 
+                    "IF-MATCH": "*" // Overwrite any changes in the item.
                                     // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
                 };
 
@@ -1231,7 +1377,7 @@ angular.module('ngSharePoint').factory('SPList',
                         var d = utils.parseSPResponse(data);
 
                         def.resolve(d);
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -1285,7 +1431,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
             // Make the call.
-            // ----------------------------------------------------------------------------             
+            // ----------------------------------------------------------------------------
             executor.executeAsync({
 
                 url: self.apiUrl + '/items(' + id + ')',
@@ -1297,7 +1443,7 @@ angular.module('ngSharePoint').factory('SPList',
                     var d = utils.parseSPResponse(data);
 
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 

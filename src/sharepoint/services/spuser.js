@@ -3,18 +3,18 @@
  * @name ngSharePoint.SPUser
  *
  * @description
- * Represents a SPUser object that are used to access to all SharePoint user properties
+ * Represents a SPUser object that is used to access to all SharePoint user properties
  * 
- * When you instantiates a SPUser object (with any user Id), the service is configured
+ * When you instantiate an SPUser object (with any user Id), the service is configured
  * with a pointer to the next REST api: `http://<site-url>/_api/web/SiteUserInfoList/getItemById(userId)`.
  * If you instantiate a SPUser object with a login name, the api is configured with the
  * url: `http://<site-url>/_api/web/siteusers/getByLoginName(loginName)`.
  *
- * You should have care with this difference, because the properties returned by this 
+ * You should take care with this difference, because the properties returned by these 
  * two API's are different. View the SharePoint documentation to get more information or 
- * make some calls to the API in a browser in order to see wich method you prefer.
+ * make some calls to the API in a browser in order to see whitch method you prefer.
  *
- * *At this moment, not all SharePoint API methods for user objects are implementeds in ngSharePoint*
+ * *At the moment, not all SharePoint API methods for user objects are implemented in ngSharePoint*
  *
  */
 
@@ -34,12 +34,12 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * @methodOf ngSharePoint.SPUser
 		 * 
 		 * @description
-		 * Instantiates a new SPUser object that points to a specific SharePoint user and allows to
-		 * retrieve their properties
+		 * Instantiates a new SPUser object that points to a specific SharePoint user and allows
+		 * retrieval of their properties
 		 * 
 		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
-		 * @param {int|string} userId|loginName User id or login name of the user that we'll retrieve properties
-		 * @param {object} data Properties to initialize the object
+		 * @param {int|string} userId|loginName User id or login name of the user that will retrieve properties
+		 * @param {object} data Properties to initialize the object (optional)
 		 * @returns {promise} with the SPUser object correctly instantiated
 		 * 
 		 * @example
@@ -98,8 +98,8 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * 
 		 * @description
 		 * Makes a call to the SharePoint server and gets all their properties.
-		 * The current object are extended with all recovered properties. This means that when you has been executed this 
-		 * method, you directly have access to their values. ex: `user.IsSiteAdmin`, `user.LoginName`, `user.Title`, etc.
+		 * The current object are extended with all recovered properties. This means that when you have executed this 
+		 * method, you will have direct access to their values. ex: `user.IsSiteAdmin`, `user.LoginName`, `user.Title`, etc.
 		 * 
 		 * For a complete list of user properties go to Microsoft 
 		 * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties api reference}
@@ -108,7 +108,7 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * like user `Groups` are not returned directly by the api and you need to extend the query
 		 * to retrieve their values. You can accomplish this with the `query` param.
 		 *
-		 * @param {object} query With this parameter you can specify witch web properties you want to extend and to retrieve from server.
+		 * @param {object} query With this parameter you can specify which web properties you want to extend and to retrieve from the server.
 		 * @returns {promise} promise with an object with all user properties
 		 * 
 		 * @example

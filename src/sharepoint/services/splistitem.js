@@ -807,6 +807,20 @@ angular.module('ngSharePoint').factory('SPListItem',
                         utils.cleanDeferredProperties(d);
                         angular.extend(self, d);
 
+                        /**
+                         * On a document library, if user changes the name of the 
+                         * file (by the FileLeafRef field), the .File property that
+                         * points to the File object on the server, will have a bad 
+                         * api url
+                         * This problem can solfe with a call to updateAPIUrlById method
+                         * that modifies the apiURL property correctly
+
+                        if (self.File !== undefined) {
+                            self.File.updateAPIUrlById(self.list, self.Id);
+                        }
+                        
+                        */
+
                         // After save, process the attachments.
                         self.processAttachments().then(function() {
                             def.resolve(d);

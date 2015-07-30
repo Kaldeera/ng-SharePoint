@@ -9,13 +9,13 @@
  * When you instantiates a SPWeb object (with any SharePoint site url), the service is configured
  * with a pointer to a REST API of the site `http://<site url>/_api/web`.
  *
- * You don't might to instantiate this object directly. You must use {@link ngSharePoint.SharePoint SharePoint} service
+ * You musn't instantiate this object directly. You must use {@link ngSharePoint.SharePoint SharePoint} service
  * to get SPWeb instances.
  *
- * If you instantiates a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access to all
- * web properties or get the lists, and users through his methods
+ * If you instantiates a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access all
+ * web properties or get lists, and users through his methods
  *
- * *At this moment, not all SharePoint API methods for web objects are implementeds in ngSharePoint*
+ * *At the moment, not all SharePoint API methods for web objects are implemented in ngSharePoint*
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPList
@@ -43,7 +43,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * @description
 		 * Instantiates a new SPWeb object that points to a specific SharePoint site.
 		 * 
-		 * @param {sring=} url|webId url or web id. If this parameter is no provided, the object is initialized with the current web
+		 * @param {sring=} url|webId url or web id. If this parameter is not provided, the object is initialized with the current web
 		 * @returns {promise} with the SPWeb object correctly instantiated
 		 * 
 		 * @example
@@ -53,7 +53,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * })
 		 * </pre>
 		 *
-		 * All method calls to this `SPWeb` object will refer to a contents of this site (lists, users, ...)
+		 * All method calls to this `SPWeb` object will refer to the content of this site (lists, users, ...)
 		 */
 		var SPWebObj = function(url) {
 
@@ -127,9 +127,9 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * @methodOf ngSharePoint.SPWeb
 		 * 
 		 * @description
-		 * Makes a call to the SharePoint server and gets all his properties.
-		 * The current object are extended with all recovered properties. This means that when you has been executed this 
-		 * method, you directly have access to this values. ex: `web.Title`, `web.Language`, etc.
+		 * Makes a call to the SharePoint server and gets all the web properties.
+		 * The current object is extended with all recovered properties. This means that when you have executed this 
+		 * method, you will have direct access to these values. ex: `web.Title`, `web.Language`, etc.
 		 * 
 		 * For a complete list of web properties go to Microsoft 
 		 * SharePoint {@link https://msdn.microsoft.com/en-us/library/dn499819.aspx#bk_WebProperties api reference}
@@ -138,7 +138,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * like `SiteGroups`, `Lists` or `ContentTypes` are not returned directly by the api and you need to extend the query
 		 * to retrieve their values. You can accomplish this with the `query` param.
 		 *
-		 * @param {object} query With this parameter you can specify witch web properties you want to extend and to retrieve from server.
+		 * @param {object} query With this parameter you can specify which web properties you want to extend and to retrieve from server.
 		 * By default `RegionalSettings/TimeZone` properties are extended.
 		 *
 		 * @returns {promise} promise with an object with all web properties
@@ -324,6 +324,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 	     * Retrieves an instance of the specified SharePoint list or document library from the server
 	     *
 	     * @param {string|GUID} name The name or the GUID of the list
+	     *
+         * Also, you can specify "UserInfoList" to refer the system list with all site users.
 	     * @returns {promise} promise with a {@link ngSharePoint.SPList SPList} object
 	     *
 		 * @example
