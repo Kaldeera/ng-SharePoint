@@ -20,8 +20,10 @@
  *   <script src="js/angular.js"></script>
  *   <!-- Include the ngSharePoint script -->
  *   <script src="js/ng-sharepoint.min.js"></script>
+ *
  *   <!-- Include the ngSharePoint templates (if you need forms) -->
  *   <script src="js/ng-sharepoint.sharepoint.templates.js"></script>
+ *
  *   <script>
  *     // ...and add 'ngSharePoint' as a dependency
  *     var myApp = angular.module('myApp', ['ngSharePoint']);
@@ -63,3 +65,4 @@ angular.module('ngSharePoint').value('Constants', {
 	errorTemplate: 'templates/error.html',
 	userProfileUrl: '_layouts/userdisp.aspx?ID='
 });
+
