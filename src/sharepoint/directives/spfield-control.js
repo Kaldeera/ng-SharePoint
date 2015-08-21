@@ -116,6 +116,9 @@ angular.module('ngSharePoint').directive('spfieldControl',
 
 
                         // Check for 'render-as' attribute
+                        if (schema.RenderAs !== undefined) {
+                            fieldType = schema.RenderAs;
+                        }
                         if ($attrs.renderAs) {
                             fieldType = $attrs.renderAs;
                         }
