@@ -10,9 +10,10 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
+    "oldJs",
     "node_modules",
     "bower_components",
-    "test",
-    "tests"
+    "Gruntfile.js",
+    "package.json"
   ]
 }

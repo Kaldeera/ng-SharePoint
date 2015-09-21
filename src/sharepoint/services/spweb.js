@@ -69,7 +69,6 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * This method is called when a new SPWeb object is instantiated.
 		 * The proupose of this method is to resolve the correct api url of the web, depending on `url` property
 		 *
-		 *
 		 * @returns {promise} that will be resolved after the initialization of the SharePoint web API REST url endpoint
 		 */
 		SPWebObj.prototype.getApiUrl = function() {
