@@ -147,7 +147,7 @@ module.exports = function(grunt) {
 
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
+  grunt.registerTask('default', ['ngdocs']);
   grunt.registerTask('build', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
   grunt.registerTask('publishcdn', ['copy']);
   grunt.registerTask('debug', ['concat']);
@@ -155,3 +155,42 @@ module.exports = function(grunt) {
   grunt.registerTask('documentation', ['ngdocs']);
 
 };
+
+
+grunt.registerTask('publish-pages', 'Publish a clean build, docs, and sample to github.io', function () {
+  promising(this,
+    ensureCleanMaster().then(function () {
+      shjs.rm('-rf', 'build');
+      return system('git checkout gh-pages');
+    }).then(function () {
+      return system('git merge master');
+    }).then(function () {
+      return system('grunt dist-docs');
+    }).then(function () {
+      return system('git commit -a -m \'Automatic gh-pages build\'');
+    }).then(function () {
+      return system('git checkout master');
+    })
+  );
+});
+
+
+function ensureCleanMaster() {
+  return exec('git symbolic-ref HEAD').then(function (result) {
+    if (result.stdout.trim() !== 'refs/heads/master') throw 'Not on master branch, aborting';
+    return exec('git status --porcelain');
+  }).then(function (result) {
+    if (result.stdout.trim() !== '') throw 'Working copy is dirty, aborting';
+  });
+}
+
+
+function promising(task, promise) {
+  var done = task.async();
+  promise.then(function () {
+    done();
+  }, function (error) {
+    grunt.log.write(error + '\n');
+    done(false);
+  });
+}

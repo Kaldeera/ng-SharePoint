@@ -9,6 +9,10 @@
  *
  * *At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint*
  *
+ * @requires ngSharePoint.SPListItem
+ * @requires ngSharePoint.SPFolder
+ * @requires ngSharePoint.SPContentType
+ *
  */
 
 
@@ -857,7 +861,7 @@ angular.module('ngSharePoint').factory('SPList',
          * 
          * By default SharePoint returns sets of 100 items from the server. You can modify this value with the param `$top`
          * 
-         * @returns {promise} promise with a collection of {@link ngSharePoint.SPlistItem SPlistItem} elements
+         * @returns {promise} promise with a collection of {@link ngSharePoint.SPListItem SPListItem} elements
          * retrieved from the server
          *
          * @example
@@ -997,7 +1001,7 @@ angular.module('ngSharePoint').factory('SPList',
          * @param {integer} Id The Id of the item to be retrieved.
          * @param {string} expandProperties Comma separed values with the properties to expand
          * in the REST query
-         * @returns {promise} promise with a object of type {@link ngSharePoint.SPlistItem SPlistItem} corresponding
+         * @returns {promise} promise with a object of type {@link ngSharePoint.SPListItem SPListItem} corresponding
          * with the element retrieved
          *
          * @example
