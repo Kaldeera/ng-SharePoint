@@ -165,7 +165,7 @@ grunt.registerTask('publish-pages', 'Publish a clean build, docs, and sample to 
     }).then(function () {
       return system('git merge master');
     }).then(function () {
-      return system('grunt dist-docs');
+      return system('grunt ngdocs');
     }).then(function () {
       return system('git commit -a -m \'Automatic gh-pages build\'');
     }).then(function () {
