@@ -1,0 +1,47 @@
+<h1><code ng:non-bindable="">SharePoint</code>
+<div><span class="hint">service in module <code ng:non-bindable="">ngSharePoint</code>
+</span>
+</div>
+</h1>
+<div><h2 id="description">Description</h2>
+<div class="description"><div class="ngsharepoint-sharepoint-page"><p>Provides top level access to SharePoint web sites api.</p>
+</div></div>
+<h2 id="dependencies">Dependencies</h2>
+<ul class="dependencies"><li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPUtils">SPUtils</a></code>
+</li>
+<li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPWeb">SPWeb</a></code>
+</li>
+</ul>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_getcurrentweb">getCurrentWeb()</h3>
+<div class="getcurrentweb"><div class="ngsharepoint-sharepoint-getcurrentweb-page"><p>Returns a <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object initialized with the 
+current SharePoint web. That means, the web context where 
+this sentence is executed</p>
+</div><h5 id="methods_getcurrentweb_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-sharepoint-getcurrentweb-page"><p>Promise with a new <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object that allows access to
+web methods and properties</p>
+</div></td></tr></table><h4 id="methods_getcurrentweb_example">Example</h4>
+<div class="example"><div class="ngsharepoint-sharepoint-getcurrentweb-page"><pre class="prettyprint linenums">
+SharePoint.getCurrentWeb().then(function(web) {
+  // ... do something with the web object
+});
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getweb">getWeb(url)</h3>
+<div class="getweb"><div class="ngsharepoint-sharepoint-getweb-page"><p>Returns the <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> specified by the required url</p>
+</div><h5 id="methods_getweb_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>url</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-sharepoint-getweb-page"><p>The url of the web that you want to retrieve</p>
+</div></td></tr></tbody></table><h5 id="methods_getweb_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-sharepoint-getweb-page"><p>Promise with a new <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object that allows access to
+web methods and properties</p>
+</div></td></tr></table><h4 id="methods_getweb_example">Example</h4>
+<div class="example"><div class="ngsharepoint-sharepoint-getweb-page"><pre class="prettyprint linenums">
+SharePoint.getWeb('/sites/rrhh').then(function(web) {
+  // ... do something with the 'rrhh' web object
+});
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
+</div>

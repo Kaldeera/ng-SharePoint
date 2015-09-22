@@ -1,0 +1,176 @@
+<h1><code ng:non-bindable="">SPWeb</code>
+<div><span class="hint">service in module <code ng:non-bindable="">ngSharePoint</code>
+</span>
+</div>
+</h1>
+<div><h2 id="description">Description</h2>
+<div class="description"><div class="ngsharepoint-spweb-page"><p>Represents a SPWeb object that are used to access to all SharePoint web site properties, lists and users.</p>
+<p>When you instantiates a SPWeb object (with any SharePoint site url), the service is configured
+with a pointer to a REST API of the site <code>http://&lt;site url&gt;/_api/web</code>.</p>
+<p>You musn&#39;t instantiate this object directly. You must use <a href="#/api/ngSharePoint.SharePoint">SharePoint</a> service
+to get SPWeb instances.</p>
+<p>If you instantiates a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access all
+web properties or get lists, and users through his methods</p>
+<p><em>At the moment, not all SharePoint API methods for web objects are implemented in ngSharePoint</em></p>
+</div></div>
+<h2 id="dependencies">Dependencies</h2>
+<ul class="dependencies"><li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPUtils">SPUtils</a></code>
+</li>
+<li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPList">SPList</a></code>
+</li>
+<li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPUser">SPUser</a></code>
+</li>
+</ul>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_constructor">constructor(url|webId)</h3>
+<div class="constructor"><div class="ngsharepoint-spweb-constructor-page"><p>Instantiates a new SPWeb object that points to a specific SharePoint site.</p>
+</div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>url|webId <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-sring">sring</a></td><td><div class="ngsharepoint-spweb-constructor-page"><p>url or web id. If this parameter is not provided, the object is initialized with the current web</p>
+</div></td></tr></tbody></table><h5 id="methods_constructor_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-constructor-page"><p>with the SPWeb object correctly instantiated</p>
+</div></td></tr></table><h4 id="methods_constructor_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-constructor-page"><pre class="prettyprint linenums">
+new SPWeb('/mySite').then(function(web) {
+  // ... do something with the web object
+})
+</pre>
+<p>All method calls to this <code>SPWeb</code> object will refer to the content of this site (lists, users, ...)</p>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getcurrentuser">getCurrentUser()</h3>
+<div class="getcurrentuser"><div class="ngsharepoint-spweb-getcurrentuser-page"><p>Retrieves the current user from SharePoint</p>
+</div><h5 id="methods_getcurrentuser_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getcurrentuser-page"><p>promise with a <a href="#/api/ngSharePoint.SPUser">SPUser</a> object</p>
+</div></td></tr></table><h4 id="methods_getcurrentuser_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getcurrentuser-page"><pre class="prettyprint linenums">
+
+// previously initiated web object ...
+web.getCurrentUser().then(function(user) {
+  
+   if (user.IsSiteAdmin) {
+     // some stuff ... 
+   }
+});
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getlist">getList(name)</h3>
+<div class="getlist"><div class="ngsharepoint-spweb-getlist-page"><p>Retrieves an instance of the specified SharePoint list or document library from the server</p>
+</div><h5 id="methods_getlist_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>name</td><td><a href="" class="label type-hint type-hint-string">string</a><a href="" class="label type-hint type-hint-guid">GUID</a></td><td><div class="ngsharepoint-spweb-getlist-page"><p>The name or the GUID of the list</p>
+<p>Also, you can specify &quot;UserInfoList&quot; to refer the system list with all site users.</p>
+</div></td></tr></tbody></table><h5 id="methods_getlist_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getlist-page"><p>promise with a <a href="#/api/ngSharePoint.SPList">SPList</a> object</p>
+</div></td></tr></table><h4 id="methods_getlist_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getlist-page"><pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getList('Tasks').then(function(taskList) {
+      
+       taskList.getListItems();
+    });
+
+  });
+</pre>
+<p>You can access to any list with their GUID.
+<pre class="prettyprint linenums">
+  
+   web.getList('12fa20d2-1bb8-489c-bea3-b81797ddfeaf').then(function(list) {
+       alert(list.Title);
+   });
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getlists">getLists()</h3>
+<div class="getlists"><div class="ngsharepoint-spweb-getlists-page"><p>Retrieves all SharePoint lists and document libraries from the server and returns one
+array of <a href="#/api/ngSharePoint.SPList">SPList</a> objects</p>
+</div><h5 id="methods_getlists_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getlists-page"><p>promise with an array of <a href="#/api/ngSharePoint.SPList">SPList</a> objects</p>
+</div></td></tr></table><h4 id="methods_getlists_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getlists-page"><pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getLists().then(function(lists) {
+      
+       angular.forEach(lists, function(list) {
+          
+          console.log(list.Title + ' ' + list.EnableAttachments);
+       });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getproperties">getProperties(query)</h3>
+<div class="getproperties"><div class="ngsharepoint-spweb-getproperties-page"><p>Makes a call to the SharePoint server and gets all the web properties.
+The current object is extended with all recovered properties. This means that when you have executed this 
+method, you will have direct access to these values. ex: <code>web.Title</code>, <code>web.Language</code>, etc.</p>
+<p>For a complete list of web properties go to Microsoft 
+SharePoint <a href="https://msdn.microsoft.com/en-us/library/dn499819.aspx#bk_WebProperties">api reference</a></p>
+<p>SharePoint REST api only returns certain web properties that have primary values. Properties with complex structures
+like <code>SiteGroups</code>, <code>Lists</code> or <code>ContentTypes</code> are not returned directly by the api and you need to extend the query
+to retrieve their values. You can accomplish this with the <code>query</code> param.</p>
+</div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spweb-getproperties-page"><p>With this parameter you can specify which web properties you want to extend and to retrieve from server.
+By default <code>RegionalSettings/TimeZone</code> properties are extended.</p>
+</div></td></tr></tbody></table><h5 id="methods_getproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getproperties-page"><p>promise with an object with all web properties</p>
+</div></td></tr></table><h4 id="methods_getproperties_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getproperties-page"><p>This example shows how to retrieve the web properties:
+<pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getProperties().then(function(properties) {
+      
+       // at this point we have all web properties
+       alert(properties.Title);
+
+       // or you can do
+       alert(web.Title);
+    });
+
+  });
+</pre>
+<p>This example shows how to retrieve site groups:
+<pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getProperties({$expand: 'SiteGroups'}).then(function() {
+      
+       angular.forEach(web.SiteGroups.results, function(group) {
+          
+          console.log(group.Title + ' ' + group.Description);
+       });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getuserbyid">getUserById(userId)</h3>
+<div class="getuserbyid"><div class="ngsharepoint-spweb-getuserbyid-page"><p>Retrieves a specified user from SharePoint</p>
+</div><h5 id="methods_getuserbyid_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>userId</td><td><a href="" class="label type-hint type-hint-int">int</a></td><td><div class="ngsharepoint-spweb-getuserbyid-page"><p>User id of the desired user to retrieve</p>
+</div></td></tr></tbody></table><h5 id="methods_getuserbyid_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getuserbyid-page"><p>promise with a <a href="#/api/ngSharePoint.SPUser">SPUser</a> object</p>
+</div></td></tr></table><h4 id="methods_getuserbyid_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getuserbyid-page"><pre class="prettyprint linenums">
+
+// previously initiated web object ...
+web.getUser(12).then(function(user) {
+  
+   if (user.IsSiteAdmin) {
+     // some stuff ... 
+   }
+});
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
+</div>

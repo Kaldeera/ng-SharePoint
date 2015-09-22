@@ -1,0 +1,134 @@
+<h1><code ng:non-bindable="">SPList</code>
+<div><span class="hint">service in module <code ng:non-bindable="">ngSharePoint</code>
+</span>
+</div>
+</h1>
+<div><h2 id="description">Description</h2>
+<div class="description"><div class="ngsharepoint-splist-page"><p>Represents a SPList object that you could use to access to all SharePoint list properties and data.</p>
+<p>You can create new SPList objects or use a <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object to get SPList object instances.</p>
+<p><em>At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint</em></p>
+</div></div>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_constructor">constructor(web, listId|listName, listProperties)</h3>
+<div class="constructor"><div class="ngsharepoint-splist-constructor-page"><p>Instantiates a new <code>SPList</code> object that points to a specific SharePoint list. With this
+list instance you can access their properties and get list items.</p>
+<p><em>Note</em>: this method only instantiates a new <code>SPList</code> object initialized for future access to
+list related API (get list items, folders, documents) . This method doesn&#39;t retrieve any 
+list properties or information. If you need list properties you need to use the 
+<a href="#/api/ngSharePoint.SPList#getproperties">getProperties</a> method.</p>
+</div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>web</td><td><a href="" class="label type-hint type-hint-spweb">SPWeb</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object where the list is located</p>
+</div></td></tr><tr><td>listId|listName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>List id or list name.</p>
+<p>Also, you can specify &quot;UserInfoList&quot; to refer the system list with all site users.</p>
+</div></td></tr><tr><td>listProperties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>Properties to initialize the object</p>
+</div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splist-constructor-page"><pre class="prettyprint linenums">
+new SPList(web, 'Shared documents').then(function(docs) {
+  // ... do something with the 'docs' object
+})
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getfields">getFields()</h3>
+<div class="getfields"><div class="ngsharepoint-splist-getfields-page"><p>This method retrieves the Fields collection of the list and creates a new object property
+called &quot;Fields&quot; that contains a named property for every field.</p>
+<p>After you call this method, you will have access to the schema of every field in the list and all
+their properties (default values, validation expressions, choice values or lookup properties).</p>
+<p>For a complete list of field properties go to Microsoft 
+SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldProperties">field api reference</a>.
+Also, there are additional field specific properties that you can consult 
+based on the field type:
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCalculated">FieldCalculated</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCollection">FieldCollection</a>, 
+<a href="#/api/FieldComputed">FieldComputed</a>, 
+<a href="#/api/FieldDateTime">FieldDateTime</a>, 
+<a href="#/api/FieldGeolocation">FieldGeolocation</a>, 
+<a href="#/api/FieldGuid">FieldGuid</a>, 
+<a href="#/api/FieldLookup">and FieldUser</a>, 
+<a href="#/api/FieldMultiChoice,">FieldChoice, and FieldRatingScale</a>, 
+<a href="#/api/FieldMultiLineText">FieldMultiLineText</a>, 
+<a href="#/api/FieldNumber">and FieldCurrency</a>, 
+<a href="#/api/FieldText">FieldText</a>, 
+<a href="#/api/FieldUrl">FieldUrl</a>, </p>
+<p>With all of this information, you might construct new interfaces (views, forms, etc) that follow 
+definitions of any SharePoint list.</p>
+</div><h5 id="methods_getfields_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getfields-page"><p>promise with an object that contains all oh the fields schema</p>
+</div></td></tr></table><h4 id="methods_getfields_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splist-getfields-page"><pre class="prettyprint linenums">
+// a pre-initialized "list" object ...
+list.getFields().then(function() {
+
+    // at this point, you have access to the definition of any list field
+    console.log(list.Fields.Title.DefaultValue);               // '' or any defined value
+    console.log(list.Fields.DueDate.Required);                 // true|false
+    console.log(list.Fields.Editor.ReadOnlyField);             // true
+    console.log(list.Fields.ProjectStatus.Choices.results);    // ['Open', 'Closed', 'Draft']
+});
+
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getproperties">getProperties(query)</h3>
+<div class="getproperties"><div class="ngsharepoint-splist-getproperties-page"><p>Makes a call to the SharePoint server and collects all the list properties.
+The current object is extended with the recovered properties. This means that when you have executed this 
+method, you will have direct access to their values. ex: <code>list.Title</code>, <code>list.BaseTemplate</code>, <code>list.AllowContentTypes</code>, etc.</p>
+<p>For a complete list of list properties go to Microsoft 
+SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn531433.aspx#bk_ListProperties">list api reference</a></p>
+<p>SharePoint REST api only returns certain list properties that have primary values. Properties with complex structures
+like <code>ContentTypes</code>, <code>EffectiveBasePermissions</code> or <code>Fields</code> are not returned directly by the api and you need to extend the query
+to retrieve their values. You can accomplish this with the <code>query</code> param.</p>
+</div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-getproperties-page"><p>With this parameter you can specify which list properties you want to extend and to retrieve from the server.
+By default <code>Views</code> property is extended.</p>
+</div></td></tr></tbody></table><h5 id="methods_getproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getproperties-page"><p>promise with an object with all list properties</p>
+</div></td></tr></table><h4 id="methods_getproperties_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splist-getproperties-page"><p>This example shows how to retrieve the list properties:
+<pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(web) {
+
+    web.getList("Orders").then(function(list) {
+
+       list.getProperties().then(function() {
+      
+           // at this point we have all list properties
+           if (!list.EnableAttachments) {
+               alert("You can't attach any file");
+           }
+       });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_updateproperties">updateProperties(properties)</h3>
+<div class="updateproperties"><div class="ngsharepoint-splist-updateproperties-page"><p>With this method, you can modify list properties. The method recives an object
+with the new property values and makes a call to the server API to modify it.</p>
+</div><h5 id="methods_updateproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>properties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-updateproperties-page"><p>A object with all the properties to modify</p>
+</div></td></tr></tbody></table><h5 id="methods_updateproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-updateproperties-page"><p>promise with an object that contains all modified list properties</p>
+</div></td></tr></table><h4 id="methods_updateproperties_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splist-updateproperties-page"><pre class="prettyprint linenums">
+SharePoint.getCurrentWeb(function(web) {
+
+  web.getList("Orders").then(function(list) {
+
+      list.updateProperties({
+
+          EnableAttachments: true,
+          ForceCheckout: false
+
+      }).then(function() {
+          // ...
+      });
+  });
+
+});
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
