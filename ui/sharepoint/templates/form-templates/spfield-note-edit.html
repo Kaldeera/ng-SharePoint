@@ -1,0 +1,37 @@
+<span dir="ltr" ng-if="!rteFullHtml">
+	<textarea ng-model="$parent.value" data-spfield-focus-element="true" maxlength="{{schema.MaxLength}}" ng-maxlength="{{schema.MaxLength}}" ng-required="{{schema.Required}}" rows="{{schema.NumberOfLines}}" cols="20" title="{{schema.Title}}" class="ms-long"></textarea>
+</span>
+<br ng-if="!rteFullHtml" />
+
+<div ng-if="rteFullHtml" class="ms-rtestate-field ms-rtefield ms-inputBox" id="{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_topDiv">
+    <div id="{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte_label" style="display:none" ng-bind="$parent.rteLabelText"></div>
+    <div ng-model="$parent.value" ng-blur="$parent.updateModel($event)" ng-keyup="$parent.updateModel($event)" ng-change="$parent.updateModel($event)" contenteditable="true" data-spfield-focus-element="true" class="ms-rtestate-write ms-rteflags-0 ms-rtestate-field" id="{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte" style="min-height:84px" aria-labelledby="{{schema.EntityPropertyName}}_{{schema.Id}}_$TextField_inplacerte_label" role="textbox" aria-autocomplete="both" aria-haspopup="true" aria-multiline="true"></div>
+    <div style="clear : both;"></div>
+</div>
+
+<spfield-validation-messages></spfield-validation-messages>
+
+<div class="ms-formdescription" ng-if="schema.RichText && !rteFullHtml">
+    <a href="javascript:HelpWindowKey('nsrichtext')" ng-bind="rteHelpMessage"></a>
+</div>
+
+<div ng-if="schema.AppendOnly">
+    <div ng-repeat="version in versions" class="accumulated-wrapper">
+        <span class="ms-noWrap accumulated-user">
+            <span class="ms-imnSpan">
+                <a href="#" onclick="IMNImageOnClick(event);return false;" class="ms-imnlink ms-spimn-presenceLink">
+                    <span class="ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10">
+                        <img name="imnmark" class="ms-spimn-img ms-spimn-presence-disconnected-10x10x32" title="" showofflinepawn="1" src="/_layouts/15/images/spimn.png?rev=23" alt="No presence information" />
+                    </span>
+                </a>
+            </span>
+            <span class="ms-noWrap ms-imnSpan">
+                <a href="#" onclick="IMNImageOnClick(event);return false;" class="ms-imnlink" tabindex="-1">
+                    <img name="imnmark" class="ms-hide" title="" showofflinepawn="1" src="/_layouts/15/images/blank.gif?rev=23" alt="" />
+                </a>
+                <a class="ms-subtleLink" onclick="GoToLinkOrDialogNewWindow(this);return false;" href="/_layouts/15/userdisp.aspx?ID={{version.editor.id}}" ng-bind="version.editor.name"></a>
+            </span>
+        </span>
+        <span class="accummulated-date">(<a href="/_layouts/15/listform.aspx?ListId={{item.list.Id}}&PageType=4&ID={{item.Id}}&Source={{defaultViewUrl}}&VersionNo=3072" ng-bind="version.modified | date:cultureInfo.dateTimeFormat.ShortDatePattern + ' ' + cultureInfo.dateTimeFormat.ShortTimePattern"></a>): </span><span class="accumulated-text" ng-bind-html="version.value | unsafe"></span>
+    </div>
+</div>

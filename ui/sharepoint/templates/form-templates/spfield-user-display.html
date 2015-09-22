@@ -1,0 +1,23 @@
+<div>
+	<div class="ms-vb" ng-repeat="item in selectedUserItems">
+		<nobr ng-if="schema.LookupField == 'ImnName' && item.Title != ''">
+			<span class="ms-imnSpan">
+				<a href="" ng-click="IMNImageOnClick($event)" class="ms-imnlink ms-spimn-presenceLink" tabindex="-1">
+					<span class="ms-spimn-presenceWrapper ms-imnImg ms-spimn-imgSize-10x10">
+						<img title="" alt="{{noUserPresenceAlt}}" name="imnmark" class="ms-spimn-img ms-spimn-presence-disconnected-10x10x32" showofflinepawn="1" src="/_layouts/15/images/spimn.png" sip="" id="imn0,type=sip" />
+					</span>
+				</a>
+			</span>
+			<span class="ms-noWrap ms-imnSpan">
+				<a href="" ng-click="IMNImageOnClick($event)" class="ms-imnlink" tabindex="-1">
+					<img title="" alt="{{noUserPresenceAlt}}" name="imnmark" class="ms-hide" showofflinepawn="1" src="/_layouts/15/images/spimn.png" sip="" id="imn1,type=sip"/>
+				</a>
+				<a ng-click="GoToLinkOrDialogNewWindow(this)" class="ms-peopleux-userdisplink ms-subtleLink" ng-href="{{item.url}}" ng-bind="item.Title"></a>
+			</span>
+		</nobr>
+	</div>
+
+	<div ng-if="schema.LookupField != 'ImnName'">
+		<span ng-repeat="item in selectedUserItems"><a ng-href="{{item.url}}" ng-bind="item.Title"></a>{{!$last ? '; ' : ''}}</span>
+	</div>
+</div>

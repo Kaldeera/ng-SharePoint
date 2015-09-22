@@ -1,0 +1,23 @@
+<div>
+	<table border="0" cellpadding="0" cellspacing="0" ng-style="{ true: { 'margin-bottom': '10px' } }[attachmentFiles.length > 0]">
+		<tbody>
+			<tr ng-repeat="file in attachmentFiles">
+				<td class="ms-vb" style="white-space: nowrap;">
+					<span ng-if="file.ServerRelativeUrl"><a ng-href="{{file.ServerRelativeUrl}}" ng-bind="file.FileName"></a></span>
+					<span ng-if="!file.ServerRelativeUrl" ng-bind="file.FileName"></span>
+				</td>
+				<td class="ms-propertysheet" style="white-space: nowrap; padding-left: 20px;">
+					<img alt="Eliminar" src="/_layouts/15/images/rect.gif?rev=23">&nbsp;<a href="#" ng-click="removeAttachment($event, $index, file.local)">{{DeleteAttachmentText}}</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<a href="#" file-select="onFileSelect($files, $event)" data-multiple="true">
+		<span style="width: 16px; height: 16px; overflow: hidden; display: inline-block; position: relative; top: 3px;">
+			<img alt="" ng-src="/_layouts/15/{{LanguageID}}/images/formatmap16x16.png?rev=23" style="position: absolute; top: -235px; left: -235px;" />
+		</span>
+		<span ng-bind="AttachFileText"></span>
+	</a>
+</div>
+<spfield-validation-messages></spfield-validation-messages>

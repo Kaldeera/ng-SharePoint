@@ -1,0 +1,7 @@
+<div>
+	<div class="ms-formdescription">{{UrlFieldTypeText}}&nbsp;(<a id="{{schema.InternalName}}_{{schema.Id}}_$UrlControlId" href="javascript:TestURL('{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl')" target="_self">{{UrlFieldClickText}}</a>)</div>
+	<input dir="ltr" type="text" ng-model="Url" data-spfield-focus-element="true" ng-required="{{schema.Required}}" id="{{schema.InternalName}}_{{schema.Id}}_$UrlFieldUrl" title="{{schema.Title}}" class="ms-long">
+	<div class="ms-formdescription">{{UrlFieldTypeDescription}}&nbsp;</div>
+	<input type="text" ng-model="Description" maxlength="255" id="{{schema.InternalName}}_{{schema.Id}}_$UrlFieldDescription" title="{{Description_Text}}" class="ms-long">
+</div>
+<spfield-validation-messages></spfield-validation-messages>
