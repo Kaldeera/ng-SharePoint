@@ -23,6 +23,15 @@ NG_DOCS={
     },
     {
       "section": "api",
+      "id": "ngSharePoint.SPGroup",
+      "shortName": "ngSharePoint.SPGroup",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.",
+      "keywords": "access allows api factory group implemented methods moment ngsharepoint object objects properties retrieve sharepoint spgroup users"
+    },
+    {
+      "section": "api",
       "id": "ngSharePoint.SPList",
       "shortName": "ngSharePoint.SPList",
       "type": "object",
