@@ -7,4 +7,29 @@
 <div class="description"><div class="ngsharepoint-spgroup-page"><p>SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.</p>
 <p><em>At the moment, not all SharePoint API methods for group objects are implemented in ngSharePoint</em></p>
 </div></div>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_constructor">constructor(web, groupId|groupName, data)</h3>
+<div class="constructor"><div class="ngsharepoint-spgroup-constructor-page"><p>Instantiates a new SPGroup object that points to a specific SharePoint group and allows
+retrieval of their properties and users</p>
+</div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>web</td><td><a href="" class="label type-hint type-hint-spweb">SPWeb</a></td><td><div class="ngsharepoint-spgroup-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object</p>
+</div></td></tr><tr><td>groupId|groupName</td><td><a href="" class="label type-hint type-hint-int">int</a><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-spgroup-constructor-page"><p>Group id or name</p>
+</div></td></tr><tr><td>data</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spgroup-constructor-page"><p>Properties to initialize the object (optional)</p>
+</div></td></tr></tbody></table><h5 id="methods_constructor_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spgroup-constructor-page"><p>with the SPGroup object correctly instantiated</p>
+</div></td></tr></table><h4 id="methods_constructor_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spgroup-constructor-page"><pre class="prettyprint linenums">
+
+	// Previously initiated web service and injected SPGroup service ...
+		var group = new SPGroup(web, 'Visitors');
+
+ 	// ... do something with the group object
+	group.getUsers().then(function(users) {
+		// ...
+	});
+
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
 </div>
