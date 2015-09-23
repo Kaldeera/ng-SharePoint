@@ -27,11 +27,32 @@ and their property item.attachments.add is an array with files to attach.</p>
 <li><h3 id="methods_constructor">constructor(list, data|itemId)</h3>
 <div class="constructor"><div class="ngsharepoint-splistitem-constructor-page"><p>Instantiates a new <code>SPListItem</code> object for a specific list. It&#39;s possible
 to specify their new properties (data).</p>
-<p>When you call some of methods <a href="#/api/ngSharePoint.SPList#getlistitems">getListItems</a> or 
+<p>When you call <a href="#/api/ngSharePoint.SPList#getlistitems">getListItems</a> or 
 <a href="#/api/ngSharePoint.SPList#getitembyid">getItemById</a>, SPListItem objects are returned.</p>
 </div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>list</td><td><a href="" class="label type-hint type-hint-splist">SPList</a></td><td><div class="ngsharepoint-splistitem-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPList">SPList</a> object where the item is stored</p>
 </div></td></tr><tr><td>data|itemId</td><td><a href="" class="label type-hint type-hint-object">object</a><a href="" class="label type-hint type-hint-int32">Int32</a></td><td><div class="ngsharepoint-splistitem-constructor-page"><p>Can be an object with item properties or an item identifier.</p>
-</div></td></tr></tbody></table></div>
+</div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splistitem-constructor-page"><p>The next code creates a new announcement:
+<pre class="prettyprint linenums">
+  SharePoint.getCurrentWeb(function(web) {
+
+    web.getList('Announcements').then(function(list) {
+
+         var item = new SPListItem(list);
+
+         item.Title = 'ngSharePoint is here!!';
+         item.Body = '&lt;strong&gt;ngSharePoint&lt;/strong&gt; is a new Angular library that allows to &lt;br/&gt;interact easily with SharePoint';
+         item.Expires = new Date(2020, 12, 31);
+
+         item.save().then(function() {
+             SP.UI.Notify.addNotification('Annuncement created', false);
+         });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
 </li>
 <li><h3 id="methods_getattachments">getAttachments()</h3>
 <div class="getattachments"><div class="ngsharepoint-splistitem-getattachments-page"><p>Gets all attachments of the item. This method inititalizes a new item property
@@ -63,21 +84,6 @@ If the item is not a DocumentLibrary folder element, the REST query returns no r
 <li><h3 id="methods_getproperties">getProperties(expandProperties)</h3>
 <div class="getproperties"><div class="ngsharepoint-splistitem-getproperties-page"><p>Retrieve a item from the server and attach it to &#39;this&#39; object. To retrieve
 a specific item, you must specify the item Id.</p>
-<pre class="prettyprint linenums">
-   var item = new SPListItem(anyList, anyId);
-   // or
-   var otherItem = new SPListItem(anyList);
-   otherItem.Id = anyId;
-
-   // Later ...
-   item.getProperties().then(function() {
-
-     console.log('This will return false: ' + item.isNew());
-     console.log(item.Title);
-
-   });
-
-</pre>
 <p>Instead of create a new SPListItem, specifiy the Id and <code>getProperties</code> is recomendable
 to use <a href="#/api/ngSharePoint.SPList#getitembyid">getItemById</a> of the SPList object.</p>
 <p>If the item is a DocumentLibrary item, also gets the <a href="#/api/ngSharePoint.SPFile">File</a> 
@@ -85,7 +91,24 @@ and/or <a href="#/api/ngSharePoint.SPFolder">Folder</a> properties.</p>
 </div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>expandProperties</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splistitem-getproperties-page"><p>Comma separed values with the properties to expand
 in the item.</p>
 </div></td></tr></tbody></table><h5 id="methods_getproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getproperties-page"><p>promise with all the item properties (fields) retrieved from the server</p>
-</div></td></tr></table></div>
+</div></td></tr></table><h4 id="methods_getproperties_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splistitem-getproperties-page"><pre class="prettyprint linenums">
+var item = new SPListItem(anyList, anyId);
+// or
+var otherItem = new SPListItem(anyList);
+otherItem.Id = anyId;
+
+// Later ...
+item.getProperties().then(function() {
+
+  console.log('This will return false: ' + item.isNew());
+  console.log(item.Title);
+
+});
+
+</pre>
+</div></div>
+</div>
 </li>
 <li><h3 id="methods_isnew">isNew()</h3>
 <div class="isnew"><div class="ngsharepoint-splistitem-isnew-page"><p>List items can be retrieved from the server or created on the client side before to 

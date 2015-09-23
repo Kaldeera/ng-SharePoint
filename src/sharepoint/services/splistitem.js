@@ -36,12 +36,32 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Instantiates a new `SPListItem` object for a specific list. It's possible
          * to specify their new properties (data).
          *
-         * When you call some of methods {@link ngSharePoint.SPList#getListItems getListItems} or 
+         * When you call {@link ngSharePoint.SPList#getListItems getListItems} or 
          * {@link ngSharePoint.SPList#getItemById getItemById}, SPListItem objects are returned.
          *
          * @param {SPList} list A valid {@link ngSharePoint.SPList SPList} object where the item is stored
          * @param {object|Int32} data|itemId Can be an object with item properties or an item identifier.
          *
+         * @example
+         * The next code creates a new announcement:
+         * <pre>
+         *   SharePoint.getCurrentWeb(function(web) {
+         *
+         *     web.getList('Announcements').then(function(list) {
+         *
+         *          var item = new SPListItem(list);
+         *
+         *          item.Title = 'ngSharePoint is here!!';
+         *          item.Body = '<strong>ngSharePoint</strong> is a new Angular library that allows to <br/>interact easily with SharePoint';
+         *          item.Expires = new Date(2020, 12, 31);
+         *
+         *          item.save().then(function() {
+         *              SP.UI.Notify.addNotification('Annuncement created', false);
+         *          });
+         *     });
+         *
+         *   });
+         * </pre>
          */
         var SPListItemObj = function(list, data) {
 
@@ -138,6 +158,19 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Retrieve a item from the server and attach it to 'this' object. To retrieve
          * a specific item, you must specify the item Id.
          *
+         *
+         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
+         * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
+         * 
+         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
+         * and/or {@link ngSharePoint.SPFolder Folder} properties.
+         *
+         * @param {string} expandProperties Comma separed values with the properties to expand
+         * in the item.
+         *
+         * @returns {promise} promise with all the item properties (fields) retrieved from the server
+         *
+         * @example
          * <pre>
          *    var item = new SPListItem(anyList, anyId);
          *    // or
@@ -153,19 +186,6 @@ angular.module('ngSharePoint').factory('SPListItem',
          *    });
          *
          * </pre>
-         *
-         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
-         * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
-         *
-         * 
-         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
-         * and/or {@link ngSharePoint.SPFolder Folder} properties.
-         *
-         * @param {string} expandProperties Comma separed values with the properties to expand
-         * in the item.
-         *
-         * @returns {promise} promise with all the item properties (fields) retrieved from the server
-         *
         */        
         SPListItemObj.prototype.getProperties = function(expandProperties) {
 
