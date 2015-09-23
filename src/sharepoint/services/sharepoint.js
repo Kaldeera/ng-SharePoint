@@ -4,7 +4,7 @@
  * @name ngSharePoint.SharePoint
  *
  * @description
- * Provides top level access to SharePoint web sites api.
+ * Provides top level access to SharePoint web sites api. Throw this provider is possible to access to any SharePoint web.
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPWeb
