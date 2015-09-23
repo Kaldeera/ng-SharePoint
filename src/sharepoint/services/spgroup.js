@@ -32,18 +32,17 @@ angular.module('ngSharePoint').factory('SPGroup',
 		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
 		 * @param {int|string} groupId|groupName Group id or name
 		 * @param {object} data Properties to initialize the object (optional)
-		 * @returns {promise} with the SPGroup object correctly instantiated
 		 * 
 		 * @example
 		 * <pre>
          *
-         *		// Previously initiated web service and injected SPGroup service ...
-		 * 		var group = new SPGroup(web, 'Visitors');
+         *   // Previously initiated web service and injected SPGroup service ...
+		 * 	 var group = new SPGroup(web, 'Visitors');
 		 *
-		 *  	// ... do something with the group object
-		 *		group.getUsers().then(function(users) {
-		 *			// ...
-		 *		});
+		 *   // ... do something with the group object
+		 *   group.getUsers().then(function(users) {
+		 *   	// ...
+		 *   });
 		 *
 		 * </pre>
 		 *
