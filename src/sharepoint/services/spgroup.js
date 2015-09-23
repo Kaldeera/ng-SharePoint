@@ -35,15 +35,13 @@ angular.module('ngSharePoint').factory('SPGroup',
 		 * 
 		 * @example
 		 * <pre>
-         *
-         *   // Previously initiated web service and injected SPGroup service ...
-		 * 	 var group = new SPGroup(web, 'Visitors');
+         *  // Previously initiated web service and injected SPGroup service ...
+		 *  var group = new SPGroup(web, 'Visitors');
 		 *
-		 *   // ... do something with the group object
-		 *   group.getUsers().then(function(users) {
-		 *   	// ...
-		 *   });
-		 *
+		 *  // ... do something with the group object
+		 *  group.getUsers().then(function(users) {
+		 *  	// ...
+		 *  });
 		 * </pre>
 		 *
 		 */
