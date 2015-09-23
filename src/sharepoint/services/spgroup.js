@@ -9,21 +9,6 @@
  *
  */
 
- /*
-	SPGroup - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPGroup
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPGroup', 
 
@@ -34,12 +19,35 @@ angular.module('ngSharePoint').factory('SPGroup',
 		'use strict';
 
 
-		// ****************************************************************************
-		// SPGroup constructor
-		//
-		// @web: SPWeb instance that contains the group in SharePoint.
-		// @groupName: Name or id of the group you want to instantiate.
-		//
+		/**
+		 * @ngdoc function
+		 * @name ngSharePoint.SPGroup#constructor
+		 * @constructor
+		 * @methodOf ngSharePoint.SPGroup
+		 * 
+		 * @description
+		 * Instantiates a new SPGroup object that points to a specific SharePoint group and allows
+		 * retrieval of their properties and users
+		 * 
+		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
+		 * @param {int|string} groupId|groupName Group id or name
+		 * @param {object} data Properties to initialize the object (optional)
+		 * @returns {promise} with the SPGroup object correctly instantiated
+		 * 
+		 * @example
+		 * <pre>
+         *
+         *		// Previously initiated web service and injected SPGroup service ...
+		 * 		var group = new SPGroup(web, 'Visitors');
+		 *
+		 *  	// ... do something with the group object
+		 *		group.getUsers().then(function(users) {
+		 *			// ...
+		 *		});
+		 *
+		 * </pre>
+		 *
+		 */
 		var SPGroupObj = function(web, groupName, groupProperties) {
 
 			if (web === void 0) {
