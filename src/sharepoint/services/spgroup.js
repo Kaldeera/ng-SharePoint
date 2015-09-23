@@ -89,7 +89,7 @@ angular.module('ngSharePoint').factory('SPGroup',
          * @description
          * Makes a call to the SharePoint server and collects all the group properties.
          * The current object is extended with the recovered properties. This means that when this method is executed,
-         * any group property is accessible directly. ex: `group.Title`, `group.Description`, `list.CanCurrentUserEditMembership`, etc.
+         * any group property is accessible directly. ex: `group.Title`, `group.Description`, `group.CanCurrentUserEditMembership`, etc.
          *
          * For a complete list of group properties go to Microsoft
          * SharePoint {@link https://msdn.microsoft.com/en-us/library/office/dn531432.aspx#bk_GroupProperties group api reference}
@@ -174,7 +174,6 @@ angular.module('ngSharePoint').factory('SPGroup',
 		 *     group.getUsers().then(function(users) {
 		 *       
 		 *        angular.forEach(users, function(user) {
-	     *           
 	     *           console.log(user.Name);
 		 *        });
 		 *     });
