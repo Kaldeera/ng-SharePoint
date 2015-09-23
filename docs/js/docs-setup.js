@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "object",
       "moduleName": "ngSharePoint",
       "shortDescription": "SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.",
-      "keywords": "access allows api data factory function getusers group groupid implemented initialize initiated injected instantiates methods moment ngsharepoint object objects points properties retrieval retrieve service sharepoint specific spgroup spweb users valid var visitors web"
+      "keywords": "access accessible accomplish allows angular api array aspx bk_groupproperties call cancurrentusereditmembership collection collects complete complex console current data default description directly executed extend extended factory foreach function getcurrentweb getgroup getproperties getusers group groupid https implemented initialize initiated injected instantiates list log method methods microsoft moment ngsharepoint object objects owner param parameter points primary promise properties property query recovered reference represents rest retrieval retrieve retrieved returned returns server service sharepoint specific spgroup spuser spweb structures title users valid values var visitors web"
     },
     {
       "section": "api",
