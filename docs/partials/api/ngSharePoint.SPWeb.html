@@ -20,6 +20,8 @@ web properties or get lists, and users through his methods</p>
 </li>
 <li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPUser">SPUser</a></code>
 </li>
+<li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPFolder">SPFolder</a></code>
+</li>
 </ul>
 <div class="member method"><h2 id="methods">Methods</h2>
 <ul class="methods"><li><h3 id="methods_constructor">constructor(url|webId)</h3>
@@ -152,6 +154,11 @@ By default <code>RegionalSettings/TimeZone</code> properties are extended.</p>
 </pre>
 </div></div>
 </div>
+</li>
+<li><h3 id="methods_getrootfolder">getRootFolder()</h3>
+<div class="getrootfolder"><div class="ngsharepoint-spweb-getrootfolder-page"><p>Use this method to get a reference of the web root folder.</p>
+</div><h5 id="methods_getrootfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getrootfolder-page"><p>promise with a <a href="#/api/ngSharePoint.SPFolder">SPFolder</a> object</p>
+</div></td></tr></table></div>
 </li>
 <li><h3 id="methods_getuserbyid">getUserById(userId)</h3>
 <div class="getuserbyid"><div class="ngsharepoint-spweb-getuserbyid-page"><p>Retrieves a specified user from SharePoint</p>

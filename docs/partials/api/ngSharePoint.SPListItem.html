@@ -1,0 +1,170 @@
+<h1><code ng:non-bindable="">SPListItem</code>
+<div><span class="hint">service in module <code ng:non-bindable="">ngSharePoint</code>
+</span>
+</div>
+</h1>
+<div><h2 id="description">Description</h2>
+<div class="description"><div class="ngsharepoint-splistitem-page"><p>Represents a SPListItem object that you could use to insert, modify and remove items on 
+SharePoint lists.</p>
+<p>Is possible create new SPListItem objects or use a <a href="#/api/ngSharePoint.SPList">SPList</a> object to 
+get the SPListItems storeds in the list.</p>
+<p><em>At the moment, not all SharePoint API methods for list items are implemented in ngSharePoint</em></p>
+</div></div>
+<h2 id="dependencies">Dependencies</h2>
+<ul class="dependencies"><li><code ng:non-bindable=""><a href="#/api/ngSharePoint.SPList">SPList</a></code>
+</li>
+</ul>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_addattachment">addAttachment(file)</h3>
+<div class="addattachment"><div class="ngsharepoint-splistitem-addattachment-page"><p>Attach a new file to the item.</p>
+<p><strong>Note</strong> This method is called internaly by the method processAttachments 
+when the item is saved to the server
+and their property item.attachments.add is an array with files to attach.</p>
+</div><h5 id="methods_addattachment_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>file</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splistitem-addattachment-page"><p>DOM object to be attached to the item</p>
+</div></td></tr></tbody></table><h5 id="methods_addattachment_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-addattachment-page"><p>promise with the result of the REST call.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_constructor">constructor(list, data|itemId)</h3>
+<div class="constructor"><div class="ngsharepoint-splistitem-constructor-page"><p>Instantiates a new <code>SPListItem</code> object for a specific list. It&#39;s possible
+to specify their new properties (data).</p>
+<p>When you call some of methods <a href="#/api/ngSharePoint.SPList#getlistitems">getListItems</a> or 
+<a href="#/api/ngSharePoint.SPList#getitembyid">getItemById</a>, SPListItem objects are returned.</p>
+</div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>list</td><td><a href="" class="label type-hint type-hint-splist">SPList</a></td><td><div class="ngsharepoint-splistitem-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPList">SPList</a> object where the item is stored</p>
+</div></td></tr><tr><td>data|itemId</td><td><a href="" class="label type-hint type-hint-object">object</a><a href="" class="label type-hint type-hint-int32">Int32</a></td><td><div class="ngsharepoint-splistitem-constructor-page"><p>Can be an object with item properties or an item identifier.</p>
+</div></td></tr></tbody></table></div>
+</li>
+<li><h3 id="methods_getattachments">getAttachments()</h3>
+<div class="getattachments"><div class="ngsharepoint-splistitem-getattachments-page"><p>Gets all attachments of the item. This method inititalizes a new item property
+called AttachmentFiles with an array of all attached elements.</p>
+</div><h5 id="methods_getattachments_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getattachments-page"><p>promise with the array of attachments.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_getfieldvaluesashtml">getFieldValuesAsHtml()</h3>
+<div class="getfieldvaluesashtml"><div class="ngsharepoint-splistitem-getfieldvaluesashtml-page"><p>This method performs a REST call to _api/web/list/item/FieldValuesAsHtml.
+Thats different to expand the property when executes getProperties.
+That method makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.</p>
+<p>Expanding this property does not retrieve detailed information lookup 
+values neither user fields, then it&#39;s necessary to call this method.</p>
+</div><h5 id="methods_getfieldvaluesashtml_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getfieldvaluesashtml-page"><p>promise with the result of the REST query</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_getfile">getFile()</h3>
+<div class="getfile"><div class="ngsharepoint-splistitem-getfile-page"><p>Gets file properties of the item and attach it to &#39;this&#39; objtect.
+If the item is not a DocumentLibrary document element, the REST query returns no results.</p>
+</div><h5 id="methods_getfile_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getfile-page"><p>promise with the result of the REST query</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_getfolder">getFolder()</h3>
+<div class="getfolder"><div class="ngsharepoint-splistitem-getfolder-page"><p>Gets folder properties of the item and attach it to &#39;this&#39; objtect.
+If the item is not a DocumentLibrary folder element, the REST query returns no results.</p>
+</div><h5 id="methods_getfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getfolder-page"><p>promise with the result of the REST query</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_getproperties">getProperties(expandProperties)</h3>
+<div class="getproperties"><div class="ngsharepoint-splistitem-getproperties-page"><p>Retrieve a item from the server and attach it to &#39;this&#39; object. To retrieve
+a specific item, you must specify the item Id.</p>
+<pre class="prettyprint linenums">
+   var item = new SPListItem(anyList, anyId);
+   // or
+   var otherItem = new SPListItem(anyList);
+   otherItem.Id = anyId;
+
+   // Later ...
+   item.getProperties().then(function() {
+
+     console.log('This will return false: ' + item.isNew());
+     console.log(item.Title);
+
+   });
+
+</pre>
+<p>Instead of create a new SPListItem, specifiy the Id and <code>getProperties</code> is recomendable
+to use <a href="#/api/ngSharePoint.SPList#getitembyid">getItemById</a> of the SPList object.</p>
+<p>If the item is a DocumentLibrary item, also gets the <a href="#/api/ngSharePoint.SPFile">File</a> 
+and/or <a href="#/api/ngSharePoint.SPFolder">Folder</a> properties.</p>
+</div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>expandProperties</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splistitem-getproperties-page"><p>Comma separed values with the properties to expand
+in the item.</p>
+</div></td></tr></tbody></table><h5 id="methods_getproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-getproperties-page"><p>promise with all the item properties (fields) retrieved from the server</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_isnew">isNew()</h3>
+<div class="isnew"><div class="ngsharepoint-splistitem-isnew-page"><p>List items can be retrieved from the server or created on the client side before to 
+be saved on the server.</p>
+<p>This method indicates if the item is new and will create an item on the server
+or will update an existing element.</p>
+<p>Any item that doesn&#39;t have Id property is considered new.</p>
+</div><h5 id="methods_isnew_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-boolean">Boolean</a></td><td><div class="ngsharepoint-splistitem-isnew-page"><p>indicating if the item is new or not.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_processattachment">processAttachment()</h3>
+<div class="processattachment"><div class="ngsharepoint-splistitem-processattachment-page"><p>Process the attachments arrays (item.attachments.add and item.attachments.remove)
+when the item is saved to the server.</p>
+<p>The attachments arrays contains the collection of files to attach to the item
+and the attachments to remove.</p>
+<p>After the process, the attachments array will be initialized.</p>
+<p><strong>Note</strong> This method is called internaly by the method save.</p>
+</div><h5 id="methods_processattachment_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-processattachment-page"><p>promise with the result of the process.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_remove">remove()</h3>
+<div class="remove"><div class="ngsharepoint-splistitem-remove-page"><p>This method removes the item from the server.</p>
+</div><h5 id="methods_remove_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-remove-page"><p>promise with the result of the REST query.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_removeattachment">removeAttachment(fileName)</h3>
+<div class="removeattachment"><div class="ngsharepoint-splistitem-removeattachment-page"><p>Romove an item attached file</p>
+<p><strong>Note</strong> This method is called internaly by the method processAttachments
+when the item is saved to the server
+and their property item.attachments.remove is an array with files to remove.</p>
+</div><h5 id="methods_removeattachment_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>fileName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splistitem-removeattachment-page"><p>The name of the file to remove.</p>
+</div></td></tr></tbody></table><h5 id="methods_removeattachment_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-removeattachment-page"><p>promise with the result of the REST call.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_runworkflow">runWorkflow(workflowName, params)</h3>
+<div class="runworkflow"><div class="ngsharepoint-splistitem-runworkflow-page"><p>This method starts a new instance of a specified workflow for current item.</p>
+<p>The workflow must be enabled and no other instances of the same workflow version
+can be running.</p>
+<p>The method allows to specify the initiation form data.</p>
+<p><strong>NOTE</strong>:
+Due to limititaions of the SharePoint REST api, there isn&#39;t any method
+to run a workflow. Because that, this method uses the SharePoint <code>workflow.asmx</code> web service.</p>
+<p><strong>Limitations</strong>:
+This method uses JSOM to retrieve <code>FileRef</code> property of the item. This means
+that this method can&#39;t be executed outside of the SharePoint page context.</p>
+</div><h5 id="methods_runworkflow_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>workflowName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splistitem-runworkflow-page"><p>The name or the Id of the workflow that you want to run.</p>
+</div></td></tr><tr><td>params</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splistitem-runworkflow-page"><p>Initiation workflow data. A object with all properties and
+values that will be passed to the workflow.</p>
+</div></td></tr></tbody></table><h5 id="methods_runworkflow_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-runworkflow-page"><p>promise with the result of the operation.</p>
+</div></td></tr></table></div>
+</li>
+<li><h3 id="methods_save">save()</h3>
+<div class="save"><div class="ngsharepoint-splistitem-save-page"><p>This method saves the item to the server.</p>
+<p>If the item is new because doesn&#39;t have any Id, a new item is created.
+If the item is an existing element retrieved previously, the 
+element is updated with the new set of properties (fields).</p>
+<p>This method saves the item and process the attachments arrays.</p>
+<p>After the process, the attachments array will be initialized.</p>
+</div><h5 id="methods_save_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splistitem-save-page"><p>promise with and object with the item properties</p>
+</div></td></tr></table><h4 id="methods_save_example">Example</h4>
+<div class="example"><div class="ngsharepoint-splistitem-save-page"><p>This example restrieves a task item from the server and 
+changes his state to &#39;Closed&#39;
+<pre class="prettyprint linenums">
+
+   taskList.getItemById(taskId).then(function(task) {
+
+       task.Status = 'Closed';
+       task.save().then(function() {
+         
+           SP.UI.Notify.addNotification("Task closed!", false);
+
+       });
+
+   });
+
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
