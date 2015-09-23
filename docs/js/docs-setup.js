@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "object",
       "moduleName": "ngSharePoint",
       "shortDescription": "SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.",
-      "keywords": "access allows api correctly data factory function getusers group groupid implemented initialize initiated injected instantiated instantiates methods moment ngsharepoint object objects points properties retrieval retrieve service sharepoint specific spgroup spweb users valid var visitors web"
+      "keywords": "access allows api data factory function getusers group groupid implemented initialize initiated injected instantiates methods moment ngsharepoint object objects points properties retrieval retrieve service sharepoint specific spgroup spweb users valid var visitors web"
     },
     {
       "section": "api",
@@ -55,7 +55,7 @@ NG_DOCS={
       "type": "object",
       "moduleName": "ngSharePoint",
       "shortDescription": "Represents a SPUser object that is used to access to all SharePoint user properties",
-      "keywords": "_spcontextinfo _sppagecontextinfo access accomplish allows api aspx bk_userproperties browser call calls care complete complex configured correctly current currentuser data difference direct directly documentation evirontment executed extend extended function getproperties groups http https implemented initialize instantiate instantiated instantiates issiteadmin list loged login loginname method methods microsoft moment mydomain ngsharepoint object objects order param parameter pointer points prefer primary promise properties query recovered reference represents rest retrieval retrieve returned returns server service sharepoint specific spuser spweb structures title url user userid valid values var variable view web whitch"
+      "keywords": "_spcontextinfo _sppagecontextinfo access accomplish allows api aspx bk_userproperties browser call calls care complete complex configured current currentuser data difference direct directly documentation evirontment executed extend extended function getproperties groups http https implemented initialize instantiate instantiates issiteadmin list loged login loginname method methods microsoft moment mydomain ngsharepoint object objects order param parameter pointer points prefer primary promise properties query recovered reference represents rest retrieval retrieve returned returns server service sharepoint specific spuser spweb structures title url user userid valid values var variable view web whitch"
     },
     {
       "section": "api",

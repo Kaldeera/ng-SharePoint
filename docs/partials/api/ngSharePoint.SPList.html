@@ -30,9 +30,9 @@ Is possible to specify &quot;UserInfoList&quot; to refer the system list with al
 </div></td></tr><tr><td>listProperties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>Properties to initialize the object</p>
 </div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-constructor-page"><pre class="prettyprint linenums">
-new SPList(web, 'Shared documents').then(function(docs) {
-  // ... do something with the 'docs' object
-})
+var docs = SPList(web, 'Shared documents');
+// ... do something with the 'docs' object
+docs.getListItems().then(...);
 </pre>
 </div></div>
 </div>
