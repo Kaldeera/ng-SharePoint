@@ -16,15 +16,13 @@ retrieval of their properties and users</p>
 </div></td></tr><tr><td>data</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spgroup-constructor-page"><p>Properties to initialize the object (optional)</p>
 </div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
 <div class="example"><div class="ngsharepoint-spgroup-constructor-page"><pre class="prettyprint linenums">
+// Previously initiated web service and injected SPGroup service ...
+var group = new SPGroup(web, 'Visitors');
 
-  // Previously initiated web service and injected SPGroup service ...
-	 var group = new SPGroup(web, 'Visitors');
-
-  // ... do something with the group object
-  group.getUsers().then(function(users) {
-  	// ...
-  });
-
+// ... do something with the group object
+group.getUsers().then(function(users) {
+	// ...
+});
 </pre>
 </div></div>
 </div>
