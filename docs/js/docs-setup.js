@@ -10,7 +10,7 @@ NG_DOCS={
       "type": "overview",
       "moduleName": "ngSharePoint",
       "shortDescription": "ngSharePoint (core module)",
-      "keywords": "access add aims allows angular api app aspx castro cm codina copyright dependency directives document elemements facilitate forms https include introduction js libraries license licensed lists ll microsoft min mit module myapp ngsharepoint overview pau pedro powerfull rest script services set sharepoint src templates usage users var wrapper"
+      "keywords": "angular api app application castro cm codina copyright dependency include license licensed ll mit module myapp ngsharepoint overview pau pedro sharepoint usage var wrapper"
     },
     {
       "section": "api",
@@ -18,8 +18,8 @@ NG_DOCS={
       "shortName": "ngSharePoint.SharePoint",
       "type": "object",
       "moduleName": "ngSharePoint",
-      "shortDescription": "Provides top level access to SharePoint web sites api.",
-      "keywords": "access allows api context current executed function getcurrentweb getweb initialized level methods ngsharepoint object promise properties required retrieve returns rrhh sentence sharepoint sites sputils spweb top url web"
+      "shortDescription": "Provides top level access to SharePoint web sites api. Throw this provider is possible to access to any SharePoint web.",
+      "keywords": "access allows api context current executed function getcurrentweb getweb initialized level methods ngsharepoint object promise properties provider required retrieve returns rrhh sentence sharepoint sites sputils spweb throw top url web"
     },
     {
       "section": "api",

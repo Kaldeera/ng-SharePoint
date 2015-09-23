@@ -4,25 +4,12 @@
 </h1>
 <div><div class="ngsharepoint-page"><h4 id="ngsharepoint">ngSharePoint (core module)</h4>
 <p>The ngSharePoint module is an Angular wrapper for SharePoint 2013.</p>
-<h3 id="introduction">Introduction</h3>
-<p>Microsoft SharePoint 2013 provides a powerfull <a href="https://msdn.microsoft.com/en-us/library/dn593591.aspx">REST api</a>
-that allows to access to all SharePoint elemements (webs, lists, document libraries, users, etc.)</p>
-<p>ngSharePoint aims to facilitate this REST access through a set of angular services and directives.</p>
 <h3 id="usage">Usage</h3>
 <p>To use ngSharePoint you&#39;ll need to include this module as a dependency within your angular app.
 <pre class="prettyprint linenums">
 
-  &lt;script src="js/angular.js"&gt;&lt;/script&gt;
-  &lt;!-- Include the ngSharePoint script --&gt;
-  &lt;script src="js/ng-sharepoint.min.js"&gt;&lt;/script&gt;
-
-  &lt;!-- Include the ngSharePoint templates (if you need forms) --&gt;
-  &lt;script src="js/ng-sharepoint.sharepoint.templates.js"&gt;&lt;/script&gt;
-
-  &lt;script&gt;
-    // ...and add 'ngSharePoint' as a dependency
-    var myApp = angular.module('myApp', ['ngSharePoint']);
-  &lt;/script&gt;
+    	// In your module application include 'ngSharePoint' as a dependency
+    	var myApp = angular.module('myApp', ['ngSharePoint']);
 
 </pre>
 </div></div>
