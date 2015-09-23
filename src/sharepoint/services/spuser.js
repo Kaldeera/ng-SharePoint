@@ -78,7 +78,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			}
 
-			// Initializes the SharePoint API REST url for the group.
+			// Initializes the SharePoint API REST url for the user.
 			this.apiUrl = web.apiUrl + this.apiUrl;
 
 			// Init userProperties (if exists)
