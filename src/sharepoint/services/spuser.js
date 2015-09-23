@@ -40,13 +40,12 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
 		 * @param {int|string} userId|loginName User id or login name of the user that will retrieve properties
 		 * @param {object} data Properties to initialize the object (optional)
-		 * @returns {promise} with the SPUser object correctly instantiated
 		 * 
 		 * @example
 		 * <pre>
-		 * new SPUser(web, 'mydomain\user1').then(function(user) {
-		 *   // ... do something with the user object
-		 * })
+		 * var user = new SPUser(web, 'mydomain\user1');
+		 * // ... do something with the user object
+		 * user.getProperties().then(...);
 		 * </pre>
 		 *
 		 */

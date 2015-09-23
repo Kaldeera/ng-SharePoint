@@ -47,9 +47,9 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * @example
          * <pre>
-         * new SPList(web, 'Shared documents').then(function(docs) {
-         *   // ... do something with the 'docs' object
-         * })
+         * var docs = SPList(web, 'Shared documents');
+         * // ... do something with the 'docs' object
+         * docs.getListItems().then(...);
          * </pre>
          *
          */
