@@ -3,7 +3,7 @@ ngSharePoint
 
 ngSharePoint is a powerful and extensible AngularJS module that converts the APIs of SharePoint (REST and JSOM) to the AngularJS world.
 
-A set of services, directives and utilities that allows you to access and interact with SharePoint sites, lists, items and forms.
+A set of services, directives and utilities that allows you to access and interact with SharePoint sites, lists, items and forms. This  module allows you to create powerfull and rich user interfaces using the power of Angular.
 
 Current Status
 --------------
