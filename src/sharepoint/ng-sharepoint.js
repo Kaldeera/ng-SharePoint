@@ -22,7 +22,7 @@
  * @copyright Copyright (c) 2014
  */
 
-angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
+angular.module('ngSharePoint', ['CamlHelper']);
 
 
 
