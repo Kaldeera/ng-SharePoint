@@ -124,7 +124,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
             } else {
 
-                return scope.item.list.getItemQueryById(scope.item.Id, queryParts.join('/')).then(function(data) {
+                return scope.item.list.getItemProperty(scope.item.Id, queryParts.join('/')).then(function(data) {
 
                     return data[queryParts[queryParts.length - 1]];
             
@@ -146,7 +146,7 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
 
                     var queryParts = getExpressionParts(expression);
 
-                    return list.getItemQueryById(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
+                    return list.getItemProperty(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
 
                         return data[queryParts[queryParts.length - 1]];
 
