@@ -1224,21 +1224,19 @@ angular.module('ngSharePoint').provider('SPConfig',
     }
 ]);
 
-/*
-    SPContentType - factory
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPContentType
+ *
+ * @description
+ * SPContentType factory provides access to any content type (web or list). This factory allows 
+ * to retrieve their associated fields. It also, allows to get and set jsLink` property
+ *
+ * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPList
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPContentType', 
 
@@ -2127,21 +2125,18 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 ]);
 
-/*
-	SPFile - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPFile
+ *
+ * @description
+ * Provides functionality to manage SharePoint files.
+ *
+ * *At the moment, not all methods for manage file objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPFile
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPFile', 
 
@@ -2807,21 +2802,17 @@ angular.module('ngSharePoint').factory('SPFile',
 	}
 ]);
 
-/*
-	SPFolder - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPFolder
-///////////////////////////////////////
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPFolder
+ *
+ * @description
+ * Provides functionality to manage SharePoint folders.
+ *
+ * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
@@ -6541,21 +6532,18 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
     }
 ]);
 
-/*
-    SPRibbon - factory
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPUtils
+ *
+ * @description
+ * This factory provides functionality to manage ribbon (tabs, groups, buttons).
+ *
+ * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPRibbon
-///////////////////////////////////////
 
 (function() {
     
@@ -7392,21 +7380,16 @@ angular.module('ngSharePoint').factory('SPUser',
 	}
 ]);
 
-/*
-    SPUtils - factory
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPUtils
+ *
+ * @description
+ * This factory provides helpers and utilities.
+ *
+ * *Documentation are pending*
+ */
 
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPUtils
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPUtils', 
 
