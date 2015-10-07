@@ -86,7 +86,7 @@ If the item is not a DocumentLibrary folder element, the REST query returns no r
 a specific item, you must specify the item Id.</p>
 <p>Instead of create a new SPListItem, specifiy the Id and <code>getProperties</code> is recomendable
 to use <a href="#/api/ngSharePoint.SPList#getitembyid">getItemById</a> of the SPList object.</p>
-<p>If the item is a DocumentLibrary item, also gets the <a href="#/api/ngSharePoint.SPFile">File</a> 
+<p>By default, if the item is a DocumentLibrary item, this method gets the <a href="#/api/ngSharePoint.SPFile">File</a> 
 and/or <a href="#/api/ngSharePoint.SPFolder">Folder</a> properties.</p>
 </div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>expandProperties</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splistitem-getproperties-page"><p>Comma separed values with the properties to expand
 in the item.</p>
