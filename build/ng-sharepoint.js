@@ -867,28 +867,13 @@ angular.module('CamlHelper', [])
  * @description 
  * ### ngSharePoint (core module)
  * The ngSharePoint module is an Angular wrapper for SharePoint 2013.
- *
- * ## Introduction
- * Microsoft SharePoint 2013 provides a powerfull {@link https://msdn.microsoft.com/en-us/library/dn593591.aspx REST api}
- * that allows to access to all SharePoint elemements (webs, lists, document libraries, users, etc.)
- *
- * ngSharePoint aims to facilitate this REST access through a set of angular services and directives.
  * 
  * ## Usage
  * To use ngSharePoint you'll need to include this module as a dependency within your angular app.
  * <pre>
  *
- *   <script src="js/angular.js"></script>
- *   <!-- Include the ngSharePoint script -->
- *   <script src="js/ng-sharepoint.min.js"></script>
- *
- *   <!-- Include the ngSharePoint templates (if you need forms) -->
- *   <script src="js/ng-sharepoint.sharepoint.templates.js"></script>
- *
- *   <script>
- *     // ...and add 'ngSharePoint' as a dependency
- *     var myApp = angular.module('myApp', ['ngSharePoint']);
- *   </script>
+ *     	// In your module application include 'ngSharePoint' as a dependency
+ *     	var myApp = angular.module('myApp', ['ngSharePoint']);
  *
  * </pre>
  * 
@@ -898,7 +883,7 @@ angular.module('CamlHelper', [])
  * @copyright Copyright (c) 2014
  */
 
-angular.module('ngSharePoint', ['ngSharePoint.templates', 'CamlHelper']);
+angular.module('ngSharePoint', ['CamlHelper']);
 
 
 
@@ -934,7 +919,7 @@ angular.module('ngSharePoint').value('Constants', {
  * @name ngSharePoint.SharePoint
  *
  * @description
- * Provides top level access to SharePoint web sites api.
+ * Provides top level access to SharePoint web sites api. Throw this provider is possible to access to any SharePoint web.
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPWeb
@@ -3389,21 +3374,17 @@ angular.module('ngSharePoint').factory('SPFolder',
 	}
 ]);
 
-/*
-	SPGroup - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPGroup
+ *
+ * @description
+ * SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.
+ *
+ * *At the moment, not all SharePoint API methods for group objects are implemented in ngSharePoint*
+ *
+ */
 
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPGroup
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPGroup', 
 
@@ -3414,12 +3395,32 @@ angular.module('ngSharePoint').factory('SPGroup',
 		'use strict';
 
 
-		// ****************************************************************************
-		// SPGroup constructor
-		//
-		// @web: SPWeb instance that contains the group in SharePoint.
-		// @groupName: Name or id of the group you want to instantiate.
-		//
+		/**
+		 * @ngdoc function
+		 * @name ngSharePoint.SPGroup#constructor
+		 * @constructor
+		 * @methodOf ngSharePoint.SPGroup
+		 * 
+		 * @description
+		 * Instantiates a new SPGroup object that points to a specific SharePoint group and allows
+		 * retrieval of their properties and users
+		 * 
+		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
+		 * @param {int|string} groupId|groupName Group id or name
+		 * @param {object} data Properties to initialize the object (optional)
+		 * 
+		 * @example
+		 * <pre>
+         *  // Previously initiated web service and injected SPGroup service ...
+		 *  var group = new SPGroup(web, 'Visitors');
+		 *
+		 *  // ... do something with the group object
+		 *  group.getUsers().then(function(users) {
+		 *    // ...
+		 *  });
+		 * </pre>
+		 *
+		 */
 		var SPGroupObj = function(web, groupName, groupProperties) {
 
 			if (web === void 0) {
@@ -3456,13 +3457,29 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 
 
-		// ****************************************************************************
-		// getProperties
-		//
-		// Gets group properties and attach it to 'this' object.
-		//
-		// @returns: Promise with the result of the REST query.
-		//
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPGroup#getProperties
+         * @methodOf ngSharePoint.SPGroup
+         *
+         * @description
+         * Makes a call to the SharePoint server and collects all the group properties.
+         * The current object is extended with the recovered properties. This means that when this method is executed,
+         * any group property is accessible directly. ex: `group.Title`, `group.Description`, `group.CanCurrentUserEditMembership`, etc.
+         *
+         * For a complete list of group properties go to Microsoft
+         * SharePoint {@link https://msdn.microsoft.com/en-us/library/office/dn531432.aspx#bk_GroupProperties group api reference}
+         *
+         * SharePoint REST api only returns certain group properties that have primary values. Properties with complex structures
+         * like `Owner` are not returned directly by the api and is necessary to extend the query
+         * to retrieve their values. Is possible to accomplish this with the `query` param.
+         *
+         * @param {object} query This parameter specify which group properties will be extended and retrieved from the server.
+         * By default `Owner` property is extended.
+         *
+         * @returns {promise} promise with an object with all group properties
+         *
+         */
 		SPGroupObj.prototype.getProperties = function(query) {
 
 			var self = this;
@@ -3514,13 +3531,32 @@ angular.module('ngSharePoint').factory('SPGroup',
 
 
 
-		// ****************************************************************************
-		// getUsers
-		//
-		// Gets group users
-		//
-		// @returns: Promise with the result of the REST query.
-		//
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPGroup#getUsers
+	     * @methodOf ngSharePoint.SPGroup
+	     *
+	     * @description
+	     * Gets a collection of {@link ngSharePoint.SPUser SPUser} objects that represents all of the users in the group.
+	     *
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPUser SPUser} objects  
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var group = web.getGroup('Visitors');
+		 *     group.getUsers().then(function(users) {
+		 *       
+		 *        angular.forEach(users, function(user) {
+	     *           console.log(user.Name);
+		 *        });
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
 		SPGroupObj.prototype.getUsers = function() {
 
 			var self = this;
@@ -3632,9 +3668,9 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * @example
          * <pre>
-         * new SPList(web, 'Shared documents').then(function(docs) {
-         *   // ... do something with the 'docs' object
-         * })
+         * var docs = SPList(web, 'Shared documents');
+         * // ... do something with the 'docs' object
+         * docs.getListItems().then(...);
          * </pre>
          *
          */
@@ -5274,12 +5310,32 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Instantiates a new `SPListItem` object for a specific list. It's possible
          * to specify their new properties (data).
          *
-         * When you call some of methods {@link ngSharePoint.SPList#getListItems getListItems} or 
+         * When you call {@link ngSharePoint.SPList#getListItems getListItems} or 
          * {@link ngSharePoint.SPList#getItemById getItemById}, SPListItem objects are returned.
          *
          * @param {SPList} list A valid {@link ngSharePoint.SPList SPList} object where the item is stored
          * @param {object|Int32} data|itemId Can be an object with item properties or an item identifier.
          *
+         * @example
+         * The next code creates a new announcement:
+         * <pre>
+         *   SharePoint.getCurrentWeb(function(web) {
+         *
+         *     web.getList('Announcements').then(function(list) {
+         *
+         *          var item = new SPListItem(list);
+         *
+         *          item.Title = 'ngSharePoint is here!!';
+         *          item.Body = '<strong>ngSharePoint</strong> is a new Angular library that allows to <br/>interact easily with SharePoint';
+         *          item.Expires = new Date(2020, 12, 31);
+         *
+         *          item.save().then(function() {
+         *              SP.UI.Notify.addNotification('Annuncement created', false);
+         *          });
+         *     });
+         *
+         *   });
+         * </pre>
          */
         var SPListItemObj = function(list, data) {
 
@@ -5376,6 +5432,19 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Retrieve a item from the server and attach it to 'this' object. To retrieve
          * a specific item, you must specify the item Id.
          *
+         *
+         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
+         * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
+         * 
+         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
+         * and/or {@link ngSharePoint.SPFolder Folder} properties.
+         *
+         * @param {string} expandProperties Comma separed values with the properties to expand
+         * in the item.
+         *
+         * @returns {promise} promise with all the item properties (fields) retrieved from the server
+         *
+         * @example
          * <pre>
          *    var item = new SPListItem(anyList, anyId);
          *    // or
@@ -5391,19 +5460,6 @@ angular.module('ngSharePoint').factory('SPListItem',
          *    });
          *
          * </pre>
-         *
-         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
-         * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
-         *
-         * 
-         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
-         * and/or {@link ngSharePoint.SPFolder Folder} properties.
-         *
-         * @param {string} expandProperties Comma separed values with the properties to expand
-         * in the item.
-         *
-         * @returns {promise} promise with all the item properties (fields) retrieved from the server
-         *
         */        
         SPListItemObj.prototype.getProperties = function(expandProperties) {
 
@@ -7206,13 +7262,12 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
 		 * @param {int|string} userId|loginName User id or login name of the user that will retrieve properties
 		 * @param {object} data Properties to initialize the object (optional)
-		 * @returns {promise} with the SPUser object correctly instantiated
 		 * 
 		 * @example
 		 * <pre>
-		 * new SPUser(web, 'mydomain\user1').then(function(user) {
-		 *   // ... do something with the user object
-		 * })
+		 * var user = new SPUser(web, 'mydomain\user1');
+		 * // ... do something with the user object
+		 * user.getProperties().then(...);
 		 * </pre>
 		 *
 		 */
@@ -7244,7 +7299,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			}
 
-			// Initializes the SharePoint API REST url for the group.
+			// Initializes the SharePoint API REST url for the user.
 			this.apiUrl = web.apiUrl + this.apiUrl;
 
 			// Init userProperties (if exists)
@@ -15155,7 +15210,7 @@ angular.module('ngSharePoint').filter('unsafe',
  */
 
 
-angular.module('ngSharePointFormPage', ['ngSharePoint', 'oc.lazyLoad']);
+angular.module('ngSharePointFormPage', ['ngSharePoint', 'ngSharePoint.templates', 'oc.lazyLoad']);
 
 
 angular.module('ngSharePointFormPage').config(
