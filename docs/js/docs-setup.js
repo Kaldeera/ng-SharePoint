@@ -32,6 +32,15 @@ NG_DOCS={
     },
     {
       "section": "api",
+      "id": "ngSharePoint.SPFile",
+      "shortName": "ngSharePoint.SPFile",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "Provides functionality to manage SharePoint files.",
+      "keywords": "api file files functionality implemented manage methods moment ngsharepoint object objects pending sharepoint spfile"
+    },
+    {
+      "section": "api",
       "id": "ngSharePoint.SPFolder",
       "shortName": "ngSharePoint.SPFolder",
       "type": "object",
