@@ -37,7 +37,7 @@ NG_DOCS={
       "type": "object",
       "moduleName": "ngSharePoint",
       "shortDescription": "Provides functionality to manage SharePoint files.",
-      "keywords": "api file files functionality implemented manage methods moment ngsharepoint object objects pending sharepoint spfile"
+      "keywords": "api call created default document file fileproperties files function functionality getitembyid getlistitems implemented initialize instantiates libraries manage methods moment ngsharepoint object objects path pending picture properties property relative server sharepoint specific spfile splist spweb stored valid web"
     },
     {
       "section": "api",
