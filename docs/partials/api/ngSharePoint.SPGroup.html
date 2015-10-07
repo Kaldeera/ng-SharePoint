@@ -30,7 +30,7 @@ group.getUsers().then(function(users) {
 <li><h3 id="methods_getproperties">getProperties(query)</h3>
 <div class="getproperties"><div class="ngsharepoint-spgroup-getproperties-page"><p>Makes a call to the SharePoint server and collects all the group properties.
 The current object is extended with the recovered properties. This means that when this method is executed,
-any group property is accessible directly. ex: <code>group.Title</code>, <code>group.Description</code>, <code>list.CanCurrentUserEditMembership</code>, etc.</p>
+any group property is accessible directly. ex: <code>group.Title</code>, <code>group.Description</code>, <code>group.CanCurrentUserEditMembership</code>, etc.</p>
 <p>For a complete list of group properties go to Microsoft
 SharePoint <a href="https://msdn.microsoft.com/en-us/library/office/dn531432.aspx#bk_GroupProperties">group api reference</a></p>
 <p>SharePoint REST api only returns certain group properties that have primary values. Properties with complex structures
@@ -53,7 +53,6 @@ By default <code>Owner</code> property is extended.</p>
     group.getUsers().then(function(users) {
       
        angular.forEach(users, function(user) {
-          
           console.log(user.Name);
        });
     });

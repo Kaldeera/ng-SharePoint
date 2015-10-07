@@ -23,6 +23,24 @@ NG_DOCS={
     },
     {
       "section": "api",
+      "id": "ngSharePoint.SPContentType",
+      "shortName": "ngSharePoint.SPContentType",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "SPContentType factory provides access to any content type (web or list). This factory allows ",
+      "keywords": "access allows api associated content factory fields implemented jslink list methods moment ngsharepoint object objects pending property retrieve set sharepoint spcontenttype type"
+    },
+    {
+      "section": "api",
+      "id": "ngSharePoint.SPFolder",
+      "shortName": "ngSharePoint.SPFolder",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "Provides functionality to manage SharePoint folders.",
+      "keywords": "api folder folders functionality implemented manage methods moment ngsharepoint object objects pending sharepoint spfolder"
+    },
+    {
+      "section": "api",
       "id": "ngSharePoint.SPGroup",
       "shortName": "ngSharePoint.SPGroup",
       "type": "object",
@@ -56,6 +74,24 @@ NG_DOCS={
       "moduleName": "ngSharePoint",
       "shortDescription": "Represents a SPUser object that is used to access to all SharePoint user properties",
       "keywords": "_spcontextinfo _sppagecontextinfo access accomplish allows api aspx bk_userproperties browser call calls care complete complex configured current currentuser data difference direct directly documentation evirontment executed extend extended function getproperties groups http https implemented initialize instantiate instantiates issiteadmin list loged login loginname method methods microsoft moment mydomain ngsharepoint object objects order param parameter pointer points prefer primary promise properties query recovered reference represents rest retrieval retrieve returned returns server service sharepoint specific spuser spweb structures title url user userid valid values var variable view web whitch"
+    },
+    {
+      "section": "api",
+      "id": "ngSharePoint.SPUtils",
+      "shortName": "ngSharePoint.SPUtils",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "This factory provides functionality to manage ribbon (tabs, groups, buttons).",
+      "keywords": "api buttons content factory functionality groups implemented manage methods moment ngsharepoint object objects pending ribbon sharepoint sputils type"
+    },
+    {
+      "section": "api",
+      "id": "ngSharePoint.SPUtils",
+      "shortName": "ngSharePoint.SPUtils",
+      "type": "object",
+      "moduleName": "ngSharePoint",
+      "shortDescription": "This factory provides helpers and utilities.",
+      "keywords": "api factory helpers ngsharepoint object pending sputils utilities"
     },
     {
       "section": "api",
