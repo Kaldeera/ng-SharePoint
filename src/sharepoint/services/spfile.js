@@ -20,13 +20,26 @@ angular.module('ngSharePoint').factory('SPFile',
 		'use strict';
 
 
-		// ****************************************************************************
-		// SPFile constructor
-		//
-		// @web: SPWeb instance that contains the file in SharePoint.
-		// @path: Name the file you want to instantiate.
-		//
-		var SPFileObj = function(web, path, fileProperties) {
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFile#constructor
+         * @constructor
+         * @methodOf ngSharePoint.SPFile
+         *
+         * @description
+         * Instantiates a new `SPFile` object for a specific SharePoint file in the server. It's possible
+         * to specify their properties.
+         *
+         * By default, in document and picture libraries, when you call {@link ngSharePoint.SPList#getListItems getListItems} or 
+         * {@link ngSharePoint.SPList#getItemById getItemById}, by default a ´item.File´ property are created and contains
+         * file information.
+         *
+         * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the file is stored.
+         * @param {string} path The server relative path of the file.
+         * @param {object} fileProperties Properties to initialize the object
+         *
+         */
+ 		var SPFileObj = function(web, path, fileProperties) {
 
 			if (web === void 0) {
 				throw '@web parameter not specified in SPFile constructor.';
