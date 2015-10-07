@@ -1,18 +1,15 @@
-/*
-	SPFile - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPFile
+ *
+ * @description
+ * Provides functionality to manage SharePoint files.
+ *
+ * *At the moment, not all methods for manage file objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPFile
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPFile', 
 
