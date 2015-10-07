@@ -1,18 +1,14 @@
-/*
-	SPFolder - factory
-	
-	Pau Codina (pau.codina@kaldeera.com)
-	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-	Copyright (c) 2014
-	Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//	SPFolder
-///////////////////////////////////////
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPFolder
+ *
+ * @description
+ * Provides functionality to manage SharePoint folders.
+ *
+ * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
+ *
+ * *Documentation are pending*
+ */
 
 angular.module('ngSharePoint').factory('SPFolder', 
 
