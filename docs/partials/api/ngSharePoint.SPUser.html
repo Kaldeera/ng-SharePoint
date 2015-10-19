@@ -4,14 +4,14 @@
 </div>
 </h1>
 <div><h2 id="description">Description</h2>
-<div class="description"><div class="ngsharepoint-spuser-page"><p>Represents a SPUser object that is used to access to all SharePoint user properties</p>
-<p>When you instantiate an SPUser object (with any user Id), the service is configured
-with a pointer to the next REST api: <code>http://&lt;site-url&gt;/_api/web/SiteUserInfoList/getItemById(userId)</code>.
-If you instantiate a SPUser object with a login name, the api is configured with the
+<div class="description"><div class="ngsharepoint-spuser-page"><p>Represents an SPUser object that is used to access all SharePoint user properties.</p>
+<p>When you instantiate an SPUser object (with any user ID), the service is configured
+with a pointer to the next REST api: <code>http://&lt;site-url&gt;/_api/web/SiteUserInfoList/getItemById(userID)</code>.
+If you instantiate an SPUser object with a login name, the api is configured with the
 url: <code>http://&lt;site-url&gt;/_api/web/siteusers/getByLoginName(loginName)</code>.</p>
 <p>You should take care with this difference, because the properties returned by these 
 two API&#39;s are different. View the SharePoint documentation to get more information or 
-make some calls to the API in a browser in order to see whitch method you prefer.</p>
+make some calls to the API in a browser in order to see which method you prefer.</p>
 <p><em>At the moment, not all SharePoint API methods for user objects are implemented in ngSharePoint</em></p>
 </div></div>
 <div class="member method"><h2 id="methods">Methods</h2>
@@ -32,10 +32,10 @@ user.getProperties().then(...);
 </li>
 <li><h3 id="methods_getproperties">getProperties(query)</h3>
 <div class="getproperties"><div class="ngsharepoint-spuser-getproperties-page"><p>Makes a call to the SharePoint server and gets all their properties.
-The current object are extended with all recovered properties. This means that when you have executed this 
+The current object is extended with all recovered properties. This means that when you have executed this 
 method, you will have direct access to their values. ex: <code>user.IsSiteAdmin</code>, <code>user.LoginName</code>, <code>user.Title</code>, etc.</p>
 <p>For a complete list of user properties go to Microsoft 
-SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties">api reference</a></p>
+SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties">api reference</a>.</p>
 <p>SharePoint REST api only returns certain user properties that have primary values. Properties with complex structures
 like user <code>Groups</code> are not returned directly by the api and you need to extend the query
 to retrieve their values. You can accomplish this with the <code>query</code> param.</p>
@@ -44,7 +44,7 @@ to retrieve their values. You can accomplish this with the <code>query</code> pa
 </div></td></tr></table><h4 id="methods_getproperties_example">Example</h4>
 <div class="example"><div class="ngsharepoint-spuser-getproperties-page"><pre class="prettyprint linenums">
 // _spContextInfo.userId contains the ID of the current loged user. We can use
-// this SharePoint evirontment variable to retrieve current user information
+// this SharePoint environtment variable to retrieve current user information
 var currentUser = new SPUser(currentWeb, _spPageContextInfo.userId);
 currentUser.getProperties().then(function() {
 

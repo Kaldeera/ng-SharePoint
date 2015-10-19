@@ -4,8 +4,8 @@
 </div>
 </h1>
 <div><h2 id="description">Description</h2>
-<div class="description"><div class="ngsharepoint-splist-page"><p>Represents a SPList object that you could use to access to all SharePoint list properties and data.</p>
-<p>Is possible create new SPList objects or use a <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object to get SPList object instances.</p>
+<div class="description"><div class="ngsharepoint-splist-page"><p>Represents an SPList object that you can use to access to all SharePoint list properties and data.</p>
+<p>It is possible to create new SPList objects or use an <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object to get SPList object instances.</p>
 <p><em>At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint</em></p>
 </div></div>
 <h2 id="dependencies">Dependencies</h2>
@@ -17,16 +17,16 @@
 </li>
 </ul>
 <div class="member method"><h2 id="methods">Methods</h2>
-<ul class="methods"><li><h3 id="methods_constructor">constructor(web, listId|listName, listProperties)</h3>
+<ul class="methods"><li><h3 id="methods_constructor">constructor(web, listID|listName, listProperties)</h3>
 <div class="constructor"><div class="ngsharepoint-splist-constructor-page"><p>Instantiates a new <code>SPList</code> object that points to a specific SharePoint list. With a
-list instance is possible to access their properties and get list items.</p>
+list instance it is possible to access their properties and get list items.</p>
 <p><em>Note</em>: this method only instantiates a new <code>SPList</code> object initialized for future access to
 list related API (get list items, folders, documents). This method doesn&#39;t retrieve any
-list properties or information. For retrieve list properties is necessary to call 
+list properties or information. To get list properties it is necessary to call 
 <a href="#/api/ngSharePoint.SPList#getproperties">getProperties</a> method.</p>
 </div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>web</td><td><a href="" class="label type-hint type-hint-spweb">SPWeb</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> object where the list is located</p>
-</div></td></tr><tr><td>listId|listName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>List id or list name.
-Is possible to specify &quot;UserInfoList&quot; to refer the system list with all site users.</p>
+</div></td></tr><tr><td>listID|listName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>List ID or list name.
+It is possible to specify &quot;UserInfoList&quot; to refer to the system list with all site users.</p>
 </div></td></tr><tr><td>listProperties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>Properties to initialize the object</p>
 </div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-constructor-page"><pre class="prettyprint linenums">
@@ -37,14 +37,14 @@ docs.getListItems().then(...);
 </div></div>
 </div>
 </li>
-<li><h3 id="methods_getcontenttype">getContentType(Id|name)</h3>
-<div class="getcontenttype"><div class="ngsharepoint-splist-getcontenttype-page"><p>Gets a specified content type by his Id or name.</p>
+<li><h3 id="methods_getcontenttype">getContentType(ID|name)</h3>
+<div class="getcontenttype"><div class="ngsharepoint-splist-getcontenttype-page"><p>Gets a specified content type by its ID or name.</p>
 <p>Internally, this method makes a call to <a href="#/api/ngSharePoint.SPList#getcontenttypes">getContentTypes</a> method.</p>
-</div><h5 id="methods_getcontenttype_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>Id|name <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getcontenttype-page"><p>The Id or the name of the content type to be retrieved. If this parameter is not
+</div><h5 id="methods_getcontenttype_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>ID|name <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getcontenttype-page"><p>The ID or name of the content type to be retrieved. If this parameter is not
 specified, the method returns the default content type.</p>
 </div></td></tr></tbody></table><h5 id="methods_getcontenttype_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getcontenttype-page"><p>promise with the <a href="#/api/ngSharePoint.SPContentType">SPContentType</a> object.</p>
 </div></td></tr></table><h4 id="methods_getcontenttype_example">Example</h4>
-<div class="example"><div class="ngsharepoint-splist-getcontenttype-page"><p>This example retrieves the associated Issue content type and logs all his field titles
+<div class="example"><div class="ngsharepoint-splist-getcontenttype-page"><p>This example retrieves the associated Issue content type and logs all its field titles.
 <pre class="prettyprint linenums">
   list.getContentType('Issue').then(function(issueCt) {
 
@@ -58,8 +58,8 @@ specified, the method returns the default content type.</p>
 </div>
 </li>
 <li><h3 id="methods_getcontenttypes">getContentTypes()</h3>
-<div class="getcontenttypes"><div class="ngsharepoint-splist-getcontenttypes-page"><p>This method retrieves the list of all content types of the list.</p>
-<p>If you call this method, a new <code>ContentType</code> property will be set with the array of content types.</p>
+<div class="getcontenttypes"><div class="ngsharepoint-splist-getcontenttypes-page"><p>This method retrieves a list of all content types of the list.</p>
+<p>If you call this method, a new <code>ContentType</code> property will be set with an array of content types.</p>
 </div><h5 id="methods_getcontenttypes_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getcontenttypes-page"><p>promise with an array of all content types associated with the list.
 Every element on the array is a <a href="#/api/ngSharePoint.SPContentType">SPContentType</a> object.</p>
 </div></td></tr></table><h4 id="methods_getcontenttypes_example">Example</h4>
@@ -77,29 +77,29 @@ list.getContentTypes().then(function() {
 </li>
 <li><h3 id="methods_getdefaultdisplayformurl">getDefaultDisplayFormUrl()</h3>
 <div class="getdefaultdisplayformurl"><div class="ngsharepoint-splist-getdefaultdisplayformurl-page"><p>Use this method to obtain the URL of the default display form.</p>
-<p><strong>Note</strong> This method uses JSOM for retrieve this URL because there aren&#39;t
-any RES API call that returns this value.</p>
+<p><strong>Note</strong> This method uses JSOM to retrieve this URL because there aren&#39;t
+any REST API call that returns this value.</p>
 </div><h5 id="methods_getdefaultdisplayformurl_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getdefaultdisplayformurl-page"><p>promise with the url.</p>
 </div></td></tr></table></div>
 </li>
 <li><h3 id="methods_getdefaulteditformurl">getDefaultEditFormUrl()</h3>
 <div class="getdefaulteditformurl"><div class="ngsharepoint-splist-getdefaulteditformurl-page"><p>Use this method to obtain the URL of the default edit form.</p>
-<p><strong>Note</strong> This method uses JSOM for retrieve this URL because there aren&#39;t
-any RES API call that returns this value.</p>
+<p><strong>Note</strong> This method uses JSOM to retrieve this URL because there isn&#39;t
+an REST API call that returns this value.</p>
 </div><h5 id="methods_getdefaulteditformurl_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getdefaulteditformurl-page"><p>promise with the url.</p>
 </div></td></tr></table></div>
 </li>
 <li><h3 id="methods_getdefaultnewformurl">getDefaultNewFormUrl()</h3>
 <div class="getdefaultnewformurl"><div class="ngsharepoint-splist-getdefaultnewformurl-page"><p>Use this method to obtain the URL of the default new form.</p>
-<p><strong>Note</strong> This method uses JSOM for retrieve this URL because there aren&#39;t
-any RES API call that returns this value.</p>
+<p><strong>Note</strong> This method uses JSOM to retrieve this URL because there aren&#39;t
+any REST API call that returns this value.</p>
 </div><h5 id="methods_getdefaultnewformurl_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getdefaultnewformurl-page"><p>promise with the url.</p>
 </div></td></tr></table></div>
 </li>
 <li><h3 id="methods_getdefaultviewurl">getDefaultViewUrl()</h3>
-<div class="getdefaultviewurl"><div class="ngsharepoint-splist-getdefaultviewurl-page"><p>Use this method to obtain the default view URL of the list.</p>
-<p><strong>Note</strong> This method uses JSOM for retrieve this URL because there aren&#39;t
-any RES API call that returns this value.</p>
+<div class="getdefaultviewurl"><div class="ngsharepoint-splist-getdefaultviewurl-page"><p>Use this method to obtain the default view URL of a list.</p>
+<p><strong>Note</strong> This method uses JSOM to retrieve this URL because there aren&#39;t
+any REST API call that returns this value.</p>
 </div><h5 id="methods_getdefaultviewurl_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getdefaultviewurl-page"><p>promise with the url.</p>
 </div></td></tr></table></div>
 </li>
@@ -126,10 +126,10 @@ based on the field type:
 <a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldUrl">FieldUrl</a>,</p>
 <p>With all of this information, you might construct new interfaces (views, forms, etc) that follow
 definitions of any SharePoint list.</p>
-<p><em>Note</em>: The list of fields of the list does&#39;nt necessaray be equal to the item content type.
-If you want to get the content type specific fields, you could call &#39;getFields&#39; method of
+<p><em>Note</em>: The list of fields of the list isn&#39;t necessaray equal to the item content type.
+If you want to get the content type specific fields, you can call `getFields method of
 the specific content type.</p>
-</div><h5 id="methods_getfields_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getfields-page"><p>promise with an object that contains all oh the fields schema</p>
+</div><h5 id="methods_getfields_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getfields-page"><p>promise with an object that contains all of the fields schema</p>
 </div></td></tr></table><h4 id="methods_getfields_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-getfields-page"><pre class="prettyprint linenums">
 // a pre-initialized "list" object ...
@@ -146,31 +146,31 @@ list.getFields().then(function() {
     // this returns true
 
     console.log(list.Fields.ProjectStatus.Choices.results);
-    // this returns on array with available choices ['Open', 'Closed', 'Draft']
+    // this returns an array with available choices ['Open', 'Closed', 'Draft']
 });
 
 </pre>
 </div></div>
 </div>
 </li>
-<li><h3 id="methods_getitembyid">getItemById(Id, expandProperties)</h3>
+<li><h3 id="methods_getitembyid">getItemById(ID, expandProperties)</h3>
 <div class="getitembyid"><div class="ngsharepoint-splist-getitembyid-page"><p>This method gets a specified list item.</p>
-</div><h5 id="methods_getitembyid_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>Id</td><td><a href="" class="label type-hint type-hint-integer">integer</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>The Id of the item to be retrieved.</p>
-</div></td></tr><tr><td>expandProperties</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>Comma separed values with the properties to expand
+</div><h5 id="methods_getitembyid_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>ID</td><td><a href="" class="label type-hint type-hint-integer">integer</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>The ID of the item to be retrieved.</p>
+</div></td></tr><tr><td>expandProperties</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>Comma separated values with the properties to expand
 in the REST query</p>
-</div></td></tr></tbody></table><h5 id="methods_getitembyid_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>promise with a object of type <a href="#/api/ngSharePoint.SPListItem">SPListItem</a> corresponding
+</div></td></tr></tbody></table><h5 id="methods_getitembyid_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getitembyid-page"><p>promise with an object of type <a href="#/api/ngSharePoint.SPListItem">SPListItem</a> corresponding
 with the element retrieved</p>
 </div></td></tr></table><h4 id="methods_getitembyid_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-getitembyid-page"><p>This example retrieves the item specified by the query string over the contextual list.
 This assumes that this code is executed in a form page
 <pre class="prettyprint linenums">
-     var itemId = utils.getQueryStringParamByName('ID');
+     var itemID = utils.getQueryStringParamByName('ID');
 
      SharePoint.getCurrentWeb().then(function(web) {
 
          web.getList(_spPageContextInfo.pageListId).then(function(list) {
 
-             list.getItemById(itemId).then(function(item) {
+             list.getItemById(itemID).then(function(item) {
 
                  $scope.currentItem = item;
 
@@ -183,40 +183,40 @@ This assumes that this code is executed in a form page
 </div></div>
 </div>
 </li>
-<li><h3 id="methods_getitemproperty">getItemProperty(Id, query)</h3>
+<li><h3 id="methods_getitemproperty">getItemProperty(ID, query)</h3>
 <div class="getitemproperty"><div class="ngsharepoint-splist-getitemproperty-page"><p>This method gets a specified related item property from the list.</p>
-</div><h5 id="methods_getitemproperty_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>Id</td><td><a href="" class="label type-hint type-hint-integer">integer</a></td><td><div class="ngsharepoint-splist-getitemproperty-page"><p>The Id of the item.</p>
-</div></td></tr><tr><td>query</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getitemproperty-page"><p>The REST query after &#39;.../getItemById(<id>)/&#39;</p>
+</div><h5 id="methods_getitemproperty_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>ID</td><td><a href="" class="label type-hint type-hint-integer">integer</a></td><td><div class="ngsharepoint-splist-getitemproperty-page"><p>The ID of the item.</p>
+</div></td></tr><tr><td>query</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getitemproperty-page"><p>The REST query after &#39;.../getItemById(<ID>)/&#39;</p>
 </div></td></tr></tbody></table><h5 id="methods_getitemproperty_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getitemproperty-page"><p>promise with the value of the property. Can be a primary value like a string or
 an integer or can be a complex value like a item. It depends of the query specified.</p>
 </div></td></tr></table><h4 id="methods_getitemproperty_example">Example</h4>
-<div class="example"><div class="ngsharepoint-splist-getitemproperty-page"><p>With this method you can obtain related information of a item. You can specify simple expressions
-or other more sophisticated. The next examples show how you can use it.</p>
+<div class="example"><div class="ngsharepoint-splist-getitemproperty-page"><p>With this method you can obtain the related information of an item. You can specify simple expressions
+or other more sophisticated expressions. The following examples show how you can use it.</p>
 <pre class="prettyprint linenums">
   // This returns the name of the author (string)
-  list.getItemProperty(id, 'Created/Name').then(...);        
+  list.getItemProperty(ID, 'Created/Name').then(...);        
 
   // This returns the title of the department (string)
-  list.getItemProperty(id, 'Department/Title').then(...)     
+  list.getItemProperty(ID, 'Department/Title').then(...)     
 
   // This returns the manager of the department (item)
-  list.getItemProperty(id, 'Department/Manager').then(...)   
+  list.getItemProperty(ID, 'Department/Manager').then(...)   
 
-  // This returns the EMail of the manager's department of the 
-  // user who was created the item
-  list.getItemProperty(id, 'Created/Department/Manager/EMail');  
+  // This returns the EMail of the manager's department for the 
+  // user who has created the item
+  list.getItemProperty(ID, 'Created/Department/Manager/EMail');  
 </pre>
 </div></div>
 </div>
 </li>
 <li><h3 id="methods_getlistitems">getListItems(query, resetPagination)</h3>
-<div class="getlistitems"><div class="ngsharepoint-splist-getlistitems-page"><p>Use this method to retrieve a collection of items of the list.</p>
-<p>The method have a <code>query</code> parameter that allows you to specify the selection, filters
+<div class="getlistitems"><div class="ngsharepoint-splist-getlistitems-page"><p>Use this method to retrieve a collection of items from the list.</p>
+<p>The method has a <code>query</code> parameter that allows you to specify the selection, filters
 and order options for the data you request from the server.
 All valid OData options implemented by the SharePoint REST api are accepted.</p>
 <p>Go to <a href="https://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx">SharePoint documentation</a> for 
-more information about the OData query oprations in SharePoint REST api</p>
-<p>By default, this method expands the next properties:</p>
+more information about the OData query operations in SharePoint REST api.</p>
+<p>By default, this method expands the following properties:</p>
 <ul>
 <li>ContentType</li>
 <li>File</li>
@@ -224,32 +224,32 @@ more information about the OData query oprations in SharePoint REST api</p>
 <li>Folder</li>
 <li>Folder/ParentFolder</li>
 </ul>
-</div><h5 id="methods_getlistitems_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-getlistitems-page"><p>A object with all the query options used to retrieve list items.</p>
-<p>It&#39;s possible to specify different query options:
+</div><h5 id="methods_getlistitems_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-getlistitems-page"><p>An object with all query options used to retrieve list items.</p>
+<p>It is possible to specify different query options:
 <pre class="prettyprint linenums">
     var query = {
          // Use the $filter query option to select
          // which items to return
          $filter: "filter expression",
          // Use $top to indicate the number of items
-         // to be retrieved (for pagination prouposes)
+         // to be retrieved (for pagination purposes)
          $top: nn,
          // User $orderby to specify how to sort the
          // items in your query return set
          $orderby: "field1 asc,field2 desc,...",
-         // to gets additional information of other
+         // to get additional information of other
          // lookup fields
          $expand: "field1,field2,..."
     };
     someList.getListItems(query).then(...);
 </pre>
-</div></td></tr><tr><td>resetPagination <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-boolean">boolean</a></td><td><div class="ngsharepoint-splist-getlistitems-page"><p>With this param you can specify if you want to continue the
-previously query and retrieve the next set of items or wants to reset the counter and start a completly new query.</p>
+</div></td></tr><tr><td>resetPagination <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-boolean">boolean</a></td><td><div class="ngsharepoint-splist-getlistitems-page"><p>With this param you can specify if you want to continue with the
+previous query and retrieve the next set of items or want to reset the counter and start a completely new query.</p>
 <p>By default SharePoint returns sets of 100 items from the server. You can modify this value with the param <code>$top</code></p>
 </div></td></tr></tbody></table><h5 id="methods_getlistitems_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getlistitems-page"><p>promise with a collection of <a href="#/api/ngSharePoint.SPListItem">SPListItem</a> elements
 retrieved from the server</p>
 </div></td></tr></table><h4 id="methods_getlistitems_example">Example</h4>
-<div class="example"><div class="ngsharepoint-splist-getlistitems-page"><p>This example retrieves the list of &quot;Closed&quot; projects in a list ordereds by close date
+<div class="example"><div class="ngsharepoint-splist-getlistitems-page"><p>This example retrieves the list of &quot;Closed&quot; projects in a list ordered by close date
 <pre class="prettyprint linenums">
   list.getListItems({
 
@@ -262,13 +262,13 @@ retrieved from the server</p>
 
   });
 </pre>
-<p>Supose that you have a list of announcements categorized by department. A <code>Department</code> field
-is a lookup to the &quot;departments&quot; lists and do you want to query the annuncements of the &quot;RRHH&quot; deparment.</p>
-<p>If you know the ID of the RRHH item in the &quot;departments&quot; list (ex: 2), you would do this query:
+<p>Suppose that you have a list of announcements categorized by department. A <code>Department</code> field
+is a lookup to the &quot;departments&quot; lists and you want to query the announcements of the &quot;RRHH&quot; department.</p>
+<p>If you know the ID of the RRHH item in the &quot;departments&quot; list (ex: 2), you would make this query:
 <pre class="prettyprint linenums">
      announcementsList.getListItems({ $filter: "Department eq 2"}).then(...);
 </pre>
-<p>But if you doesn&#39;t knows the ID and wants to make the query by its title, you should to expand 
+<p>But if you don&#39;t know the ID and want to make the query by its title, you should expand 
 the lookup column, select the desired related column and filter the result set.
 The query will be similar to this:</p>
 <pre class="prettyprint linenums">
@@ -284,19 +284,19 @@ The query will be similar to this:</p>
 </div>
 </li>
 <li><h3 id="methods_getproperties">getProperties(query)</h3>
-<div class="getproperties"><div class="ngsharepoint-splist-getproperties-page"><p>Makes a call to the SharePoint server and collects all the list properties.
+<div class="getproperties"><div class="ngsharepoint-splist-getproperties-page"><p>Makes a call to the SharePoint server and collects all list properties.
 The current object is extended with the recovered properties. This means that when this method is executed,
 any list property is accessible directly. ex: <code>list.Title</code>, <code>list.BaseTemplate</code>, <code>list.AllowContentTypes</code>, etc.</p>
 <p>For a complete list of list properties go to Microsoft
 SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn531433.aspx#bk_ListProperties">list api reference</a></p>
 <p>SharePoint REST api only returns certain list properties that have primary values. Properties with complex structures
-like <code>ContentTypes</code>, <code>EffectiveBasePermissions</code> or <code>Fields</code> are not returned directly by the api and is necessary to extend the query
-to retrieve their values. Is possible to accomplish this with the <code>query</code> param.</p>
-</div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-getproperties-page"><p>This parameter specify which list properties will be extended and retrieved from the server.
+like <code>ContentTypes</code>, <code>EffectiveBasePermissions</code> or <code>Fields</code> are not returned directly by the api and it is necessary to extend the query
+to retrieve their values. It is possible to accomplish this with the <code>query</code> param.</p>
+</div><h5 id="methods_getproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>query</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-getproperties-page"><p>This parameter specifies which list properties will be extended and retrieved from the server.
 By default <code>Views</code> property is extended.</p>
 </div></td></tr></tbody></table><h5 id="methods_getproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getproperties-page"><p>promise with an object with all list properties</p>
 </div></td></tr></table><h4 id="methods_getproperties_example">Example</h4>
-<div class="example"><div class="ngsharepoint-splist-getproperties-page"><p>This example shows how to retrieve the list properties:
+<div class="example"><div class="ngsharepoint-splist-getproperties-page"><p>This example shows how to retrieve list properties:
 <pre class="prettyprint linenums">
 
   SharePoint.getCurrentWeb(function(web) {
@@ -318,9 +318,9 @@ By default <code>Views</code> property is extended.</p>
 </div>
 </li>
 <li><h3 id="methods_getrootfolder">getRootFolder()</h3>
-<div class="getrootfolder"><div class="ngsharepoint-splist-getrootfolder-page"><p>This method to gets a reference to the root folder of the list.</p>
-</div><h5 id="methods_getrootfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getrootfolder-page"><p>promise with a <a href="#/api/ngSharePoint.SPFolder">SPFolder</a> object corresponding
-to root folder.</p>
+<div class="getrootfolder"><div class="ngsharepoint-splist-getrootfolder-page"><p>This method gets a reference to the root folder of the list.</p>
+</div><h5 id="methods_getrootfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getrootfolder-page"><p>promise with an <a href="#/api/ngSharePoint.SPFolder">SPFolder</a> object corresponding
+to the root folder.</p>
 </div></td></tr></table><h4 id="methods_getrootfolder_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-getrootfolder-page"><p>This example retrieves the root folder of a document library to add a new file
 <pre class="prettyprint linenums">
@@ -336,10 +336,10 @@ to root folder.</p>
 </div>
 </li>
 <li><h3 id="methods_getworkflowassociationbyname">getWorkflowAssociationByName(workflowName)</h3>
-<div class="getworkflowassociationbyname"><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>This method search by name a list associated workflow and returns an object with its information.
+<div class="getworkflowassociationbyname"><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>This method searches a list associated workflow by name and returns an object with this information.
 The method only find for enabled workflows.</p>
 </div><h5 id="methods_getworkflowassociationbyname_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>workflowName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>The name of the workflow to be retrieved.</p>
-</div></td></tr></tbody></table><h5 id="methods_getworkflowassociationbyname_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>promise with a object corresponding to the associated workflow</p>
+</div></td></tr></tbody></table><h5 id="methods_getworkflowassociationbyname_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>promise with an object corresponding to the associated workflow</p>
 </div></td></tr></table><h4 id="methods_getworkflowassociationbyname_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-getworkflowassociationbyname-page"><p>This example retrieves one associated workflow
 <pre class="prettyprint linenums">
@@ -354,9 +354,9 @@ The method only find for enabled workflows.</p>
 </div>
 </li>
 <li><h3 id="methods_updateproperties">updateProperties(properties)</h3>
-<div class="updateproperties"><div class="ngsharepoint-splist-updateproperties-page"><p>With this method, is possible to modify list properties. The has an object param 
+<div class="updateproperties"><div class="ngsharepoint-splist-updateproperties-page"><p>With this method, it is possible to modify list properties. The method has an object param 
 with any property to modify and makes a call to the server API in order to modify it.</p>
-</div><h5 id="methods_updateproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>properties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-updateproperties-page"><p>A object with all the properties to modify</p>
+</div><h5 id="methods_updateproperties_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>properties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-updateproperties-page"><p>An object with all the properties to modify</p>
 </div></td></tr></tbody></table><h5 id="methods_updateproperties_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-splist-updateproperties-page"><p>promise with an object that contains all modified list properties</p>
 </div></td></tr></table><h4 id="methods_updateproperties_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-updateproperties-page"><pre class="prettyprint linenums">
