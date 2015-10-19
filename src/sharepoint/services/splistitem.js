@@ -162,7 +162,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
          * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
          * 
-         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
+         * By default, if the item is a DocumentLibrary item, this method gets the {@link ngSharePoint.SPFile File} 
          * and/or {@link ngSharePoint.SPFolder Folder} properties.
          *
          * @param {string} expandProperties Comma separed values with the properties to expand

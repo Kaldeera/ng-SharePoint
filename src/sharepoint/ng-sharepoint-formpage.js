@@ -1,4 +1,3 @@
-
 /**
  * @ngdoc overview
  * @name ngSharePointFormPage

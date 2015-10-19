@@ -7,7 +7,7 @@
  *
  * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 angular.module('ngSharePoint').factory('SPFolder', 

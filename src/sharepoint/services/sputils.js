@@ -5,7 +5,7 @@
  * @description
  * This factory provides helpers and utilities.
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
