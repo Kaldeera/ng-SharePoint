@@ -3,9 +3,9 @@
  * @name ngSharePoint.SPList
  *
  * @description
- * Represents a SPList object that you could use to access to all SharePoint list properties and data.
+ * Represents an SPList object that you can use to access to all SharePoint list properties and data.
  *
- * Is possible create new SPList objects or use a {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
+ * It is possible to create new SPList objects or use an {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
  *
  * *At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint*
  *
@@ -33,16 +33,16 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * @description
          * Instantiates a new `SPList` object that points to a specific SharePoint list. With a
-         * list instance is possible to access their properties and get list items.
+         * list instance it is possible to access their properties and get list items.
          *
          * *Note*: this method only instantiates a new `SPList` object initialized for future access to
          * list related API (get list items, folders, documents). This method doesn't retrieve any
-         * list properties or information. For retrieve list properties is necessary to call 
+         * list properties or information. To get list properties it is necessary to call 
          * {@link ngSharePoint.SPList#getProperties getProperties} method.
          *
          * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the list is located
-         * @param {string} listId|listName List id or list name.
-         * Is possible to specify "UserInfoList" to refer the system list with all site users.
+         * @param {string} listID|listName List ID or list name.
+         * It is possible to specify "UserInfoList" to refer to the system list with all site users.
          * @param {object} listProperties Properties to initialize the object
          *
          * @example
@@ -434,8 +434,8 @@ angular.module('ngSharePoint').factory('SPList',
          * With all of this information, you might construct new interfaces (views, forms, etc) that follow
          * definitions of any SharePoint list.
          *
-         * *Note*: The list of fields of the list does'nt necessaray be equal to the item content type.
-         * If you want to get the content type specific fields, you could call 'getFields' method of
+         * *Note*: The list of fields of the list isn't necessaray equal to the item content type.
+         * If you want to get the content type specific fields, you can call 'getFields' method of
          * the specific content type.
          *
          * @returns {promise} promise with an object that contains all oh the fields schema
@@ -525,9 +525,9 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * This method retrieves the list of all content types of the list.
+         * This method retrieves a list of all content types of the list.
          *
-         * If you call this method, a new `ContentType` property will be set with the array of content types.
+         * If you call this method, a new `ContentType` property will be set with an array of content types.
          * 
          * @returns {promise} promise with an array of all content types associated with the list.
          * Every element on the array is a {@link ngSharePoint.SPContentType SPContentType} object.
@@ -610,16 +610,16 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Gets a specified content type by his Id or name.
+         * Gets a specified content type by its ID or name.
          *
          * Internally, this method makes a call to {@link ngSharePoint.SPList#getContentTypes getContentTypes} method.
          *
-         * @param {string=} Id|name The Id or the name of the content type to be retrieved. If this parameter is not
+         * @param {string=} ID|name The ID or name of the content type to be retrieved. If this parameter is not
          * specified, the method returns the default content type.
          * @returns {promise} promise with the {@link ngSharePoint.SPContentType SPContentType} object.
          *
          * @example
-         * This example retrieves the associated Issue content type and logs all his field titles
+         * This example retrieves the associated Issue content type and logs all its field titles.
          * <pre>
          *   list.getContentType('Issue').then(function(issueCt) {
          *
@@ -631,7 +631,7 @@ angular.module('ngSharePoint').factory('SPList',
          * </pre>
          *
         */
-        SPListObj.prototype.getContentType = function(contentTypeId) {
+        SPListObj.prototype.getContentType = function(contentTypeID) {
 
             var self = this;
             var def = $q.defer();
@@ -642,13 +642,13 @@ angular.module('ngSharePoint').factory('SPList',
 
                 angular.forEach(self.ContentTypes, function(ct) {
 
-                    if (ct.StringId === contentTypeId) {
+                    if (ct.StringId === contentTypeID) {
 
                         contentType = ct;
 
                     }
 
-                    if (ct.Name === contentTypeId) {
+                    if (ct.Name === contentTypeID) {
 
                         contentType = ct;
                     }
@@ -1161,10 +1161,10 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Use this method to obtain the default view URL of the list.
+         * Use this method to obtain the default view URL of a list.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -1231,8 +1231,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default edit form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there isn't
+         * an REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -1299,8 +1299,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default display form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -1367,8 +1367,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default new form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *

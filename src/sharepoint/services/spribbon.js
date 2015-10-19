@@ -7,7 +7,7 @@
  *
  * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 

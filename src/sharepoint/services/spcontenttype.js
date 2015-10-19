@@ -3,12 +3,12 @@
  * @name ngSharePoint.SPContentType
  *
  * @description
- * SPContentType factory provides access to any content type (web or list). This factory allows 
- * to retrieve their associated fields. It also, allows to get and set jsLink` property
+ * SPContentType factory provides access to all content types (web or list). This factory allows 
+ * retrieval of associated fields. It also, allows to get and set `jsLink` properties.
  *
  * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
