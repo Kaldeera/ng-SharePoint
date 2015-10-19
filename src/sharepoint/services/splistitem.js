@@ -3,11 +3,11 @@
  * @name ngSharePoint.SPListItem
  *
  * @description
- * Represents a SPListItem object that you could use to insert, modify and remove items on 
+ * Represents an SPListItem object that you could use to insert, modify or remove items on 
  * SharePoint lists.
  *
- * Is possible create new SPListItem objects or use a {@link ngSharePoint.SPList SPList} object to 
- * get the SPListItems storeds in the list.
+ * It is possible to create new SPListItem objects or use an {@link ngSharePoint.SPList SPList} object to 
+ * get the SPListItems stored in the list.
  *
  * *At the moment, not all SharePoint API methods for list items are implemented in ngSharePoint*
  *
@@ -110,13 +110,13 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * List items can be retrieved from the server or created on the client side before to 
-         * be saved on the server.
+         * List items can be retrieved from the server or created on the client side before 
+         * being saved on the server.
          *
          * This method indicates if the item is new and will create an item on the server
          * or will update an existing element.
          *
-         * Any item that doesn't have Id property is considered new.
+         * Any item that doesn't have `Id` property is considered new.
          *
          * @returns {Boolean} indicating if the item is new or not.
          *
@@ -155,17 +155,17 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Retrieve a item from the server and attach it to 'this' object. To retrieve
-         * a specific item, you must specify the item Id.
+         * Retrieve an item from the server and attaches it to 'this' object. To retrieve
+         * a specific item, you must specify the item ID.
          *
          *
-         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
+         * Instead of creating a new SPListItem, specify the ID and `getProperties` then it is recommendable
          * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
          * 
          * By default, if the item is a DocumentLibrary item, this method gets the {@link ngSharePoint.SPFile File} 
          * and/or {@link ngSharePoint.SPFolder Folder} properties.
          *
-         * @param {string} expandProperties Comma separed values with the properties to expand
+         * @param {string} expandProperties Comma separated values with the properties to expand
          * in the item.
          *
          * @returns {promise} promise with all the item properties (fields) retrieved from the server
@@ -270,11 +270,12 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method performs a REST call to _api/web/list/item/FieldValuesAsHtml.
-         * Thats different to expand the property when executes getProperties.
-         * That method makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
+         * 
+         * That is different to expand the property when executes getProperties. That method 
+         * makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
          *
-         * Expanding this property does not retrieve detailed information lookup 
-         * values neither user fields, then it's necessary to call this method.
+         * if expanding this property does not retrieve detailed information lookup 
+         * values nor user fields, then it is necessary to call this method.
          *
          * @returns {promise} promise with the result of the REST query
          *
@@ -327,7 +328,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets file properties of the item and attach it to 'this' objtect.
+         * Gets the file property of the item and attaches it to 'this' objtect.
          * If the item is not a DocumentLibrary document element, the REST query returns no results.
          *
          * @returns {promise} promise with the result of the REST query
@@ -380,7 +381,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets folder properties of the item and attach it to 'this' objtect.
+         * Gets the folder property of the item and attaches it to 'this' objtect.
          * If the item is not a DocumentLibrary folder element, the REST query returns no results.
          *
          * @returns {promise} promise with the result of the REST query
@@ -434,7 +435,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets all attachments of the item. This method inititalizes a new item property
+         * Gets all attachments of the item. This method initializes a new item property
          * called AttachmentFiles with an array of all attached elements.
          *
          * @returns {promise} promise with the array of attachments.
@@ -504,7 +505,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * Attach a new file to the item.
          *
-         * **Note** This method is called internaly by the method processAttachments 
+         * **Note** This method is called internally by the method `processAttachments` 
          * when the item is saved to the server
          * and their property item.attachments.add is an array with files to attach.
          *
@@ -582,9 +583,9 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Romove an item attached file
+         * Remove an item attached file
          *
-         * **Note** This method is called internaly by the method processAttachments
+         * **Note** This method is called internally by the method `processAttachments
          * when the item is saved to the server
          * and their property item.attachments.remove is an array with files to remove.
          *
@@ -658,15 +659,15 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Process the attachments arrays (item.attachments.add and item.attachments.remove)
+         * Process the attachments array (item.attachments.add and item.attachments.remove)
          * when the item is saved to the server.
          *
-         * The attachments arrays contains the collection of files to attach to the item
+         * The attachments array contains the collection of files to attach to the item
          * and the attachments to remove.
          *
          * After the process, the attachments array will be initialized.
          *
-         * **Note** This method is called internaly by the method save.
+         * **Note** This method is called internally by the `save method.
          *
          * @returns {promise} promise with the result of the process.
          *
@@ -790,18 +791,18 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * This method saves the item to the server.
          * 
-         * If the item is new because doesn't have any Id, a new item is created.
+         * If the item is new because it doesn't have an `Id, a new item is created.
          * If the item is an existing element retrieved previously, the 
          * element is updated with the new set of properties (fields).
          *
-         * This method saves the item and process the attachments arrays.
+         * This method saves the item and processes the attachments arrays.
          *
-         * After the process, the attachments array will be initialized.
+         * After processing, the attachments array will be initialized.
          *
-         * @returns {promise} promise with and object with the item properties
+         * @returns {promise} promise with an object with the item properties
          * 
          * @example
-         * This example restrieves a task item from the server and 
+         * This example retrieves a task item from the server and 
          * changes his state to 'Closed'
          * <pre>
          *
@@ -1071,24 +1072,24 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * This method starts a new instance of a specified workflow for current item.
+         * This method starts a new instance of a specified workflow for the current item.
          * 
          * The workflow must be enabled and no other instances of the same workflow version
          * can be running.
          *
-         * The method allows to specify the initiation form data.
+         * The method allows you to specify the initiation form data.
          *
          * **NOTE**:
-         * Due to limititaions of the SharePoint REST api, there isn't any method
-         * to run a workflow. Because that, this method uses the SharePoint `workflow.asmx` web service.
+         * Due to limitations of the SharePoint REST api, there isn't a method
+         * to run a workflow. Because of that, this method uses the SharePoint `workflow.asmx` web service.
          * 
          * **Limitations**:
-         * This method uses JSOM to retrieve `FileRef` property of the item. This means
+         * This method uses JSOM to retrieve the `FileRef` property of the item. This means
          * that this method can't be executed outside of the SharePoint page context.
          *
          *
-         * @param {string} workflowName The name or the Id of the workflow that you want to run.
-         * @param {object} params Initiation workflow data. A object with all properties and 
+         * @param {string} workflowName The name or the ID of the workflow that you want to run.
+         * @param {object} params Initiation workflow data. An object with all properties and 
          * values that will be passed to the workflow.
          * @returns {promise} promise with the result of the operation.
          *
