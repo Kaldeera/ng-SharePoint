@@ -4,7 +4,7 @@
  * @name ngSharePoint.SharePoint
  *
  * @description
- * Provides top level access to SharePoint web sites api. Throw this provider is possible to access to any SharePoint web.
+ * Provides top level access to SharePoint web sites api. Through this provider it is possible to access to any SharePoint web.
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPWeb
@@ -28,7 +28,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * @methodOf ngSharePoint.SharePoint
 			 * 
 			 * @description
-			 * Returns a {@link ngSharePoint.SPWeb SPWeb} object initialized with the 
+			 * Returns an {@link ngSharePoint.SPWeb SPWeb} object initialized with the 
 			 * current SharePoint web. That means, the web context where 
 			 * this sentence is executed
 			 * 

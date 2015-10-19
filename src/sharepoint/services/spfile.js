@@ -7,7 +7,7 @@
  *
  * *At the moment, not all methods for manage file objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
