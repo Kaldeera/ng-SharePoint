@@ -146,8 +146,8 @@ module.exports = function(grunt) {
 
 
     // Default task(s).
-    grunt.registerTask('docs', ['ngdocs']);
-    grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
+    grunt.registerTask('default', ['ngdocs']);
+    grunt.registerTask('release', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
     grunt.registerTask('publishcdn', ['copy']);
     grunt.registerTask('debug', ['concat']);
 

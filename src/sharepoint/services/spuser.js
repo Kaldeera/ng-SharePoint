@@ -3,16 +3,16 @@
  * @name ngSharePoint.SPUser
  *
  * @description
- * Represents a SPUser object that is used to access to all SharePoint user properties
+ * Represents an SPUser object that is used to access all SharePoint user properties.
  * 
- * When you instantiate an SPUser object (with any user Id), the service is configured
- * with a pointer to the next REST api: `http://<site-url>/_api/web/SiteUserInfoList/getItemById(userId)`.
- * If you instantiate a SPUser object with a login name, the api is configured with the
+ * When you instantiate an SPUser object (with any user ID), the service is configured
+ * with a pointer to the next REST api: `http://<site-url>/_api/web/SiteUserInfoList/getItemById(userID)`.
+ * If you instantiate an SPUser object with a login name, the api is configured with the
  * url: `http://<site-url>/_api/web/siteusers/getByLoginName(loginName)`.
  *
  * You should take care with this difference, because the properties returned by these 
  * two API's are different. View the SharePoint documentation to get more information or 
- * make some calls to the API in a browser in order to see whitch method you prefer.
+ * make some calls to the API in a browser in order to see which method you prefer.
  *
  * *At the moment, not all SharePoint API methods for user objects are implemented in ngSharePoint*
  *
@@ -97,11 +97,11 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * 
 		 * @description
 		 * Makes a call to the SharePoint server and gets all their properties.
-		 * The current object are extended with all recovered properties. This means that when you have executed this 
+		 * The current object is extended with all recovered properties. This means that when you have executed this 
 		 * method, you will have direct access to their values. ex: `user.IsSiteAdmin`, `user.LoginName`, `user.Title`, etc.
 		 * 
 		 * For a complete list of user properties go to Microsoft 
-		 * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties api reference}
+		 * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties api reference}.
 		 *
 		 * SharePoint REST api only returns certain user properties that have primary values. Properties with complex structures
 		 * like user `Groups` are not returned directly by the api and you need to extend the query
@@ -113,7 +113,7 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * @example
 		 * <pre>
 		 * // _spContextInfo.userId contains the ID of the current loged user. We can use
-		 * // this SharePoint evirontment variable to retrieve current user information
+		 * // this SharePoint environtment variable to retrieve current user information
 		 * var currentUser = new SPUser(currentWeb, _spPageContextInfo.userId);
 		 * currentUser.getProperties().then(function() {
 	     * 
