@@ -11,5 +11,5 @@ Currently this is a beta version that has only been used in internal projects. W
 
 Resources
 ---------
- - [https://github.com/Kaldeera/ng-SharePoint/wiki](Documentation)
- - [http://kaldeera.github.io/ng-SharePoint/docs](Reference)
+ - [Documentation](https://github.com/Kaldeera/ng-SharePoint/wiki)
+ - [Reference](http://kaldeera.github.io/ng-SharePoint/docs)
