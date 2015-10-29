@@ -9,5 +9,7 @@ Current Status
 --------------
 Currently this is a beta version that has only been used in internal projects. We will continue posting improvements and more features in future releases.
 
-
-*Documentation pending*.
+Resources
+---------
+ - [Documentation](https://github.com/Kaldeera/ng-SharePoint/wiki)
+ - [Reference](http://kaldeera.github.io/ng-SharePoint/docs)
