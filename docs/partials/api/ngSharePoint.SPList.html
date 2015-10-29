@@ -30,7 +30,7 @@ It is possible to specify &quot;UserInfoList&quot; to refer to the system list w
 </div></td></tr><tr><td>listProperties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-splist-constructor-page"><p>Properties to initialize the object</p>
 </div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
 <div class="example"><div class="ngsharepoint-splist-constructor-page"><pre class="prettyprint linenums">
-var docs = SPList(web, 'Shared documents');
+var docs = new SPList(web, 'Shared documents');
 // ... do something with the 'docs' object
 docs.getListItems().then(...);
 </pre>
@@ -48,10 +48,13 @@ specified, the method returns the default content type.</p>
 <pre class="prettyprint linenums">
   list.getContentType('Issue').then(function(issueCt) {
 
-    angular.forEach(issueCt.Fields, function(field) {
-      console.log(field.Title);
-    });
+    issueCt.getFields().then(function() {
 
+         angular.forEach(issueCt.Fields, function(field) {
+             console.log(field.Title);
+         });
+
+    });
   });
 </pre>
 </div></div>

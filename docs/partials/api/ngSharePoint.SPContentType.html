@@ -7,6 +7,80 @@
 <div class="description"><div class="ngsharepoint-spcontenttype-page"><p>SPContentType factory provides access to all content types (web or list). This factory allows 
 retrieval of associated fields. It also, allows to get and set <code>jsLink</code> properties.</p>
 <p><em>At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint</em></p>
-<p><em>Documentation is pending</em></p>
 </div></div>
+<div class="member method"><h2 id="methods">Methods</h2>
+<ul class="methods"><li><h3 id="methods_constructor">constructor(parentObject, id, contentTypeProperties)</h3>
+<div class="constructor"><div class="ngsharepoint-spcontenttype-constructor-page"><p>Instantiates a new <code>SPContentType</code> object for a specific web or list content type in the server.
+It&#39;s possible to specify their properties.</p>
+</div><h5 id="methods_constructor_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>parentObject</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spcontenttype-constructor-page"><p>A valid <a href="#/api/ngSharePoint.SPWeb">SPWeb</a> or <a href="#/api/ngSharePoint.SPList">SPList</a> object where the content type is associated.</p>
+</div></td></tr><tr><td>id</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-spcontenttype-constructor-page"><p>Content type ID.</p>
+</div></td></tr><tr><td>contentTypeProperties</td><td><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spcontenttype-constructor-page"><p>Properties to initialize the object</p>
+</div></td></tr></tbody></table><h4 id="methods_constructor_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spcontenttype-constructor-page"><p>Use <a href="#/api/ngSharePoint.SPList#getcontenttype">SPList.getContentType</a> and <a href="#/api/ngSharePoint.SPList#getcontenttypes">SPList.getContentTypes</a> to 
+retrieve instances of the associated content types.</p>
+<pre class="prettyprint linenums">
+  list.getContentType('Issue').then(function(issueCt) {
+
+    issueCt.getFields().then(function() {
+
+         angular.forEach(issueCt.Fields, function(field) {
+             console.log(field.Title);
+         });
+
+    });
+  });
+</pre>
+</div></div>
+</div>
+</li>
+<li><h3 id="methods_getfields">getFields()</h3>
+<div class="getfields"><div class="ngsharepoint-spcontenttype-getfields-page"><p>This method retrieves the Fields collection of the content type and creates a new object property
+called &quot;Fields&quot; that contains a named property for every field.</p>
+<p>After a call to this method, the schema of every field is available in the content type and all
+their properties (default values, validation expressions, choice values or lookup properties).</p>
+<p>For a complete list of field properties go to Microsoft
+SharePoint <a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldProperties">field api reference</a>.
+Also, there are additional field specific properties that you can retrieve
+based on the field type:
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCalculated">FieldCalculated</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCollection">FieldCollection</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldComputed">FieldComputed</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldDateTime">FieldDateTime</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGeolocation">FieldGeolocation</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGuid">FieldGuid</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldLookup">FieldLookup and FieldUser</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiChoice">FieldMultiChoice, FieldChoice, and FieldRatingScale</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiLineText">FieldMultiLineText</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldNumber">FieldNumber and FieldCurrency</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldText">FieldText</a>,
+<a href="https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldUrl">FieldUrl</a>,</p>
+<p>With all of this information, you might construct new interfaces (views, forms, etc) that follow
+definitions of any SharePoint content type.</p>
+<p><em>Note</em>: The list of fields of the list isn&#39;t necessaray equal to the item content type.</p>
+</div><h5 id="methods_getfields_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spcontenttype-getfields-page"><p>promise with an object that contains all of the fields schema</p>
+</div></td></tr></table><h4 id="methods_getfields_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spcontenttype-getfields-page"><pre class="prettyprint linenums">
+// a pre-initialized "ct" object ...
+ct.getFields().then(function() {
+
+    // at this point, you have access to the definition of any content type field
+    console.log(ct.Fields.Title.DefaultValue);
+    // this returns '' or any defined value
+
+    console.log(ct.Fields.DueDate.Required);                 
+    // this returns true or false
+
+    console.log(ct.Fields.Editor.ReadOnlyField);
+    // this returns true
+
+    console.log(ct.Fields.ProjectStatus.Choices.results);
+    // this returns an array with available choices ['Open', 'Closed', 'Draft']
+});
+
+</pre>
+</div></div>
+</div>
+</li>
+</ul>
+</div>
 </div>
