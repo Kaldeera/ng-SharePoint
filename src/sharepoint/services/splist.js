@@ -47,7 +47,7 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * @example
          * <pre>
-         * var docs = SPList(web, 'Shared documents');
+         * var docs = new SPList(web, 'Shared documents');
          * // ... do something with the 'docs' object
          * docs.getListItems().then(...);
          * </pre>
@@ -623,10 +623,13 @@ angular.module('ngSharePoint').factory('SPList',
          * <pre>
          *   list.getContentType('Issue').then(function(issueCt) {
          *
-         *     angular.forEach(issueCt.Fields, function(field) {
-         *       console.log(field.Title);
-         *     });
+         *     issueCt.getFields().then(function() {
          *
+         *          angular.forEach(issueCt.Fields, function(field) {
+         *              console.log(field.Title);
+         *          });
+         *
+         *     });
          *   });
          * </pre>
          *
