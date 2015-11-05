@@ -919,7 +919,7 @@ angular.module('ngSharePoint').value('Constants', {
  * @name ngSharePoint.SharePoint
  *
  * @description
- * Provides top level access to SharePoint web sites api. Throw this provider is possible to access to any SharePoint web.
+ * Provides top level access to SharePoint web sites api. Through this provider it is possible to access to any SharePoint web.
  *
  * @requires ngSharePoint.SPUtils
  * @requires ngSharePoint.SPWeb
@@ -943,7 +943,7 @@ angular.module('ngSharePoint').provider('SharePoint',
 			 * @methodOf ngSharePoint.SharePoint
 			 * 
 			 * @description
-			 * Returns a {@link ngSharePoint.SPWeb SPWeb} object initialized with the 
+			 * Returns an {@link ngSharePoint.SPWeb SPWeb} object initialized with the 
 			 * current SharePoint web. That means, the web context where 
 			 * this sentence is executed
 			 * 
@@ -1229,12 +1229,11 @@ angular.module('ngSharePoint').provider('SPConfig',
  * @name ngSharePoint.SPContentType
  *
  * @description
- * SPContentType factory provides access to any content type (web or list). This factory allows 
- * to retrieve their associated fields. It also, allows to get and set jsLink` property
+ * SPContentType factory provides access to all content types (web or list). This factory allows 
+ * retrieval of associated fields. It also, allows to get and set `jsLink` properties.
  *
  * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
  */
 
 
@@ -1247,13 +1246,38 @@ angular.module('ngSharePoint').factory('SPContentType',
         'use strict';
 
 
-        // ****************************************************************************
-        // SPContentType constructor
-        //
-        // @parentObject: The object instance of the content type parent.
-        // @id: Name or Guid of the content type you want to instantiate.
-        // @data: Properties 
-        //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPContentType#constructor
+         * @constructor
+         * @methodOf ngSharePoint.SPContentType
+         *
+         * @description
+         * Instantiates a new `SPContentType` object for a specific web or list content type in the server.
+         * It's possible to specify their properties.
+         *
+         * @param {object} parentObject A valid {@link ngSharePoint.SPWeb SPWeb} or {@link ngSharePoint.SPList SPList} object where the content type is associated.
+         * @param {string} id Content type ID.
+         * @param {object} contentTypeProperties Properties to initialize the object
+         *
+         * @example
+         * Use {@link ngSharePoint.SPList#getContentType SPList.getContentType} and {@link ngSharePoint.SPList#getContentTypes SPList.getContentTypes} to 
+         * retrieve instances of the associated content types.
+         *
+         * <pre>
+         *   list.getContentType('Issue').then(function(issueCt) {
+         *
+         *     issueCt.getFields().then(function() {
+         *
+         *          angular.forEach(issueCt.Fields, function(field) {
+         *              console.log(field.Title);
+         *          });
+         *
+         *     });
+         *   });
+         * </pre>
+         *
+         */
         var SPContentTypeObj = function(parentObject, id, contentTypeProperties) {
 
             if (parentObject === void 0) {
@@ -1308,6 +1332,64 @@ angular.module('ngSharePoint').factory('SPContentType',
         //
         // @returns: Promise with the result of the REST query.
         //
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPContentType#getFields
+         * @methodOf ngSharePoint.SPContentType
+         *
+         * @description
+         * This method retrieves the Fields collection of the content type and creates a new object property
+         * called "Fields" that contains a named property for every field.
+         *
+         * After a call to this method, the schema of every field is available in the content type and all
+         * their properties (default values, validation expressions, choice values or lookup properties).
+         *
+         * For a complete list of field properties go to Microsoft
+         * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldProperties field api reference}.
+         * Also, there are additional field specific properties that you can retrieve
+         * based on the field type:
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCalculated FieldCalculated},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldCollection FieldCollection},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldComputed FieldComputed},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldDateTime FieldDateTime},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGeolocation FieldGeolocation},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldGuid FieldGuid},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldLookup FieldLookup and FieldUser},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiChoice FieldMultiChoice, FieldChoice, and FieldRatingScale},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldMultiLineText FieldMultiLineText},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldNumber FieldNumber and FieldCurrency},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldText FieldText},
+         * {@link https://msdn.microsoft.com/EN-US/library/dn600182.aspx#bk_FieldUrl FieldUrl},
+         *
+         * With all of this information, you might construct new interfaces (views, forms, etc) that follow
+         * definitions of any SharePoint content type.
+         *
+         * *Note*: The list of fields of the list isn't necessaray equal to the item content type.
+         *
+         * @returns {promise} promise with an object that contains all of the fields schema
+         *
+         * @example
+         * <pre>
+         *   // a pre-initialized "ct" object ...
+         *   ct.getFields().then(function() {
+         *
+         *       // at this point, you have access to the definition of any content type field
+         *       console.log(ct.Fields.Title.DefaultValue);
+         *       // this returns '' or any defined value
+         *
+         *       console.log(ct.Fields.DueDate.Required);                 
+         *       // this returns true or false
+         *
+         *       console.log(ct.Fields.Editor.ReadOnlyField);
+         *       // this returns true
+         *
+         *       console.log(ct.Fields.ProjectStatus.Choices.results);
+         *       // this returns an array with available choices ['Open', 'Closed', 'Draft']
+         *   });
+         *
+         * </pre>
+         *
+         */
         SPContentTypeObj.prototype.getFields = function() {
 
             var self = this;
@@ -1363,7 +1445,10 @@ angular.module('ngSharePoint').factory('SPContentType',
         }; // getFields
 
 
-
+        /**
+        * Modify the ´jsLinkUrl` property of the content type.
+        * *Internal use*
+        */
         SPContentTypeObj.prototype.setJSLink = function(jsLinkUrl) {
 
             var self = this;
@@ -1415,6 +1500,10 @@ angular.module('ngSharePoint').factory('SPContentType',
 
 
 
+        /**
+        * Retrieves the ´jsLinkUrl` property of the content type.
+        * *Internal use*
+        */
         SPContentTypeObj.prototype.getJSLink = function() {
 
             var self = this;
@@ -2134,7 +2223,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
  *
  * *At the moment, not all methods for manage file objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
@@ -2147,13 +2236,26 @@ angular.module('ngSharePoint').factory('SPFile',
 		'use strict';
 
 
-		// ****************************************************************************
-		// SPFile constructor
-		//
-		// @web: SPWeb instance that contains the file in SharePoint.
-		// @path: Name the file you want to instantiate.
-		//
-		var SPFileObj = function(web, path, fileProperties) {
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFile#constructor
+         * @constructor
+         * @methodOf ngSharePoint.SPFile
+         *
+         * @description
+         * Instantiates a new `SPFile` object for a specific SharePoint file in the server. It's possible
+         * to specify their properties.
+         *
+         * By default, in document and picture libraries, when you call {@link ngSharePoint.SPList#getListItems getListItems} or 
+         * {@link ngSharePoint.SPList#getItemById getItemById}, by default a ´item.File´ property are created and contains
+         * file information.
+         *
+         * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the file is stored.
+         * @param {string} path The server relative path of the file.
+         * @param {object} fileProperties Properties to initialize the object
+         *
+         */
+ 		var SPFileObj = function(web, path, fileProperties) {
 
 			if (web === void 0) {
 				throw '@web parameter not specified in SPFile constructor.';
@@ -2811,7 +2913,7 @@ angular.module('ngSharePoint').factory('SPFile',
  *
  * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 angular.module('ngSharePoint').factory('SPFolder', 
@@ -3370,7 +3472,7 @@ angular.module('ngSharePoint').factory('SPFolder',
  * @name ngSharePoint.SPGroup
  *
  * @description
- * SPGroup factory provides access to any SharePoint group properties and allows to retrieve their users.
+ * SPGroup factory provides access to all SharePoint group properties and allows retrieval of users.
  *
  * *At the moment, not all SharePoint API methods for group objects are implemented in ngSharePoint*
  *
@@ -3393,7 +3495,7 @@ angular.module('ngSharePoint').factory('SPGroup',
 		 * @methodOf ngSharePoint.SPGroup
 		 * 
 		 * @description
-		 * Instantiates a new SPGroup object that points to a specific SharePoint group and allows
+		 * Initializes a new SPGroup object that points to a specific SharePoint group and allows
 		 * retrieval of their properties and users
 		 * 
 		 * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object
@@ -3615,9 +3717,9 @@ angular.module('ngSharePoint').factory('SPGroup',
  * @name ngSharePoint.SPList
  *
  * @description
- * Represents a SPList object that you could use to access to all SharePoint list properties and data.
+ * Represents an SPList object that you can use to access to all SharePoint list properties and data.
  *
- * Is possible create new SPList objects or use a {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
+ * It is possible to create new SPList objects or use an {@link ngSharePoint.SPWeb SPWeb} object to get SPList object instances.
  *
  * *At the moment, not all SharePoint API methods for list objects are implemented in ngSharePoint*
  *
@@ -3645,21 +3747,21 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * @description
          * Instantiates a new `SPList` object that points to a specific SharePoint list. With a
-         * list instance is possible to access their properties and get list items.
+         * list instance it is possible to access their properties and get list items.
          *
          * *Note*: this method only instantiates a new `SPList` object initialized for future access to
          * list related API (get list items, folders, documents). This method doesn't retrieve any
-         * list properties or information. For retrieve list properties is necessary to call 
+         * list properties or information. To get list properties it is necessary to call 
          * {@link ngSharePoint.SPList#getProperties getProperties} method.
          *
          * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the list is located
-         * @param {string} listId|listName List id or list name.
-         * Is possible to specify "UserInfoList" to refer the system list with all site users.
+         * @param {string} listID|listName List ID or list name.
+         * It is possible to specify "UserInfoList" to refer to the system list with all site users.
          * @param {object} listProperties Properties to initialize the object
          *
          * @example
          * <pre>
-         * var docs = SPList(web, 'Shared documents');
+         * var docs = new SPList(web, 'Shared documents');
          * // ... do something with the 'docs' object
          * docs.getListItems().then(...);
          * </pre>
@@ -3753,7 +3855,7 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Makes a call to the SharePoint server and collects all the list properties.
+         * Makes a call to the SharePoint server and collects all list properties.
          * The current object is extended with the recovered properties. This means that when this method is executed,
          * any list property is accessible directly. ex: `list.Title`, `list.BaseTemplate`, `list.AllowContentTypes`, etc.
          *
@@ -3761,16 +3863,16 @@ angular.module('ngSharePoint').factory('SPList',
          * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531433.aspx#bk_ListProperties list api reference}
          *
          * SharePoint REST api only returns certain list properties that have primary values. Properties with complex structures
-         * like `ContentTypes`, `EffectiveBasePermissions` or `Fields` are not returned directly by the api and is necessary to extend the query
-         * to retrieve their values. Is possible to accomplish this with the `query` param.
+         * like `ContentTypes`, `EffectiveBasePermissions` or `Fields` are not returned directly by the api and it is necessary to extend the query
+         * to retrieve their values. It is possible to accomplish this with the `query` param.
          *
-         * @param {object} query This parameter specify which list properties will be extended and retrieved from the server.
+         * @param {object} query This parameter specifies which list properties will be extended and retrieved from the server.
          * By default `Views` property is extended.
          *
          * @returns {promise} promise with an object with all list properties
          *
          * @example
-         * This example shows how to retrieve the list properties:
+         * This example shows how to retrieve list properties:
          * <pre>
          *
          *   SharePoint.getCurrentWeb(function(web) {
@@ -3914,10 +4016,10 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * With this method, is possible to modify list properties. The has an object param 
+         * With this method, it is possible to modify list properties. The method has an object param 
          * with any property to modify and makes a call to the server API in order to modify it.
          *
-         * @param {object} properties A object with all the properties to modify
+         * @param {object} properties An object with all the properties to modify
          * @returns {promise} promise with an object that contains all modified list properties
          *
          * @example
@@ -4046,11 +4148,11 @@ angular.module('ngSharePoint').factory('SPList',
          * With all of this information, you might construct new interfaces (views, forms, etc) that follow
          * definitions of any SharePoint list.
          *
-         * *Note*: The list of fields of the list does'nt necessaray be equal to the item content type.
-         * If you want to get the content type specific fields, you could call 'getFields' method of
+         * *Note*: The list of fields of the list isn't necessaray equal to the item content type.
+         * If you want to get the content type specific fields, you can call `getFields method of
          * the specific content type.
          *
-         * @returns {promise} promise with an object that contains all oh the fields schema
+         * @returns {promise} promise with an object that contains all of the fields schema
          *
          * @example
          * <pre>
@@ -4068,7 +4170,7 @@ angular.module('ngSharePoint').factory('SPList',
          *       // this returns true
          *
          *       console.log(list.Fields.ProjectStatus.Choices.results);
-         *       // this returns on array with available choices ['Open', 'Closed', 'Draft']
+         *       // this returns an array with available choices ['Open', 'Closed', 'Draft']
          *   });
          *
          * </pre>
@@ -4137,9 +4239,9 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * This method retrieves the list of all content types of the list.
+         * This method retrieves a list of all content types of the list.
          *
-         * If you call this method, a new `ContentType` property will be set with the array of content types.
+         * If you call this method, a new `ContentType` property will be set with an array of content types.
          * 
          * @returns {promise} promise with an array of all content types associated with the list.
          * Every element on the array is a {@link ngSharePoint.SPContentType SPContentType} object.
@@ -4222,28 +4324,31 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Gets a specified content type by his Id or name.
+         * Gets a specified content type by its ID or name.
          *
          * Internally, this method makes a call to {@link ngSharePoint.SPList#getContentTypes getContentTypes} method.
          *
-         * @param {string=} Id|name The Id or the name of the content type to be retrieved. If this parameter is not
+         * @param {string=} ID|name The ID or name of the content type to be retrieved. If this parameter is not
          * specified, the method returns the default content type.
          * @returns {promise} promise with the {@link ngSharePoint.SPContentType SPContentType} object.
          *
          * @example
-         * This example retrieves the associated Issue content type and logs all his field titles
+         * This example retrieves the associated Issue content type and logs all its field titles.
          * <pre>
          *   list.getContentType('Issue').then(function(issueCt) {
          *
-         *     angular.forEach(issueCt.Fields, function(field) {
-         *       console.log(field.Title);
-         *     });
+         *     issueCt.getFields().then(function() {
          *
+         *          angular.forEach(issueCt.Fields, function(field) {
+         *              console.log(field.Title);
+         *          });
+         *
+         *     });
          *   });
          * </pre>
          *
         */
-        SPListObj.prototype.getContentType = function(contentTypeId) {
+        SPListObj.prototype.getContentType = function(contentTypeID) {
 
             var self = this;
             var def = $q.defer();
@@ -4254,13 +4359,13 @@ angular.module('ngSharePoint').factory('SPList',
 
                 angular.forEach(self.ContentTypes, function(ct) {
 
-                    if (ct.StringId === contentTypeId) {
+                    if (ct.StringId === contentTypeID) {
 
                         contentType = ct;
 
                     }
 
-                    if (ct.Name === contentTypeId) {
+                    if (ct.Name === contentTypeID) {
 
                         contentType = ct;
                     }
@@ -4286,10 +4391,10 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * This method to gets a reference to the root folder of the list.
+         * This method gets a reference to the root folder of the list.
          *
-         * @returns {promise} promise with a {@link ngSharePoint.SPFolder SPFolder} object corresponding
-         * to root folder.
+         * @returns {promise} promise with an {@link ngSharePoint.SPFolder SPFolder} object corresponding
+         * to the root folder.
          *
          * @example
          * This example retrieves the root folder of a document library to add a new file
@@ -4360,11 +4465,11 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * This method search by name a list associated workflow and returns an object with its information.
+         * This method searches a list associated workflow by name and returns an object with this information.
          * The method only find for enabled workflows.
          *
          * @param {string} workflowName The name of the workflow to be retrieved.
-         * @returns {promise} promise with a object corresponding to the associated workflow
+         * @returns {promise} promise with an object corresponding to the associated workflow
          *
          * @example
          * This example retrieves one associated workflow
@@ -4432,44 +4537,44 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Use this method to retrieve a collection of items of the list.
+         * Use this method to retrieve a collection of items from the list.
          *
-         * The method have a `query` parameter that allows you to specify the selection, filters
+         * The method has a `query` parameter that allows you to specify the selection, filters
          * and order options for the data you request from the server.
          * All valid OData options implemented by the SharePoint REST api are accepted.
          *
          * Go to {@link https://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx SharePoint documentation} for 
-         * more information about the OData query oprations in SharePoint REST api
+         * more information about the OData query operations in SharePoint REST api.
          *
-         * By default, this method expands the next properties:
+         * By default, this method expands the following properties:
          * * ContentType
          * * File
          * * File/ParentFolder
          * * Folder
          * * Folder/ParentFolder
          * 
-         * @param {object=} query A object with all the query options used to retrieve list items.
+         * @param {object=} query An object with all query options used to retrieve list items.
          *
-         * It's possible to specify different query options:
+         * It is possible to specify different query options:
          * <pre>
          *     var query = {
          *          // Use the $filter query option to select
          *          // which items to return
          *          $filter: "filter expression",
          *          // Use $top to indicate the number of items
-         *          // to be retrieved (for pagination prouposes)
+         *          // to be retrieved (for pagination purposes)
          *          $top: nn,
          *          // User $orderby to specify how to sort the
          *          // items in your query return set
          *          $orderby: "field1 asc,field2 desc,...",
-         *          // to gets additional information of other
+         *          // to get additional information of other
          *          // lookup fields
          *          $expand: "field1,field2,..."
          *     };
          *     someList.getListItems(query).then(...);
          * </pre>
-         * @param {boolean=} resetPagination With this param you can specify if you want to continue the 
-         * previously query and retrieve the next set of items or wants to reset the counter and start a completly new query.
+         * @param {boolean=} resetPagination With this param you can specify if you want to continue with the 
+         * previous query and retrieve the next set of items or want to reset the counter and start a completely new query.
          * 
          * By default SharePoint returns sets of 100 items from the server. You can modify this value with the param `$top`
          * 
@@ -4477,7 +4582,7 @@ angular.module('ngSharePoint').factory('SPList',
          * retrieved from the server
          *
          * @example
-         * This example retrieves the list of "Closed" projects in a list ordereds by close date
+         * This example retrieves the list of "Closed" projects in a list ordered by close date
          * <pre>
          *   list.getListItems({
          *
@@ -4491,15 +4596,15 @@ angular.module('ngSharePoint').factory('SPList',
          *   });
          * </pre>
          *
-         * Supose that you have a list of announcements categorized by department. A `Department` field
-         * is a lookup to the "departments" lists and do you want to query the annuncements of the "RRHH" deparment.
+         * Suppose that you have a list of announcements categorized by department. A `Department` field
+         * is a lookup to the "departments" lists and you want to query the announcements of the "RRHH" department.
          *
-         * If you know the ID of the RRHH item in the "departments" list (ex: 2), you would do this query:
+         * If you know the ID of the RRHH item in the "departments" list (ex: 2), you would make this query:
          * <pre>
          *      announcementsList.getListItems({ $filter: "Department eq 2"}).then(...);
          * </pre>
          *
-         * But if you doesn't knows the ID and wants to make the query by its title, you should to expand 
+         * But if you don't know the ID and want to make the query by its title, you should expand 
          * the lookup column, select the desired related column and filter the result set.
          * The query will be similar to this:
          *
@@ -4610,23 +4715,23 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * This method gets a specified list item.
          *
-         * @param {integer} Id The Id of the item to be retrieved.
-         * @param {string} expandProperties Comma separed values with the properties to expand
+         * @param {integer} ID The ID of the item to be retrieved.
+         * @param {string} expandProperties Comma separated values with the properties to expand
          * in the REST query
-         * @returns {promise} promise with a object of type {@link ngSharePoint.SPListItem SPListItem} corresponding
+         * @returns {promise} promise with an object of type {@link ngSharePoint.SPListItem SPListItem} corresponding
          * with the element retrieved
          *
          * @example
          * This example retrieves the item specified by the query string over the contextual list.
          * This assumes that this code is executed in a form page
          * <pre>
-         *      var itemId = utils.getQueryStringParamByName('ID');
+         *      var itemID = utils.getQueryStringParamByName('ID');
          *
          *      SharePoint.getCurrentWeb().then(function(web) {
          *
          *          web.getList(_spPageContextInfo.pageListId).then(function(list) {
          *
-         *              list.getItemById(itemId).then(function(item) {
+         *              list.getItemById(itemID).then(function(item) {
          *
          *                  $scope.currentItem = item;
          *
@@ -4638,7 +4743,7 @@ angular.module('ngSharePoint').factory('SPList',
          * </pre>
          *
         */
-        SPListObj.prototype.getItemById = function(id, expandProperties) {
+        SPListObj.prototype.getItemById = function(ID, expandProperties) {
 
             var self = this;
             var def = $q.defer();
@@ -4650,7 +4755,7 @@ angular.module('ngSharePoint').factory('SPList',
 
             executor.executeAsync({
 
-                url: self.apiUrl + '/getItemById(' + id + ')' + utils.parseQuery(query),
+                url: self.apiUrl + '/getItemById(' + ID + ')' + utils.parseQuery(query),
                 method: 'GET',
                 headers: {
                     "Accept": "application/json; odata=verbose"
@@ -4689,7 +4794,7 @@ angular.module('ngSharePoint').factory('SPList',
 
             return def.promise;
 
-        }; // getItemById
+        }; // getItemByID
 
 
 
@@ -4702,33 +4807,33 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * This method gets a specified related item property from the list.
          *
-         * @param {integer} Id The Id of the item.
-         * @param {string} query The REST query after '.../getItemById(<id>)/'
+         * @param {integer} ID The ID of the item.
+         * @param {string} query The REST query after '.../getItemById(<ID>)/'
          *
          * @returns {promise} promise with the value of the property. Can be a primary value like a string or
          * an integer or can be a complex value like a item. It depends of the query specified.
          *
          * @example
-         * With this method you can obtain related information of a item. You can specify simple expressions
-         * or other more sophisticated. The next examples show how you can use it.
+         * With this method you can obtain the related information of an item. You can specify simple expressions
+         * or other more sophisticated expressions. The following examples show how you can use it.
          *
          * <pre>
          *   // This returns the name of the author (string)
-         *   list.getItemProperty(id, 'Created/Name').then(...);        
+         *   list.getItemProperty(ID, 'Created/Name').then(...);        
          *
          *   // This returns the title of the department (string)
-         *   list.getItemProperty(id, 'Department/Title').then(...)     
+         *   list.getItemProperty(ID, 'Department/Title').then(...)     
          *
          *   // This returns the manager of the department (item)
-         *   list.getItemProperty(id, 'Department/Manager').then(...)   
+         *   list.getItemProperty(ID, 'Department/Manager').then(...)   
          *
-         *   // This returns the EMail of the manager's department of the 
-         *   // user who was created the item
-         *   list.getItemProperty(id, 'Created/Department/Manager/EMail');  
+         *   // This returns the EMail of the manager's department for the 
+         *   // user who has created the item
+         *   list.getItemProperty(ID, 'Created/Department/Manager/EMail');  
          * </pre>
          *
         */
-        SPListObj.prototype.getItemProperty = function(id, query) {
+        SPListObj.prototype.getItemProperty = function(ID, query) {
 
             var self = this;
             var def = $q.defer();
@@ -4736,7 +4841,7 @@ angular.module('ngSharePoint').factory('SPList',
 
             executor.executeAsync({
 
-                url: self.apiUrl + '/getItemById(' + id + ')/' + query.ltrim('/'),
+                url: self.apiUrl + '/getItemById(' + ID + ')/' + query.ltrim('/'),
                 method: 'GET',
                 headers: {
                     "Accept": "application/json; odata=verbose"
@@ -4773,10 +4878,10 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * Use this method to obtain the default view URL of the list.
+         * Use this method to obtain the default view URL of a list.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -4843,8 +4948,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default edit form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there isn't
+         * an REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -4911,8 +5016,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default display form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -4979,8 +5084,8 @@ angular.module('ngSharePoint').factory('SPList',
          * @description
          * Use this method to obtain the URL of the default new form.
          *
-         * **Note** This method uses JSOM for retrieve this URL because there aren't
-         * any RES API call that returns this value.
+         * **Note** This method uses JSOM to retrieve this URL because there aren't
+         * any REST API call that returns this value.
          *
          * @returns {promise} promise with the url.
          *
@@ -5268,11 +5373,11 @@ angular.module('ngSharePoint').factory('SPList',
  * @name ngSharePoint.SPListItem
  *
  * @description
- * Represents a SPListItem object that you could use to insert, modify and remove items on 
+ * Represents an SPListItem object that you could use to insert, modify or remove items on 
  * SharePoint lists.
  *
- * Is possible create new SPListItem objects or use a {@link ngSharePoint.SPList SPList} object to 
- * get the SPListItems storeds in the list.
+ * It is possible to create new SPListItem objects or use an {@link ngSharePoint.SPList SPList} object to 
+ * get the SPListItems stored in the list.
  *
  * *At the moment, not all SharePoint API methods for list items are implemented in ngSharePoint*
  *
@@ -5375,13 +5480,13 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * List items can be retrieved from the server or created on the client side before to 
-         * be saved on the server.
+         * List items can be retrieved from the server or created on the client side before 
+         * being saved on the server.
          *
          * This method indicates if the item is new and will create an item on the server
          * or will update an existing element.
          *
-         * Any item that doesn't have Id property is considered new.
+         * Any item that doesn't have `Id` property is considered new.
          *
          * @returns {Boolean} indicating if the item is new or not.
          *
@@ -5420,17 +5525,17 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Retrieve a item from the server and attach it to 'this' object. To retrieve
-         * a specific item, you must specify the item Id.
+         * Retrieve an item from the server and attaches it to 'this' object. To retrieve
+         * a specific item, you must specify the item ID.
          *
          *
-         * Instead of create a new SPListItem, specifiy the Id and `getProperties` is recomendable
+         * Instead of creating a new SPListItem, specify the ID and `getProperties` then it is recommendable
          * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
          * 
-         * If the item is a DocumentLibrary item, also gets the {@link ngSharePoint.SPFile File} 
+         * By default, if the item is a DocumentLibrary item, this method gets the {@link ngSharePoint.SPFile File} 
          * and/or {@link ngSharePoint.SPFolder Folder} properties.
          *
-         * @param {string} expandProperties Comma separed values with the properties to expand
+         * @param {string} expandProperties Comma separated values with the properties to expand
          * in the item.
          *
          * @returns {promise} promise with all the item properties (fields) retrieved from the server
@@ -5535,11 +5640,12 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method performs a REST call to _api/web/list/item/FieldValuesAsHtml.
-         * Thats different to expand the property when executes getProperties.
-         * That method makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
+         * 
+         * That is different to expand the property when executes getProperties. That method 
+         * makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
          *
-         * Expanding this property does not retrieve detailed information lookup 
-         * values neither user fields, then it's necessary to call this method.
+         * if expanding this property does not retrieve detailed information lookup 
+         * values nor user fields, then it is necessary to call this method.
          *
          * @returns {promise} promise with the result of the REST query
          *
@@ -5592,7 +5698,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets file properties of the item and attach it to 'this' objtect.
+         * Gets the file property of the item and attaches it to 'this' objtect.
          * If the item is not a DocumentLibrary document element, the REST query returns no results.
          *
          * @returns {promise} promise with the result of the REST query
@@ -5645,7 +5751,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets folder properties of the item and attach it to 'this' objtect.
+         * Gets the folder property of the item and attaches it to 'this' objtect.
          * If the item is not a DocumentLibrary folder element, the REST query returns no results.
          *
          * @returns {promise} promise with the result of the REST query
@@ -5699,7 +5805,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Gets all attachments of the item. This method inititalizes a new item property
+         * Gets all attachments of the item. This method initializes a new item property
          * called AttachmentFiles with an array of all attached elements.
          *
          * @returns {promise} promise with the array of attachments.
@@ -5769,7 +5875,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * Attach a new file to the item.
          *
-         * **Note** This method is called internaly by the method processAttachments 
+         * **Note** This method is called internally by the method `processAttachments` 
          * when the item is saved to the server
          * and their property item.attachments.add is an array with files to attach.
          *
@@ -5847,9 +5953,9 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Romove an item attached file
+         * Remove an item attached file
          *
-         * **Note** This method is called internaly by the method processAttachments
+         * **Note** This method is called internally by the method `processAttachments
          * when the item is saved to the server
          * and their property item.attachments.remove is an array with files to remove.
          *
@@ -5923,15 +6029,15 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * Process the attachments arrays (item.attachments.add and item.attachments.remove)
+         * Process the attachments array (item.attachments.add and item.attachments.remove)
          * when the item is saved to the server.
          *
-         * The attachments arrays contains the collection of files to attach to the item
+         * The attachments array contains the collection of files to attach to the item
          * and the attachments to remove.
          *
          * After the process, the attachments array will be initialized.
          *
-         * **Note** This method is called internaly by the method save.
+         * **Note** This method is called internally by the `save method.
          *
          * @returns {promise} promise with the result of the process.
          *
@@ -6055,18 +6161,18 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * This method saves the item to the server.
          * 
-         * If the item is new because doesn't have any Id, a new item is created.
+         * If the item is new because it doesn't have an `Id, a new item is created.
          * If the item is an existing element retrieved previously, the 
          * element is updated with the new set of properties (fields).
          *
-         * This method saves the item and process the attachments arrays.
+         * This method saves the item and processes the attachments arrays.
          *
-         * After the process, the attachments array will be initialized.
+         * After processing, the attachments array will be initialized.
          *
-         * @returns {promise} promise with and object with the item properties
+         * @returns {promise} promise with an object with the item properties
          * 
          * @example
-         * This example restrieves a task item from the server and 
+         * This example retrieves a task item from the server and 
          * changes his state to 'Closed'
          * <pre>
          *
@@ -6268,10 +6374,11 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * This method removes the item from the server.
          * 
+         * @param {Boolean} permanent Indicates if the item is recycled or removed permanently.
          * @returns {promise} promise with the result of the REST query.
          *
          */
-        SPListItemObj.prototype.remove = function() {
+        SPListItemObj.prototype.remove = function(permanent) {
 
             var self = this;
             var def = $q.defer();
@@ -6281,9 +6388,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             // Set the headers for the REST API call.
             // ----------------------------------------------------------------------------
             var headers = {
-                "Accept": "application/json; odata=verbose",
-                "X-HTTP-Method": "DELETE",
-                "IF-MATCH": "*"
+                "Accept": "application/json; odata=verbose"
             };
 
             var requestDigest = document.getElementById('__REQUESTDIGEST');
@@ -6294,12 +6399,20 @@ angular.module('ngSharePoint').factory('SPListItem',
                 headers['X-RequestDigest'] = requestDigest.value;
             }
 
+            var url = self.getAPIUrl() + '/recycle';
+
+            if (permanent === true) {
+                url = url.rtrim('/recycle');
+                headers['X-HTTP-Method'] = 'DELETE';
+                headers['IF-MATCH'] = '*';
+            }
+
 
             // Make the call.
             // ----------------------------------------------------------------------------
             executor.executeAsync({
 
-                url: self.getAPIUrl(),
+                url: url,
                 method: 'POST',
                 headers: headers,
 
@@ -6336,24 +6449,24 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * This method starts a new instance of a specified workflow for current item.
+         * This method starts a new instance of a specified workflow for the current item.
          * 
          * The workflow must be enabled and no other instances of the same workflow version
          * can be running.
          *
-         * The method allows to specify the initiation form data.
+         * The method allows you to specify the initiation form data.
          *
          * **NOTE**:
-         * Due to limititaions of the SharePoint REST api, there isn't any method
-         * to run a workflow. Because that, this method uses the SharePoint `workflow.asmx` web service.
+         * Due to limitations of the SharePoint REST api, there isn't a method
+         * to run a workflow. Because of that, this method uses the SharePoint `workflow.asmx` web service.
          * 
          * **Limitations**:
-         * This method uses JSOM to retrieve `FileRef` property of the item. This means
+         * This method uses JSOM to retrieve the `FileRef` property of the item. This means
          * that this method can't be executed outside of the SharePoint page context.
          *
          *
-         * @param {string} workflowName The name or the Id of the workflow that you want to run.
-         * @param {object} params Initiation workflow data. A object with all properties and 
+         * @param {string} workflowName The name or the ID of the workflow that you want to run.
+         * @param {object} params Initiation workflow data. An object with all properties and 
          * values that will be passed to the workflow.
          * @returns {promise} promise with the result of the operation.
          *
@@ -6541,7 +6654,7 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
  *
  * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
@@ -7213,16 +7326,16 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
  * @name ngSharePoint.SPUser
  *
  * @description
- * Represents a SPUser object that is used to access to all SharePoint user properties
+ * Represents an SPUser object that is used to access all SharePoint user properties.
  * 
- * When you instantiate an SPUser object (with any user Id), the service is configured
- * with a pointer to the next REST api: `http://<site-url>/_api/web/SiteUserInfoList/getItemById(userId)`.
- * If you instantiate a SPUser object with a login name, the api is configured with the
+ * When you instantiate an SPUser object (with any user ID), the service is configured
+ * with a pointer to the next REST api: `http://<site-url>/_api/web/SiteUserInfoList/getItemById(userID)`.
+ * If you instantiate an SPUser object with a login name, the api is configured with the
  * url: `http://<site-url>/_api/web/siteusers/getByLoginName(loginName)`.
  *
  * You should take care with this difference, because the properties returned by these 
  * two API's are different. View the SharePoint documentation to get more information or 
- * make some calls to the API in a browser in order to see whitch method you prefer.
+ * make some calls to the API in a browser in order to see which method you prefer.
  *
  * *At the moment, not all SharePoint API methods for user objects are implemented in ngSharePoint*
  *
@@ -7307,11 +7420,11 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * 
 		 * @description
 		 * Makes a call to the SharePoint server and gets all their properties.
-		 * The current object are extended with all recovered properties. This means that when you have executed this 
+		 * The current object is extended with all recovered properties. This means that when you have executed this 
 		 * method, you will have direct access to their values. ex: `user.IsSiteAdmin`, `user.LoginName`, `user.Title`, etc.
 		 * 
 		 * For a complete list of user properties go to Microsoft 
-		 * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties api reference}
+		 * SharePoint {@link https://msdn.microsoft.com/EN-US/library/dn531432.aspx#bk_UserProperties api reference}.
 		 *
 		 * SharePoint REST api only returns certain user properties that have primary values. Properties with complex structures
 		 * like user `Groups` are not returned directly by the api and you need to extend the query
@@ -7323,7 +7436,7 @@ angular.module('ngSharePoint').factory('SPUser',
 		 * @example
 		 * <pre>
 		 * // _spContextInfo.userId contains the ID of the current loged user. We can use
-		 * // this SharePoint evirontment variable to retrieve current user information
+		 * // this SharePoint environtment variable to retrieve current user information
 		 * var currentUser = new SPUser(currentWeb, _spPageContextInfo.userId);
 		 * currentUser.getProperties().then(function() {
 	     * 
@@ -7387,7 +7500,7 @@ angular.module('ngSharePoint').factory('SPUser',
  * @description
  * This factory provides helpers and utilities.
  *
- * *Documentation are pending*
+ * *Documentation is pending*
  */
 
 
@@ -7894,16 +8007,16 @@ angular.module('ngSharePoint').factory('SPUtils',
  * @name ngSharePoint.SPWeb
  *
  * @description
- * Represents a SPWeb object that are used to access to all SharePoint web site properties, lists and users.
+ * Represents an SPWeb object that is used to access to all SharePoint web site properties, lists and users.
  * 
- * When you instantiates a SPWeb object (with any SharePoint site url), the service is configured
+ * When you instantiate an SPWeb object (with any SharePoint site url), the service is configured
  * with a pointer to a REST API of the site `http://<site url>/_api/web`.
  *
  * You musn't instantiate this object directly. You must use {@link ngSharePoint.SharePoint SharePoint} service
  * to get SPWeb instances.
  *
- * If you instantiates a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access all
- * web properties or get lists, and users through his methods
+ * If you instantiate a new SPWeb object, you have an object that points to the SharePoint web api. Then, you can access to all
+ * web properties or get lists, and users through its methods.
  *
  * *At the moment, not all SharePoint API methods for web objects are implemented in ngSharePoint*
  *
@@ -7933,7 +8046,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * @description
 		 * Instantiates a new SPWeb object that points to a specific SharePoint site.
 		 * 
-		 * @param {sring=} url|webId url or web id. If this parameter is not provided, the object is initialized with the current web
+		 * @param {sring=} url|webID url or web ID. If this parameter is not provided, the object is initialized with the current web
 		 * @returns {promise} with the SPWeb object correctly instantiated
 		 * 
 		 * @example
@@ -8016,18 +8129,18 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * @methodOf ngSharePoint.SPWeb
 		 * 
 		 * @description
-		 * Makes a call to the SharePoint server and gets all the web properties.
-		 * The current object is extended with all recovered properties. This means that when you have executed this 
+		 * Makes a call to the SharePoint server and retrieves all web properties.
+		 * The current object is extended with all retrieved properties. This means that when you have executed this 
 		 * method, you will have direct access to these values. ex: `web.Title`, `web.Language`, etc.
 		 * 
 		 * For a complete list of web properties go to Microsoft 
 		 * SharePoint {@link https://msdn.microsoft.com/en-us/library/dn499819.aspx#bk_WebProperties api reference}
 		 *
 		 * SharePoint REST api only returns certain web properties that have primary values. Properties with complex structures
-		 * like `SiteGroups`, `Lists` or `ContentTypes` are not returned directly by the api and you need to extend the query
+		 * like `SiteGroups`, `Lists` or `ContentTypes` are not returned directly by the api and you will need to extend the query
 		 * to retrieve their values. You can accomplish this with the `query` param.
 		 *
-		 * @param {object} query With this parameter you can specify which web properties you want to extend and to retrieve from server.
+		 * @param {object} query With this parameter you can specify which web properties you want to extend and to retrieve from the server.
 		 * By default `RegionalSettings/TimeZone` properties are extended.
 		 *
 		 * @returns {promise} promise with an object with all web properties
@@ -8129,10 +8242,10 @@ angular.module('ngSharePoint').factory('SPWeb',
 	     * @methodOf ngSharePoint.SPWeb
 	     *
 	     * @description
-	     * Retrieves all SharePoint lists and document libraries from the server and returns one
-	     * array of {@link ngSharePoint.SPList SPList} objects
+	     * Retrieves all SharePoint lists and document libraries from the server and returns an
+	     * array of {@link ngSharePoint.SPList SPList} objects.
 	     *
-	     * @returns {promise} promise with an array of {@link ngSharePoint.SPList SPList} objects  
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPList SPList} objects.
 	     *
 		 * @example
 		 * <pre>
@@ -8214,8 +8327,9 @@ angular.module('ngSharePoint').factory('SPWeb',
 	     *
 	     * @param {string|GUID} name The name or the GUID of the list
 	     *
-         * Also, you can specify "UserInfoList" to refer the system list with all site users.
-	     * @returns {promise} promise with a {@link ngSharePoint.SPList SPList} object
+         * Also, you can specify "UserInfoList" to refer to the system list with all site users.
+         * 
+	     * @returns {promise} promise with an {@link ngSharePoint.SPList SPList} object
 	     *
 		 * @example
 		 * <pre>
@@ -8316,7 +8430,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 	     * @description
 	     * Retrieves the current user from SharePoint
 	     *
-	     * @returns {promise} promise with a {@link ngSharePoint.SPUser SPUser} object
+	     * @returns {promise} promise with an {@link ngSharePoint.SPUser SPUser} object
 	     *
 		 * @example
 		 * <pre>
@@ -8359,7 +8473,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 	     * @description
 	     * Retrieves a specified user from SharePoint
 	     *
-	     * @param {int} userId User id of the desired user to retrieve
+	     * @param {int} userID User ID of the desired user to retrieve
 	     * @returns {promise} promise with a {@link ngSharePoint.SPUser SPUser} object
 	     *
 		 * @example
@@ -8374,11 +8488,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * });
 		 * </pre>
 		*/
-		SPWebObj.prototype.getUserById = function(userId) {
+		SPWebObj.prototype.getUserById = function(userID) {
 
 			var def = $q.defer();
 
-			new SPUser(this, userId).getProperties().then(function(user) {
+			new SPUser(this, userID).getProperties().then(function(user) {
 				def.resolve(user);
 			});
 
@@ -15178,7 +15292,6 @@ angular.module('ngSharePoint').filter('unsafe',
         
     }
 ]);
-
 
 /**
  * @ngdoc overview
