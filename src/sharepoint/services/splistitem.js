@@ -1004,10 +1004,11 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * This method removes the item from the server.
          * 
+         * @param {Boolean} permanent Indicates if the item is recycled or removed permanently.
          * @returns {promise} promise with the result of the REST query.
          *
          */
-        SPListItemObj.prototype.remove = function() {
+        SPListItemObj.prototype.remove = function(permanent) {
 
             var self = this;
             var def = $q.defer();
@@ -1017,9 +1018,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             // Set the headers for the REST API call.
             // ----------------------------------------------------------------------------
             var headers = {
-                "Accept": "application/json; odata=verbose",
-                "X-HTTP-Method": "DELETE",
-                "IF-MATCH": "*"
+                "Accept": "application/json; odata=verbose"
             };
 
             var requestDigest = document.getElementById('__REQUESTDIGEST');
@@ -1030,12 +1029,20 @@ angular.module('ngSharePoint').factory('SPListItem',
                 headers['X-RequestDigest'] = requestDigest.value;
             }
 
+            var url = self.getAPIUrl() + '/recycle';
+
+            if (permanent === true) {
+                url = url.rtrim('/recycle');
+                headers['X-HTTP-Method'] = 'DELETE';
+                headers['IF-MATCH'] = '*';
+            }
+
 
             // Make the call.
             // ----------------------------------------------------------------------------
             executor.executeAsync({
 
-                url: self.getAPIUrl(),
+                url: url,
                 method: 'POST',
                 headers: headers,
 
