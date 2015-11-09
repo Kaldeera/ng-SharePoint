@@ -190,7 +190,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			SPUtils.SharePointReady().then(function() {
 
-				var executor = new SP.RequestExecutor(self.url);
+//				var executor = new SP.RequestExecutor(self.url);
 
 				if (query) {
 					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
@@ -200,15 +200,15 @@ angular.module('ngSharePoint').factory('SPWeb',
 					};
 				}
 
-				executor.executeAsync({
+//				executor.executeAsync({
+				$http({
 
 					url: self.apiUrl + utils.parseQuery(query),
 					method: 'GET', 
 					headers: { 
 						"Accept": "application/json; odata=verbose"
-					}, 
-
-					success: function(data) {
+					}
+				}).then(function(data) {
 
 						var d = utils.parseSPResponse(data);
 						utils.cleanDeferredProperties(d);
@@ -216,18 +216,15 @@ angular.module('ngSharePoint').factory('SPWeb',
 						angular.extend(self, d);
 						def.resolve(d);
 						
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
+				}, function(data, errorCode, errorMessage) {
 
 						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
+							data: data.config,
+							errorCode: data.status,
+							errorMessage: data.statusText
 						});
 
 						def.reject(err);
-					}
 				});
 			});
 
@@ -455,9 +452,36 @@ angular.module('ngSharePoint').factory('SPWeb',
 				def.resolve(this.currentUser);
 
 			} else {
-				this.getUserById(_spPageContextInfo.userId).then(function(user) {
-					self.currentUser = user;
-					def.resolve(user);
+
+				var solveUserId;
+
+				if (window._spPageContextInfo !== undefined) {
+
+					solveUserId = window._spPageContextInfo.userId;
+
+				} else {
+
+					solveUserId = $http({
+
+						url: this.apiUrl + '/currentUser',
+						method: 'GET',
+						headers: { 
+							"Accept": "application/json; odata=verbose"
+						}
+					}).then(function(data) {
+
+						var d = utils.parseSPResponse(data);
+						return d.Id;
+					});
+				}
+
+				$q.when(solveUserId).then(function(userId) {
+
+					self.getUserById(userId).then(function(user) {
+						self.currentUser = user;
+						def.resolve(user);
+					});
+
 				});
 			}
 
