@@ -1,18 +1,13 @@
-/*
-    SPUtils - factory
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPUtils
+ *
+ * @description
+ * This factory provides helpers and utilities.
+ *
+ * *Documentation is pending*
+ */
 
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPUtils
-///////////////////////////////////////
 
 angular.module('ngSharePoint').factory('SPUtils', 
 
@@ -43,6 +38,12 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                 var deferred = $q.defer();
                 var self = this;
+
+                if (window.SP === undefined) {
+
+                    // ng-SharePoint is running outside of SharePoint site
+                    isSharePointReady = true;
+                }
 
                 if (isSharePointReady) {
 

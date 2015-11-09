@@ -1,4 +1,3 @@
-
 /**
  * @ngdoc overview
  * @name ngSharePointFormPage
@@ -12,7 +11,7 @@
  */
 
 
-angular.module('ngSharePointFormPage', ['ngSharePoint', 'oc.lazyLoad']);
+angular.module('ngSharePointFormPage', ['ngSharePoint', 'ngSharePoint.templates', 'oc.lazyLoad']);
 
 
 angular.module('ngSharePointFormPage').config(

@@ -1,18 +1,15 @@
-/*
-    SPRibbon - factory
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPUtils
+ *
+ * @description
+ * This factory provides functionality to manage ribbon (tabs, groups, buttons).
+ *
+ * *At the moment, not all SharePoint API methods for content type objects are implemented in ngSharePoint*
+ *
+ * *Documentation is pending*
+ */
 
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPRibbon
-///////////////////////////////////////
 
 (function() {
     

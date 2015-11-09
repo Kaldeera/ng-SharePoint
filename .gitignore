@@ -37,9 +37,11 @@ Icon
 .Trashes
 
 node_modules
-site
-docs
+lib
 oldJs
+forms-editor
+build\ng-sharepoint.forms-editor.*
+
 
 # Other
 # ==========================
