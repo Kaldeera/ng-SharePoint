@@ -39,6 +39,12 @@ angular.module('ngSharePoint').factory('SPUtils',
                 var deferred = $q.defer();
                 var self = this;
 
+                if (window.SP === undefined) {
+
+                    // ng-SharePoint is running outside of SharePoint site
+                    isSharePointReady = true;
+                }
+
                 if (isSharePointReady) {
 
                     deferred.resolve();

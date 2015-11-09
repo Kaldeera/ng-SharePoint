@@ -27,9 +27,9 @@
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
+	['$q', '$http', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
 
-	function SPWeb_Factory($q, SPUtils, SPList, SPUser, SPFolder) {
+	function SPWeb_Factory($q, $http, SPUtils, SPList, SPUser, SPFolder) {
 
 		'use strict';
 
@@ -86,7 +86,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 				// If not 'url' parameter provided in the constructor, gets the url of the current web.
 				if (this.url === void 0) {
 
-					this.url = _spPageContextInfo.webServerRelativeUrl;
+					if (window._spPageContextInfo !== undefined) {
+						this.url = window._spPageContextInfo.webServerRelativeUrl;
+					} else {
+						this.url = '/';
+					}
 					this.apiUrl = this.url.rtrim('/') + '/_api/web';
 					def.resolve(this);
 

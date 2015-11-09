@@ -7534,6 +7534,12 @@ angular.module('ngSharePoint').factory('SPUtils',
                 var deferred = $q.defer();
                 var self = this;
 
+                if (window.SP === undefined) {
+
+                    // ng-SharePoint is running outside of SharePoint site
+                    isSharePointReady = true;
+                }
+
                 if (isSharePointReady) {
 
                     deferred.resolve();
@@ -8089,7 +8095,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 				// If not 'url' parameter provided in the constructor, gets the url of the current web.
 				if (this.url === void 0) {
 
-					this.url = _spPageContextInfo.webServerRelativeUrl;
+					if (window._spPageContextInfo !== undefined) {
+						this.url = window._spPageContextInfo.webServerRelativeUrl;
+					} else {
+						this.url = '/';
+					}
 					this.apiUrl = this.url.rtrim('/') + '/_api/web';
 					def.resolve(this);
 
