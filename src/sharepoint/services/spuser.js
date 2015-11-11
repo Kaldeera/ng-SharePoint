@@ -22,9 +22,9 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 
+	['$q', '$http', 
 
-	function SPUser_Factory($q) {
+	function SPUser_Factory($q, $http) {
 
 
 		/**
@@ -127,36 +127,31 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			var self = this;
 			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
 
-			executor.executeAsync({
-
+			$http({
 				url: self.apiUrl + utils.parseQuery(query),
 				method: 'GET', 
 				headers: { 
 					"Accept": "application/json; odata=verbose"
-				}, 
-
-				success: function(data) {
-
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
-					
-					angular.extend(self, d);
-
-					def.resolve(self);
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
 				}
+			}).then(function(data) {
+
+				var d = utils.parseSPResponse(data);
+				utils.cleanDeferredProperties(d);
+				
+				angular.extend(self, d);
+
+				def.resolve(self);
+
+			}, function(data, errorCode, errorMessage) {
+
+				var err = utils.parseError({
+					data: data.config,
+					errorCode: data.status,
+					errorMessage: data.statusText
+				});
+
+				def.reject(err);
 			});
 
 			return def.promise;

@@ -7345,9 +7345,9 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 
+	['$q', '$http', 
 
-	function SPUser_Factory($q) {
+	function SPUser_Factory($q, $http) {
 
 
 		/**
@@ -7450,36 +7450,31 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			var self = this;
 			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
 
-			executor.executeAsync({
-
+			$http({
 				url: self.apiUrl + utils.parseQuery(query),
 				method: 'GET', 
 				headers: { 
 					"Accept": "application/json; odata=verbose"
-				}, 
-
-				success: function(data) {
-
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
-					
-					angular.extend(self, d);
-
-					def.resolve(self);
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
 				}
+			}).then(function(data) {
+
+				var d = utils.parseSPResponse(data);
+				utils.cleanDeferredProperties(d);
+				
+				angular.extend(self, d);
+
+				def.resolve(self);
+
+			}, function(data, errorCode, errorMessage) {
+
+				var err = utils.parseError({
+					data: data.config,
+					errorCode: data.status,
+					errorMessage: data.statusText
+				});
+
+				def.reject(err);
 			});
 
 			return def.promise;
@@ -8199,8 +8194,6 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			SPUtils.SharePointReady().then(function() {
 
-//				var executor = new SP.RequestExecutor(self.url);
-
 				if (query) {
 					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
 				} else {
@@ -8209,7 +8202,6 @@ angular.module('ngSharePoint').factory('SPWeb',
 					};
 				}
 
-//				executor.executeAsync({
 				$http({
 
 					url: self.apiUrl + utils.parseQuery(query),
@@ -8219,21 +8211,21 @@ angular.module('ngSharePoint').factory('SPWeb',
 					}
 				}).then(function(data) {
 
-						var d = utils.parseSPResponse(data);
-						utils.cleanDeferredProperties(d);
-						
-						angular.extend(self, d);
-						def.resolve(d);
+					var d = utils.parseSPResponse(data);
+					utils.cleanDeferredProperties(d);
+					
+					angular.extend(self, d);
+					def.resolve(d);
 						
 				}, function(data, errorCode, errorMessage) {
 
-						var err = utils.parseError({
-							data: data.config,
-							errorCode: data.status,
-							errorMessage: data.statusText
-						});
+					var err = utils.parseError({
+						data: data.config,
+						errorCode: data.status,
+						errorMessage: data.statusText
+					});
 
-						def.reject(err);
+					def.reject(err);
 				});
 			});
 
@@ -8524,13 +8516,14 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getUserById = function(userID) {
 
-			var def = $q.defer();
+//			var def = $q.defer();
 
-			new SPUser(this, userID).getProperties().then(function(user) {
-				def.resolve(user);
-			});
+			return new SPUser(this, userID).getProperties();
+			//.then(function(user) {
+			//	def.resolve(user);
+			//});
 
-			return def.promise;
+//			return def.promise;
 		};
 
 
