@@ -18,9 +18,9 @@
 
 angular.module('ngSharePoint').factory('SPList',
 
-    ['$q', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider',
+    ['$q', 'SPHttp', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider',
 
-    function SPList_Factory($q, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
+    function SPList_Factory($q, SPHttp, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
 
         'use strict';
 

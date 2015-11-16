@@ -22,9 +22,9 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', '$http', 
+	['$q', 'SPHttp', 
 
-	function SPUser_Factory($q, $http) {
+	function SPUser_Factory($q, SPHttp) {
 
 
 		/**
@@ -125,36 +125,18 @@ angular.module('ngSharePoint').factory('SPUser',
 		 */
 		SPUserObj.prototype.getProperties = function(query) {
 
-			var self = this;
-			var def = $q.defer();
+			var self = this,
+				url = self.apiUrl + utils.parseQuery(query);
 
-			$http({
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}
-			}).then(function(data) {
+			return SPHttp.get(url).then(function(data) {
 
-				var d = utils.parseSPResponse(data);
-				utils.cleanDeferredProperties(d);
+				utils.cleanDeferredProperties(data);
 				
-				angular.extend(self, d);
+				angular.extend(self, data);
 
-				def.resolve(self);
+				return self;
 
-			}, function(data, errorCode, errorMessage) {
-
-				var err = utils.parseError({
-					data: data.config,
-					errorCode: data.status,
-					errorMessage: data.statusText
-				});
-
-				def.reject(err);
 			});
-
-			return def.promise;
 
 		}; // getProperties
 

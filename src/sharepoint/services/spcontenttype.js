@@ -99,13 +99,6 @@ angular.module('ngSharePoint').factory('SPContentType',
 
 
 
-        // ****************************************************************************
-        // getFields
-        //
-        // Gets content type fields
-        //
-        // @returns: Promise with the result of the REST query.
-        //
         /**
          * @ngdoc function
          * @name ngSharePoint.SPContentType#getFields
