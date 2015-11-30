@@ -46,8 +46,3 @@ build\ng-sharepoint.forms-editor.*
 # Other
 # ==========================
 .*
-!.gitignore
-
-build/ng-sharepoint.js
-
-build/ng-sharepoint.min.js
