@@ -73,6 +73,7 @@ module.exports = function(grunt) {
         },
 
         copy: {
+            /*
             tocdn: {
                 expand: true,
                 cwd: 'build/',
@@ -81,17 +82,31 @@ module.exports = function(grunt) {
                 flatten: true,
                 filter: 'isFile'
             },
-
+            */
             toServer: {
+                files: [
+                    {
+                        expand: true,
+                        cwd: 'build/',
+                        src: '**',
+                        dest: '/Volumes/__wss_DavWWWRoot/app/libs'
+                    }
+                ]
+            }
+            /*
                 files: [{
                     cwd: 'build/',
                     expand: true,
                     src: '**',
                     //dest: 'R:\\app-ngforms\\js\\ngSharePoint'
                     //dest: 'X:\\app\\ngSharepoint'
-                    dest: 'U:\\app\\libs'
+                    //dest:
+                    dest: '/Volumes/__wss_DavWWWRoot/app/libs/',
+                    flatten: true,
+                    filter: 'isFile'
                 }]
             }
+            */
         },
 
         ngdocs: {
@@ -147,8 +162,8 @@ module.exports = function(grunt) {
 
     // Default task(s).
     grunt.registerTask('docs', ['ngdocs']);
-    grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
-    grunt.registerTask('publishcdn', ['copy']);
+    grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint', 'copy']);
+    // grunt.registerTask('publishcdn', ['copy']);
     grunt.registerTask('debug', ['concat']);
 
     grunt.registerTask('documentation', ['ngdocs']);

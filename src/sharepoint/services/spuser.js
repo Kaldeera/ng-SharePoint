@@ -22,9 +22,9 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 
+	['$q', 'SPObjectProvider', 'SPHttp', 
 
-	function SPUser_Factory($q) {
+	function SPUser_Factory($q, SPObjectProvider, SPHttp) {
 
 
 		/**
@@ -73,7 +73,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			} else if (typeof userId === 'string') {
 
-				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + userId + '\'';
+				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + encodeURIComponent(userId) + '\'';
 
 			}
 
@@ -84,6 +84,9 @@ angular.module('ngSharePoint').factory('SPUser',
 			if (userData !== void 0) {
 				utils.cleanDeferredProperties(userData);
 				angular.extend(this, userData);
+				if (this.LoginName === void 0 && this.Name !== void 0) {
+					this.LoginName = this.Name;
+				}
 			}
 		};
 
@@ -125,46 +128,77 @@ angular.module('ngSharePoint').factory('SPUser',
 		 */
 		SPUserObj.prototype.getProperties = function(query) {
 
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
+			var self = this,
+				url = self.apiUrl + utils.parseQuery(query);
 
-			executor.executeAsync({
+			return SPHttp.get(url).then(function(data) {
 
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
+				utils.cleanDeferredProperties(data);
+				
+				angular.extend(self, data);
+				self.LoginName = self.Name;
 
-				success: function(data) {
+				return self;
 
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
-					
-					angular.extend(self, d);
-
-					def.resolve(self);
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
-				}
 			});
-
-			return def.promise;
 
 		}; // getProperties
 
 
-		// Returns the SPUserObj class
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPUser#getGroups
+	     * @methodOf ngSharePoint.SPUser
+	     *
+	     * @description
+	     * Retrieves the assciated user groups and returns an
+	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getCurrentUser().then(function(user) {
+		 *
+		 *		  user.getGropus().then(function(groups) {
+		 *       
+		 *        	angular.forEach(groups, function(group) {
+	     *           
+	     *           	console.log(group.Title + ' ' + group.Description);
+		 *        	});
+		 *		  });
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
+		SPUserObj.prototype.getGroups = function() {
+
+			var self = this;
+
+			var url = self.web.apiUrl + '/getUserById(' + self.Id + ')/Groups';
+			return SPHttp.get(url).then(function(data) {
+
+				var groups = [];
+
+				angular.forEach(data, function(groupProperties) {
+					var spGroup = SPObjectProvider.getSPGroup(self.web, groupProperties.Id, groupProperties);
+					groups.push(spGroup);
+				});
+
+				self.Groups = groups;
+				return groups;
+
+			});
+
+		};
+
+
+				// Returns the SPUserObj class
 		return SPUserObj;
 
 	}
