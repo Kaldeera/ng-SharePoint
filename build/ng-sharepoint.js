@@ -1325,13 +1325,6 @@ angular.module('ngSharePoint').factory('SPContentType',
 
 
 
-        // ****************************************************************************
-        // getFields
-        //
-        // Gets content type fields
-        //
-        // @returns: Promise with the result of the REST query.
-        //
         /**
          * @ngdoc function
          * @name ngSharePoint.SPContentType#getFields
@@ -3710,6 +3703,80 @@ angular.module('ngSharePoint').factory('SPGroup',
 		return SPGroupObj;
 
 	}
+]);
+
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPHttp
+ *
+ * @description
+ * SPHttp service is a core ng-SharePoint service that facilitates communication with remote REST api and perform
+ * common configuration and response process tasks.
+ *
+ */
+
+
+angular.module('ngSharePoint').service('SPHttp', 
+
+    ['$q', '$http', 
+
+    function ($q, $http) {
+
+        'use strict';
+
+
+
+        /**
+        * Makes a GET call to a REST api
+        * *Internal use*
+        */
+        this.get = function(url, params) {
+
+            var self = this;
+            var def = $q.defer();
+
+            $http({
+
+                url: url,
+                method: 'GET', 
+                headers: { 
+                    "Accept": "application/json; odata=verbose"
+                }
+
+            }).then(function(data) {
+
+                var d = utils.parseSPResponse(data);
+//                utils.cleanDeferredProperties(d);
+                
+                def.resolve(d);
+                    
+            }, function(data, errorCode, errorMessage) {
+
+                var err = utils.parseError({
+                    data: data.config,
+                    errorCode: data.status,
+                    errorMessage: data.statusText
+                });
+
+                def.reject(err);
+            });
+
+            return def.promise;
+
+        }; // get
+
+
+        /**
+        * Modify the ´jsLinkUrl` property of the content type.
+        * *Internal use*
+        */
+        this.post = function(url, params) {
+
+
+
+        }; // setJSLink
+
+    }
 ]);
 
 /**
@@ -7345,9 +7412,9 @@ angular.module('ngSharePoint').factory('SPObjectProvider',
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', '$http', 
+	['$q', 'SPHttp', 
 
-	function SPUser_Factory($q, $http) {
+	function SPUser_Factory($q, SPHttp) {
 
 
 		/**
@@ -7448,36 +7515,18 @@ angular.module('ngSharePoint').factory('SPUser',
 		 */
 		SPUserObj.prototype.getProperties = function(query) {
 
-			var self = this;
-			var def = $q.defer();
+			var self = this,
+				url = self.apiUrl + utils.parseQuery(query);
 
-			$http({
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}
-			}).then(function(data) {
+			return SPHttp.get(url).then(function(data) {
 
-				var d = utils.parseSPResponse(data);
-				utils.cleanDeferredProperties(d);
+				utils.cleanDeferredProperties(data);
 				
-				angular.extend(self, d);
+				angular.extend(self, data);
 
-				def.resolve(self);
+				return self;
 
-			}, function(data, errorCode, errorMessage) {
-
-				var err = utils.parseError({
-					data: data.config,
-					errorCode: data.status,
-					errorMessage: data.statusText
-				});
-
-				def.reject(err);
 			});
-
-			return def.promise;
 
 		}; // getProperties
 
@@ -8031,9 +8080,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', '$http', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
+	['$q', 'SPHttp', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
 
-	function SPWeb_Factory($q, $http, SPUtils, SPList, SPUser, SPFolder) {
+	function SPWeb_Factory($q, SPHttp, SPUtils, SPList, SPUser, SPFolder) {
 
 		'use strict';
 
@@ -8192,7 +8241,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 			var def = $q.defer();
 			var defaultExpandProperties = 'RegionalSettings/TimeZone';
 
-			SPUtils.SharePointReady().then(function() {
+			return SPUtils.SharePointReady().then(function() {
 
 				if (query) {
 					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
@@ -8202,34 +8251,19 @@ angular.module('ngSharePoint').factory('SPWeb',
 					};
 				}
 
-				$http({
+				var url = self.apiUrl + utils.parseQuery(query);
 
-					url: self.apiUrl + utils.parseQuery(query),
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}
-				}).then(function(data) {
+				return SPHttp.get(url).then(function(data) {
 
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
+					utils.cleanDeferredProperties(data);
 					
-					angular.extend(self, d);
-					def.resolve(d);
+					angular.extend(self, data);
+					def.resolve(data);
 						
-				}, function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data.config,
-						errorCode: data.status,
-						errorMessage: data.statusText
-					});
-
-					def.reject(err);
 				});
 			});
 
-			return def.promise;
+			// return def.promise;
 
 		}; // getProperties
 
@@ -8266,51 +8300,24 @@ angular.module('ngSharePoint').factory('SPWeb',
 		SPWebObj.prototype.getLists = function() {
 
 			var self = this;
-			var def = $q.defer();
 
+			return SPUtils.SharePointReady().then(function() {
 
-			SPUtils.SharePointReady().then(function() {
+				var url = self.apiUrl + '/Lists';
+				return SPHttp.get(url).then(function(data) {
 
-				var executor = new SP.RequestExecutor(self.url);
+					var lists = [];
 
-				executor.executeAsync({
+					angular.forEach(data, function(listProperties) {
+						var spList = new SPList(self, listProperties.Id, listProperties);
+						lists.push(spList);
+					});
 
-					url: self.apiUrl + '/Lists',
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}, 
+					return lists;
 
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-						var lists = [];
-
-						angular.forEach(d, function(listProperties) {
-							var spList = new SPList(self, listProperties.Id, listProperties);
-							lists.push(spList);
-						});
-
-						def.resolve(lists);
-						// def.resolve(utils.parseSPResponse(data));
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
 				});
 
 			});
-
-
-            return def.promise;
 
 		};
 
@@ -8348,7 +8355,9 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * <pre>
 		 *   
 		 *    web.getList('12fa20d2-1bb8-489c-bea3-b81797ddfeaf').then(function(list) {
-	     *        alert(list.Title);
+	     *        list.getProperties().then(function() {
+		 *		     alert(list.Title);
+		 *		  });
 		 *    });
 		 * </pre>
 		 *
@@ -8376,7 +8385,27 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getRootFolder = function() {
 
-            var self = this;
+            var self = this,
+            	rootFolder = this.RootFolder;
+
+            if (rootFolder === void 0) {
+
+            	var url = self.apiUrl + '/RootFolder';
+
+            	rootFolder = SPHttp.get(url).then(function(data) {
+
+                    self.RootFolder = new SPFolder(self, data.ServerRelativeUrl, data);
+                    self.RootFolder.web = self;
+
+                    return self.RootFolder;
+
+            	});
+            }
+
+            return $q.when(rootFolder);
+
+/*
+
             var def = $q.defer();
 
             if (this.RootFolder !== void 0) {
@@ -8384,6 +8413,8 @@ angular.module('ngSharePoint').factory('SPWeb',
                 def.resolve(this.RootFolder);
 
             } else {
+
+
 
                 var executor = new SP.RequestExecutor(self.url);
 
@@ -8418,6 +8449,7 @@ angular.module('ngSharePoint').factory('SPWeb',
             }
 
             return def.promise;
+*/
 
 		};
 
@@ -8462,17 +8494,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 				} else {
 
-					solveUserId = $http({
+					var url = this.apiUrl + '/currentUser';
 
-						url: this.apiUrl + '/currentUser',
-						method: 'GET',
-						headers: { 
-							"Accept": "application/json; odata=verbose"
-						}
-					}).then(function(data) {
+					solveUserId = SPHttp.get(url).then(function(data) {
 
-						var d = utils.parseSPResponse(data);
-						return d.Id;
+						return data.Id;
 					});
 				}
 
@@ -8481,6 +8507,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 					self.getUserById(userId).then(function(user) {
 						self.currentUser = user;
 						def.resolve(user);
+					}, function(err) {
+						def.reject(err);
 					});
 
 				});
@@ -8516,14 +8544,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getUserById = function(userID) {
 
-//			var def = $q.defer();
-
 			return new SPUser(this, userID).getProperties();
-			//.then(function(user) {
-			//	def.resolve(user);
-			//});
-
-//			return def.promise;
 		};
 
 
