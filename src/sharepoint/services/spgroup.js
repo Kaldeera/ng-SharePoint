@@ -12,9 +12,9 @@
 
 angular.module('ngSharePoint').factory('SPGroup', 
 
-	['$q', 'SPCache', 'SPUser', 
+	['$q', 'SPHttp', 'SPCache', 'SPObjectProvider', 
 
-	function SPGroup_Factory($q, SPCache, SPUser) {
+	function SPGroup_Factory($q, SPHttp, SPCache, SPObjectProvider) {
 
 		'use strict';
 
@@ -94,64 +94,76 @@ angular.module('ngSharePoint').factory('SPGroup',
          * For a complete list of group properties go to Microsoft
          * SharePoint {@link https://msdn.microsoft.com/en-us/library/office/dn531432.aspx#bk_GroupProperties group api reference}
          *
-         * SharePoint REST api only returns certain group properties that have primary values. Properties with complex structures
-         * like `Owner` are not returned directly by the api and is necessary to extend the query
-         * to retrieve their values. Is possible to accomplish this with the `query` param.
-         *
-         * @param {object} query This parameter specify which group properties will be extended and retrieved from the server.
-         * By default `Owner` property is extended.
-         *
          * @returns {promise} promise with an object with all group properties
          *
          */
-		SPGroupObj.prototype.getProperties = function(query) {
+		SPGroupObj.prototype.getProperties = function() {
 
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
-			var defaultExpandProperties = 'Owner';
+			var self = this,
+				url = self.apiUrl;
+			
+			return SPHttp.get(url).then(function(data) {
 
-			if (query) {
-				query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
-			} else {
-				query = { 
-					$expand: defaultExpandProperties
-				};
-			}
+				utils.cleanDeferredProperties(data);
+				angular.extend(self, data);
 
-			executor.executeAsync({
-
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
-
-				success: function(data) {
-
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
-					
-					angular.extend(self, d);
-
-					def.resolve(self);
-				}, 
-
-				error: function(data, errorCode, errorMessage) {
-
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-
-					def.reject(err);
-				}
+				return self;
 			});
 
-			return def.promise;
 
 		}; // getProperties
+
+
+
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPGroup#getOwner
+	     * @methodOf ngSharePoint.SPGroup
+	     *
+	     * @description
+	     * Retrieves the sharepoint owner of the group.
+	     *
+	     * @returns {promise} promise with an {@link ngSharePoint.SPUser SPUser} object  
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var group = web.getGroup('Visitors');
+		 *     group.getOwner().then(function(owner) {
+		 *       
+	     *         console.log(owner.Name);
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
+		SPGroupObj.prototype.getOwner = function() {
+
+			var self = this,
+				url = self.apiUrl + '/Owner';
+			
+			return SPHttp.get(url).then(function(data) {
+
+				utils.cleanDeferredProperties(data);
+
+				var owner;
+
+				if (data.PrincipalType === 8) {
+					// group
+					owner = SPObjectProvider.getSPGroup(self.web, data.Id, data);
+				} else {
+					// user
+					owner = SPObjectProvider.getSPUser(self.web, data.Id, data);
+				}
+				self.Owner = owner;
+
+				return self;
+			});
+
+		};	// getOwner
+
 
 
 
@@ -183,55 +195,26 @@ angular.module('ngSharePoint').factory('SPGroup',
 		 */
 		SPGroupObj.prototype.getUsers = function() {
 
-			var self = this;
-			var def = $q.defer();
+			var self = this,
+				url = self.apiUrl + '/Users',
+				users = self.Users;
 
-			if (this.Users !== void 0) {
 
-				def.resolve(this.Users);
+			if (users === void 0) {
 
-			} else {
+				users = SPHttp.get(url).then(function(data) {
 
-				var executor = new SP.RequestExecutor(self.web.url);
+					var users = [];
+					angular.forEach(data, function(user) {
+						users.push(SPObjectProvider.getSPUser(self.web, user.Id, user));
+					});
 
-				executor.executeAsync({
-
-					url: self.apiUrl + '/Users',
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}, 
-
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-						var users = [];
-
-						angular.forEach(d, function(user) {
-
-							users.push(new SPUser(self.web, user.Id, user));
-
-						});
-
-						self.Users = users;
-
-						def.resolve(users);
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
+					self.Users = users;
+					return users;
 				});
 			}
 
-			return def.promise;
+            return $q.when(users);
 
 		}; // getUsers
 

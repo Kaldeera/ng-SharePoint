@@ -27,9 +27,9 @@
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPHttp', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
+	['$q', 'SPHttp', 'SPUtils', 'SPList', 'SPUser', 'SPGroup', 'SPFolder',
 
-	function SPWeb_Factory($q, SPHttp, SPUtils, SPList, SPUser, SPFolder) {
+	function SPWeb_Factory($q, SPHttp, SPUtils, SPList, SPUser, SPGroup, SPFolder) {
 
 		'use strict';
 
@@ -353,6 +353,8 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 		};
 
+
+
 		/**
 	     * @ngdoc function
 	     * @name ngSharePoint.SPWeb#getCurrentUser
@@ -447,6 +449,59 @@ angular.module('ngSharePoint').factory('SPWeb',
 			return new SPUser(this, userID).getProperties();
 		};
 
+
+
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getSiteGroups
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves all SharePoint site groups for the current web and returns an
+	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getSiteGroups().then(function(groups) {
+		 *       
+		 *        angular.forEach(groups, function(group) {
+	     *           
+	     *           console.log(group.Title + ' ' + group.Description);
+		 *        });
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
+		SPWebObj.prototype.getSiteGroups = function() {
+
+			var self = this;
+
+			return SPUtils.SharePointReady().then(function() {
+
+				var url = self.apiUrl + '/SiteGroups';
+				return SPHttp.get(url).then(function(data) {
+
+					var groups = [];
+
+					angular.forEach(data, function(groupProperties) {
+						var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
+						groups.push(spGroup);
+					});
+
+					return groups;
+
+				});
+
+			});
+
+		};
 
 
 
