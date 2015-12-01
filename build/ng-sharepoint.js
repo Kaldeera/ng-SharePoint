@@ -7523,7 +7523,11 @@ angular.module('ngSharePoint').factory('SPUser',
 	     * @methodOf ngSharePoint.SPUser
 	     *
 	     * @description
+<<<<<<< HEAD
 	     * Retrieves the asociated user groups and returns an
+=======
+	     * Retrieves the assciated user groups and returns an
+>>>>>>> master
 	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
 	     *
 	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
@@ -8573,6 +8577,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 */
 		SPWebObj.prototype.getSiteGroups = function() {
 
+<<<<<<< HEAD
 			var self = this,
 				siteGroups = self.Groups;
 
@@ -8599,6 +8604,27 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 			return $q.when(siteGroups); 
 
+=======
+			var self = this;
+
+			return SPUtils.SharePointReady().then(function() {
+
+				var url = self.apiUrl + '/SiteGroups';
+				return SPHttp.get(url).then(function(data) {
+
+					var groups = [];
+
+					angular.forEach(data, function(groupProperties) {
+						var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
+						groups.push(spGroup);
+					});
+
+					return groups;
+
+				});
+
+			});
+>>>>>>> master
 
 		};
 
