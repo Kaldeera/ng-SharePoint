@@ -151,7 +151,7 @@ angular.module('ngSharePoint').factory('SPUser',
 	     * @methodOf ngSharePoint.SPUser
 	     *
 	     * @description
-	     * Retrieves the assciated user groups and returns an
+	     * Retrieves the asociated user groups and returns an
 	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
 	     *
 	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.

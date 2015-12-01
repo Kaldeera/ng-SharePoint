@@ -3465,7 +3465,8 @@ angular.module('ngSharePoint').factory('SPFolder',
  * @name ngSharePoint.SPGroup
  *
  * @description
- * SPGroup factory provides access to all SharePoint group properties and allows retrieval of users.
+ * SPGroup factory provides access to all SharePoint group properties and allows retrieval of users and 
+ * owner (group or user).
  *
  * *At the moment, not all SharePoint API methods for group objects are implemented in ngSharePoint*
  *
@@ -7522,7 +7523,11 @@ angular.module('ngSharePoint').factory('SPUser',
 	     * @methodOf ngSharePoint.SPUser
 	     *
 	     * @description
+<<<<<<< HEAD
+	     * Retrieves the asociated user groups and returns an
+=======
 	     * Retrieves the assciated user groups and returns an
+>>>>>>> master
 	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
 	     *
 	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
@@ -8572,6 +8577,34 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 */
 		SPWebObj.prototype.getSiteGroups = function() {
 
+<<<<<<< HEAD
+			var self = this,
+				siteGroups = self.Groups;
+
+			if (siteGroups === void 0) {
+
+				siteGroups = SPUtils.SharePointReady().then(function() {
+
+					var url = self.apiUrl + '/SiteGroups';
+					return SPHttp.get(url).then(function(data) {
+
+						var groups = [];
+
+						angular.forEach(data, function(groupProperties) {
+							var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
+							groups.push(spGroup);
+						});
+
+						self.Groups = groups;
+						return groups;
+
+					});
+				});
+			}
+
+			return $q.when(siteGroups); 
+
+=======
 			var self = this;
 
 			return SPUtils.SharePointReady().then(function() {
@@ -8591,6 +8624,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 				});
 
 			});
+>>>>>>> master
 
 		};
 
