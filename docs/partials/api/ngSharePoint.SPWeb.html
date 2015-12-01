@@ -160,6 +160,29 @@ By default <code>RegionalSettings/TimeZone</code> properties are extended.</p>
 </div><h5 id="methods_getrootfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getrootfolder-page"><p>promise with a <a href="#/api/ngSharePoint.SPFolder">SPFolder</a> object</p>
 </div></td></tr></table></div>
 </li>
+<li><h3 id="methods_getsitegroups">getSiteGroups()</h3>
+<div class="getsitegroups"><div class="ngsharepoint-spweb-getsitegroups-page"><p>Retrieves all SharePoint site groups for the current web and returns an
+array of <a href="#/api/ngSharePoint.SPGroup">SPGroup</a> objects.</p>
+</div><h5 id="methods_getsitegroups_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spweb-getsitegroups-page"><p>promise with an array of <a href="#/api/ngSharePoint.SPGroup">SPGroup</a> objects.</p>
+</div></td></tr></table><h4 id="methods_getsitegroups_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spweb-getsitegroups-page"><pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getSiteGroups().then(function(groups) {
+      
+       angular.forEach(groups, function(group) {
+          
+          console.log(group.Title + ' ' + group.Description);
+       });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
+</li>
 <li><h3 id="methods_getuserbyid">getUserById(userID)</h3>
 <div class="getuserbyid"><div class="ngsharepoint-spweb-getuserbyid-page"><p>Retrieves a specified user from SharePoint</p>
 </div><h5 id="methods_getuserbyid_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>userID</td><td><a href="" class="label type-hint type-hint-int">int</a></td><td><div class="ngsharepoint-spweb-getuserbyid-page"><p>User ID of the desired user to retrieve</p>

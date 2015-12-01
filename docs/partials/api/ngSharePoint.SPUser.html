@@ -30,6 +30,32 @@ user.getProperties().then(...);
 </div></div>
 </div>
 </li>
+<li><h3 id="methods_getgroups">getGroups()</h3>
+<div class="getgroups"><div class="ngsharepoint-spuser-getgroups-page"><p>Retrieves the asociated user groups and returns an
+array of <a href="#/api/ngSharePoint.SPGroup">SPGroup</a> objects.</p>
+</div><h5 id="methods_getgroups_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spuser-getgroups-page"><p>promise with an array of <a href="#/api/ngSharePoint.SPGroup">SPGroup</a> objects.</p>
+</div></td></tr></table><h4 id="methods_getgroups_example">Example</h4>
+<div class="example"><div class="ngsharepoint-spuser-getgroups-page"><pre class="prettyprint linenums">
+
+  SharePoint.getCurrentWeb(function(webObject) {
+
+    var web = webObject;
+    web.getCurrentUser().then(function(user) {
+
+	  user.getGropus().then(function(groups) {
+      
+       	angular.forEach(groups, function(group) {
+          
+          	console.log(group.Title + ' ' + group.Description);
+       	});
+	  });
+    });
+
+  });
+</pre>
+</div></div>
+</div>
+</li>
 <li><h3 id="methods_getproperties">getProperties(query)</h3>
 <div class="getproperties"><div class="ngsharepoint-spuser-getproperties-page"><p>Makes a call to the SharePoint server and gets all their properties.
 The current object is extended with all recovered properties. This means that when you have executed this 
