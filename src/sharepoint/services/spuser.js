@@ -149,11 +149,61 @@ angular.module('ngSharePoint').factory('SPUser',
 
 				error: function(data, errorCode, errorMessage) {
 
+<<<<<<< HEAD
 					var err = utils.parseError({
 						data: data,
 						errorCode: errorCode,
 						errorMessage: errorMessage
 					});
+=======
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPUser#getGroups
+	     * @methodOf ngSharePoint.SPUser
+	     *
+	     * @description
+	     * Retrieves the asociated user groups and returns an
+	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getCurrentUser().then(function(user) {
+		 *
+		 *		  user.getGropus().then(function(groups) {
+		 *       
+		 *        	angular.forEach(groups, function(group) {
+	     *           
+	     *           	console.log(group.Title + ' ' + group.Description);
+		 *        	});
+		 *		  });
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
+		SPUserObj.prototype.getGroups = function() {
+
+			var self = this;
+
+			var url = self.web.apiUrl + '/getUserById(' + self.Id + ')/Groups';
+			return SPHttp.get(url).then(function(data) {
+
+				var groups = [];
+
+				angular.forEach(data, function(groupProperties) {
+					var spGroup = SPObjectProvider.getSPGroup(self.web, groupProperties.Id, groupProperties);
+					groups.push(spGroup);
+				});
+
+				self.Groups = groups;
+				return groups;
+>>>>>>> master
 
 					def.reject(err);
 				}
