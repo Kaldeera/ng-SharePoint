@@ -481,25 +481,32 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 */
 		SPWebObj.prototype.getSiteGroups = function() {
 
-			var self = this;
+			var self = this,
+				siteGroups = self.Groups;
 
-			return SPUtils.SharePointReady().then(function() {
+			if (siteGroups === void 0) {
 
-				var url = self.apiUrl + '/SiteGroups';
-				return SPHttp.get(url).then(function(data) {
+				siteGroups = SPUtils.SharePointReady().then(function() {
 
-					var groups = [];
+					var url = self.apiUrl + '/SiteGroups';
+					return SPHttp.get(url).then(function(data) {
 
-					angular.forEach(data, function(groupProperties) {
-						var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
-						groups.push(spGroup);
+						var groups = [];
+
+						angular.forEach(data, function(groupProperties) {
+							var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
+							groups.push(spGroup);
+						});
+
+						self.Groups = groups;
+						return groups;
+
 					});
-
-					return groups;
-
 				});
+			}
 
-			});
+			return $q.when(siteGroups); 
+
 
 		};
 

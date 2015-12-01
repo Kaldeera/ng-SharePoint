@@ -3,7 +3,8 @@
  * @name ngSharePoint.SPGroup
  *
  * @description
- * SPGroup factory provides access to all SharePoint group properties and allows retrieval of users.
+ * SPGroup factory provides access to all SharePoint group properties and allows retrieval of users and 
+ * owner (group or user).
  *
  * *At the moment, not all SharePoint API methods for group objects are implemented in ngSharePoint*
  *
