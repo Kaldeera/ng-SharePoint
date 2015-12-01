@@ -22,9 +22,9 @@
 
 angular.module('ngSharePoint').factory('SPUser', 
 
-	['$q', 
+	['$q', 'SPObjectProvider', 'SPHttp', 
 
-	function SPUser_Factory($q) {
+	function SPUser_Factory($q, SPObjectProvider, SPHttp) {
 
 
 		/**
@@ -73,7 +73,7 @@ angular.module('ngSharePoint').factory('SPUser',
 
 			} else if (typeof userId === 'string') {
 
-				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + userId + '\'';
+				this.apiUrl = '/siteusers/getByLoginName(@v)?@v=\'' + encodeURIComponent(userId) + '\'';
 
 			}
 
@@ -84,6 +84,9 @@ angular.module('ngSharePoint').factory('SPUser',
 			if (userData !== void 0) {
 				utils.cleanDeferredProperties(userData);
 				angular.extend(this, userData);
+				if (this.LoginName === void 0 && this.Name !== void 0) {
+					this.LoginName = this.Name;
+				}
 			}
 		};
 
@@ -125,37 +128,23 @@ angular.module('ngSharePoint').factory('SPUser',
 		 */
 		SPUserObj.prototype.getProperties = function(query) {
 
-			var self = this;
-			var def = $q.defer();
-			var executor = new SP.RequestExecutor(self.web.url);
+			var self = this,
+				url = self.apiUrl + utils.parseQuery(query);
 
-			executor.executeAsync({
+			return SPHttp.get(url).then(function(data) {
 
-				url: self.apiUrl + utils.parseQuery(query),
-				method: 'GET', 
-				headers: { 
-					"Accept": "application/json; odata=verbose"
-				}, 
+				utils.cleanDeferredProperties(data);
+				
+				angular.extend(self, data);
+				self.LoginName = self.Name;
 
-				success: function(data) {
+				return self;
 
-					var d = utils.parseSPResponse(data);
-					utils.cleanDeferredProperties(d);
-					
-					angular.extend(self, d);
+			});
 
-					def.resolve(self);
-				}, 
+		}; // getProperties
 
-				error: function(data, errorCode, errorMessage) {
 
-<<<<<<< HEAD
-					var err = utils.parseError({
-						data: data,
-						errorCode: errorCode,
-						errorMessage: errorMessage
-					});
-=======
 		/**
 	     * @ngdoc function
 	     * @name ngSharePoint.SPUser#getGroups
@@ -203,18 +192,13 @@ angular.module('ngSharePoint').factory('SPUser',
 
 				self.Groups = groups;
 				return groups;
->>>>>>> master
 
-					def.reject(err);
-				}
 			});
 
-			return def.promise;
-
-		}; // getProperties
+		};
 
 
-		// Returns the SPUserObj class
+				// Returns the SPUserObj class
 		return SPUserObj;
 
 	}

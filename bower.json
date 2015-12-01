@@ -1,10 +1,6 @@
 {
   "name": "ng-SharePoint",
-<<<<<<< HEAD
-  "version": "0.0.1",
-=======
   "version": "0.6.0",
->>>>>>> master
   "homepage": "https://github.com/Kaldeera/ng-SharePoint",
   "authors": [
     "Pau Codina <pau.codina@kaldeera.com>"
