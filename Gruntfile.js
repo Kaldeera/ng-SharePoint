@@ -72,27 +72,6 @@ module.exports = function(grunt) {
             }
         },
 
-        copy: {
-            tocdn: {
-                expand: true,
-                cwd: 'build/',
-                src: '**',
-                dest: '../jsdelivr/files/angular.ng-sharepoint/<%= pkg.version %>/',
-                flatten: true,
-                filter: 'isFile'
-            },
-
-            toServer: {
-                files: [{
-                    cwd: 'build/',
-                    expand: true,
-                    src: '**',
-                    //dest: 'R:\\app-ngforms\\js\\ngSharePoint'
-                    //dest: 'X:\\app\\ngSharepoint'
-                    dest: 'U:\\app\\libs'
-                }]
-            }
-        },
 
         ngdocs: {
             options: {
@@ -148,7 +127,7 @@ module.exports = function(grunt) {
     // Default task(s).
     grunt.registerTask('docs', ['ngdocs']);
     grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
-    grunt.registerTask('publishcdn', ['copy']);
+    // grunt.registerTask('publishcdn', ['copy']);
     grunt.registerTask('debug', ['concat']);
 
     grunt.registerTask('documentation', ['ngdocs']);

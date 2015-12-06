@@ -27,9 +27,9 @@
 
 angular.module('ngSharePoint').factory('SPWeb', 
 
-	['$q', 'SPUtils', 'SPList', 'SPUser', 'SPFolder',
+	['$q', 'SPHttp', 'SPUtils', 'SPList', 'SPUser', 'SPGroup', 'SPFolder',
 
-	function SPWeb_Factory($q, SPUtils, SPList, SPUser, SPFolder) {
+	function SPWeb_Factory($q, SPHttp, SPUtils, SPList, SPUser, SPGroup, SPFolder) {
 
 		'use strict';
 
@@ -86,7 +86,11 @@ angular.module('ngSharePoint').factory('SPWeb',
 				// If not 'url' parameter provided in the constructor, gets the url of the current web.
 				if (this.url === void 0) {
 
-					this.url = _spPageContextInfo.webServerRelativeUrl;
+					if (window._spPageContextInfo !== undefined) {
+						this.url = window._spPageContextInfo.webServerRelativeUrl;
+					} else {
+						this.url = '/';
+					}
 					this.apiUrl = this.url.rtrim('/') + '/_api/web';
 					def.resolve(this);
 
@@ -184,9 +188,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 			var def = $q.defer();
 			var defaultExpandProperties = 'RegionalSettings/TimeZone';
 
-			SPUtils.SharePointReady().then(function() {
-
-				var executor = new SP.RequestExecutor(self.url);
+			return SPUtils.SharePointReady().then(function() {
 
 				if (query) {
 					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
@@ -196,38 +198,19 @@ angular.module('ngSharePoint').factory('SPWeb',
 					};
 				}
 
-				executor.executeAsync({
+				var url = self.apiUrl + utils.parseQuery(query);
 
-					url: self.apiUrl + utils.parseQuery(query),
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}, 
+				return SPHttp.get(url).then(function(data) {
 
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-						utils.cleanDeferredProperties(d);
+					utils.cleanDeferredProperties(data);
+					
+					angular.extend(self, data);
+					def.resolve(data);
 						
-						angular.extend(self, d);
-						def.resolve(d);
-						
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
 				});
 			});
 
-			return def.promise;
+			// return def.promise;
 
 		}; // getProperties
 
@@ -264,51 +247,24 @@ angular.module('ngSharePoint').factory('SPWeb',
 		SPWebObj.prototype.getLists = function() {
 
 			var self = this;
-			var def = $q.defer();
 
+			return SPUtils.SharePointReady().then(function() {
 
-			SPUtils.SharePointReady().then(function() {
+				var url = self.apiUrl + '/Lists';
+				return SPHttp.get(url).then(function(data) {
 
-				var executor = new SP.RequestExecutor(self.url);
+					var lists = [];
 
-				executor.executeAsync({
+					angular.forEach(data, function(listProperties) {
+						var spList = new SPList(self, listProperties.Id, listProperties);
+						lists.push(spList);
+					});
 
-					url: self.apiUrl + '/Lists',
-					method: 'GET', 
-					headers: { 
-						"Accept": "application/json; odata=verbose"
-					}, 
+					return lists;
 
-					success: function(data) {
-
-						var d = utils.parseSPResponse(data);
-						var lists = [];
-
-						angular.forEach(d, function(listProperties) {
-							var spList = new SPList(self, listProperties.Id, listProperties);
-							lists.push(spList);
-						});
-
-						def.resolve(lists);
-						// def.resolve(utils.parseSPResponse(data));
-					}, 
-
-					error: function(data, errorCode, errorMessage) {
-
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
 				});
 
 			});
-
-
-            return def.promise;
 
 		};
 
@@ -346,7 +302,9 @@ angular.module('ngSharePoint').factory('SPWeb',
 		 * <pre>
 		 *   
 		 *    web.getList('12fa20d2-1bb8-489c-bea3-b81797ddfeaf').then(function(list) {
-	     *        alert(list.Title);
+	     *        list.getProperties().then(function() {
+		 *		     alert(list.Title);
+		 *		  });
 		 *    });
 		 * </pre>
 		 *
@@ -374,50 +332,28 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getRootFolder = function() {
 
-            var self = this;
-            var def = $q.defer();
+            var self = this,
+            	rootFolder = this.RootFolder;
 
-            if (this.RootFolder !== void 0) {
+            if (rootFolder === void 0) {
 
-                def.resolve(this.RootFolder);
+            	var url = self.apiUrl + '/RootFolder';
 
-            } else {
+            	rootFolder = SPHttp.get(url).then(function(data) {
 
-                var executor = new SP.RequestExecutor(self.url);
+                    self.RootFolder = new SPFolder(self, data.ServerRelativeUrl, data);
+                    self.RootFolder.web = self;
 
-                executor.executeAsync({
+                    return self.RootFolder;
 
-                    url: self.apiUrl + '/RootFolder',
-                    method: 'GET', 
-                    headers: { 
-                        "Accept": "application/json; odata=verbose"
-                    }, 
-
-                    success: function(data) {
-
-                        var d = utils.parseSPResponse(data);
-                        this.RootFolder = new SPFolder(self, d.ServerRelativeUrl, d);
-                        this.RootFolder.web = self;
-
-                        def.resolve(this.RootFolder);
-                    }, 
-
-                    error: function(data, errorCode, errorMessage) {
-
-                        var err = utils.parseError({
-                            data: data,
-                            errorCode: errorCode,
-                            errorMessage: errorMessage
-                        });
-
-                        def.reject(err);
-                    }
-                });
+            	});
             }
 
-            return def.promise;
+            return $q.when(rootFolder);
 
 		};
+
+
 
 		/**
 	     * @ngdoc function
@@ -451,9 +387,32 @@ angular.module('ngSharePoint').factory('SPWeb',
 				def.resolve(this.currentUser);
 
 			} else {
-				this.getUserById(_spPageContextInfo.userId).then(function(user) {
-					self.currentUser = user;
-					def.resolve(user);
+
+				var solveUserId;
+
+				if (window._spPageContextInfo !== undefined) {
+
+					solveUserId = window._spPageContextInfo.userId;
+
+				} else {
+
+					var url = this.apiUrl + '/currentUser';
+
+					solveUserId = SPHttp.get(url).then(function(data) {
+
+						return data.Id;
+					});
+				}
+
+				$q.when(solveUserId).then(function(userId) {
+
+					self.getUserById(userId).then(function(user) {
+						self.currentUser = user;
+						def.resolve(user);
+					}, function(err) {
+						def.reject(err);
+					});
+
 				});
 			}
 
@@ -487,15 +446,69 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getUserById = function(userID) {
 
-			var def = $q.defer();
-
-			new SPUser(this, userID).getProperties().then(function(user) {
-				def.resolve(user);
-			});
-
-			return def.promise;
+			return new SPUser(this, userID).getProperties();
 		};
 
+
+
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getSiteGroups
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves all SharePoint site groups for the current web and returns an
+	     * array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPGroup SPGroup} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getSiteGroups().then(function(groups) {
+		 *       
+		 *        angular.forEach(groups, function(group) {
+	     *           
+	     *           console.log(group.Title + ' ' + group.Description);
+		 *        });
+		 *     });
+		 *
+		 *   });
+		 * </pre>
+		 */
+		SPWebObj.prototype.getSiteGroups = function() {
+
+			var self = this,
+				siteGroups = self.Groups;
+
+			if (siteGroups === void 0) {
+
+				siteGroups = SPUtils.SharePointReady().then(function() {
+
+					var url = self.apiUrl + '/SiteGroups';
+					return SPHttp.get(url).then(function(data) {
+
+						var groups = [];
+
+						angular.forEach(data, function(groupProperties) {
+							var spGroup = new SPGroup(self, groupProperties.Id, groupProperties);
+							groups.push(spGroup);
+						});
+
+						self.Groups = groups;
+						return groups;
+
+					});
+				});
+			}
+
+			return $q.when(siteGroups); 
+
+
+		};
 
 
 

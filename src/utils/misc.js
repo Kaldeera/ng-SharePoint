@@ -232,9 +232,9 @@ var utils = {
 		// Status code 204 = No content, so return empty object.
 		// (http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html)
 
-		if (response.statusCode != 204) {
+		if (response.statusCode !== 204 && response.status !== 204) {
 
-			d = angular.fromJson(response.body || '{ "d": {} }').d;
+			d = angular.fromJson(response.body || response.data || '{ "d": {} }').d;
 
 			if (d.results) {
 				d = d.results;
