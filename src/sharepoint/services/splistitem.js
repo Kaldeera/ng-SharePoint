@@ -1004,7 +1004,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * This method removes the item from the server.
          * 
-         * @param {Boolean} permanent Indicates if the item is recycled or removed permanently.
+         * @param {boolean=} permanent Indicates if the item is recycled or removed permanently.
          * @returns {promise} promise with the result of the REST query.
          *
          */
