@@ -5,7 +5,7 @@
  * @description
  * Provides functionality to manage SharePoint folders.
  *
- * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
+ * *At the moment, not all methods for managing folder objects are implemented in ngSharePoint*
  *
  */
 
@@ -320,7 +320,7 @@ angular.module('ngSharePoint').factory('SPFolder',
          *
          * @description
          * Returns an SPList object corresponding with the list or document library that contains the folder.
-         * If the folder doesn't correspond with a list or document library, this method throws an error.
+         * If the folder doesn't corresponds with a list or document library, this method throws an error.
          *
          * @returns {promise} promise with an {@link ngSharePoint.SPList SPList} object.
          *
@@ -371,8 +371,8 @@ angular.module('ngSharePoint').factory('SPFolder',
          * @description
          * Gets the list item object corresponding with the current folder.
          *
-         * If the folder doesn't is in a list or document library, then there isn't a item
-         * that correspond with them and this method throws an error.
+         * If the folder isn't in a list or document library, then there isn't an item
+         * that corresponds with it and this method throws an error.
          *
          * @returns {promise} promise with an {@link ngSharePoint.SPListItem SPListItem} object.
          *
@@ -409,7 +409,7 @@ angular.module('ngSharePoint').factory('SPFolder',
          * @methodOf ngSharePoint.SPFolder
          *
          * @description
-         * Creates a new folder into the current folder.
+         * Creates a new folder within the current folder.
          *
          * @param {string} folderName The name of the folder to be created.
          * @returns {promise} promise with the new {@link ngSharePoint.SPFolder SPFolder} object.
@@ -499,7 +499,7 @@ angular.module('ngSharePoint').factory('SPFolder',
          * @param {string} fileName The name of the new file to upload.
          * @param {stream} file A stream with the content of the file to be uploaded. The maximum size of a binary file that you can add by using this method is 2 GB.
          * @param {boolean=} overwrite If a file with the same name exists on the server, this parameter
-         * indicates if the file will be overwriten
+         * indicates if the file will be overwritten
          * @returns {promise} promise with the new {@link ngSharePoint.SPFile SPFile} object.
          *
          */
@@ -635,7 +635,7 @@ angular.module('ngSharePoint').factory('SPFolder',
          * @description
          * This method removes the folder from the server.
          * 
-         * @param {string|object} folder Can be a SPFolder object or the name of the folder to be removed.
+         * @param {string|object} folder Can be an SPFolder object or the name of the folder to be removed.
          * @param {boolean=} permanent Indicates if the folder is recycled or removed permanently.
          * @returns {promise} promise with the result of the REST query.
          *
