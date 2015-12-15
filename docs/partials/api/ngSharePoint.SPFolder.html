@@ -5,7 +5,7 @@
 </h1>
 <div><h2 id="description">Description</h2>
 <div class="description"><div class="ngsharepoint-spfolder-page"><p>Provides functionality to manage SharePoint folders.</p>
-<p><em>At the moment, not all methods for manage folder objects are implemented in ngSharePoint</em></p>
+<p><em>At the moment, not all methods for managing folder objects are implemented in ngSharePoint</em></p>
 </div></div>
 <div class="member method"><h2 id="methods">Methods</h2>
 <ul class="methods"><li><h3 id="methods_addfile">addFile(fileName, file, overwrite)</h3>
@@ -13,12 +13,12 @@
 </div><h5 id="methods_addfile_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>fileName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-spfolder-addfile-page"><p>The name of the new file to upload.</p>
 </div></td></tr><tr><td>file</td><td><a href="" class="label type-hint type-hint-stream">stream</a></td><td><div class="ngsharepoint-spfolder-addfile-page"><p>A stream with the content of the file to be uploaded. The maximum size of a binary file that you can add by using this method is 2 GB.</p>
 </div></td></tr><tr><td>overwrite <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-boolean">boolean</a></td><td><div class="ngsharepoint-spfolder-addfile-page"><p>If a file with the same name exists on the server, this parameter
-indicates if the file will be overwriten</p>
+indicates if the file will be overwritten</p>
 </div></td></tr></tbody></table><h5 id="methods_addfile_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spfolder-addfile-page"><p>promise with the new <a href="#/api/ngSharePoint.SPFile">SPFile</a> object.</p>
 </div></td></tr></table></div>
 </li>
 <li><h3 id="methods_addfolder">addFolder(folderName)</h3>
-<div class="addfolder"><div class="ngsharepoint-spfolder-addfolder-page"><p>Creates a new folder into the current folder.</p>
+<div class="addfolder"><div class="ngsharepoint-spfolder-addfolder-page"><p>Creates a new folder within the current folder.</p>
 </div><h5 id="methods_addfolder_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>folderName</td><td><a href="" class="label type-hint type-hint-string">string</a></td><td><div class="ngsharepoint-spfolder-addfolder-page"><p>The name of the folder to be created.</p>
 </div></td></tr></tbody></table><h5 id="methods_addfolder_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spfolder-addfolder-page"><p>promise with the new <a href="#/api/ngSharePoint.SPFolder">SPFolder</a> object.</p>
 </div></td></tr></table><h4 id="methods_addfolder_example">Example</h4>
@@ -74,8 +74,8 @@ folder.getFiles().then(...);
 </li>
 <li><h3 id="methods_getfolderlistitem">getFolderListItem()</h3>
 <div class="getfolderlistitem"><div class="ngsharepoint-spfolder-getfolderlistitem-page"><p>Gets the list item object corresponding with the current folder.</p>
-<p>If the folder doesn&#39;t is in a list or document library, then there isn&#39;t a item
-that correspond with them and this method throws an error.</p>
+<p>If the folder isn&#39;t in a list or document library, then there isn&#39;t an item
+that corresponds with it and this method throws an error.</p>
 </div><h5 id="methods_getfolderlistitem_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spfolder-getfolderlistitem-page"><p>promise with an <a href="#/api/ngSharePoint.SPListItem">SPListItem</a> object.</p>
 </div></td></tr></table></div>
 </li>
@@ -103,7 +103,7 @@ that correspond with them and this method throws an error.</p>
 </li>
 <li><h3 id="methods_getlist">getList()</h3>
 <div class="getlist"><div class="ngsharepoint-spfolder-getlist-page"><p>Returns an SPList object corresponding with the list or document library that contains the folder.
-If the folder doesn&#39;t correspond with a list or document library, this method throws an error.</p>
+If the folder doesn&#39;t corresponds with a list or document library, this method throws an error.</p>
 </div><h5 id="methods_getlist_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spfolder-getlist-page"><p>promise with an <a href="#/api/ngSharePoint.SPList">SPList</a> object.</p>
 </div></td></tr></table></div>
 </li>
@@ -139,7 +139,7 @@ to retrieve their values. It is possible to accomplish this with the <code>query
 </li>
 <li><h3 id="methods_remove">remove(folder, permanent)</h3>
 <div class="remove"><div class="ngsharepoint-spfolder-remove-page"><p>This method removes the folder from the server.</p>
-</div><h5 id="methods_remove_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>folder</td><td><a href="" class="label type-hint type-hint-string">string</a><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spfolder-remove-page"><p>Can be a SPFolder object or the name of the folder to be removed.</p>
+</div><h5 id="methods_remove_parameters">Parameters</h5><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>folder</td><td><a href="" class="label type-hint type-hint-string">string</a><a href="" class="label type-hint type-hint-object">object</a></td><td><div class="ngsharepoint-spfolder-remove-page"><p>Can be an SPFolder object or the name of the folder to be removed.</p>
 </div></td></tr><tr><td>permanent <div><em>(optional)</em></div></td><td><a href="" class="label type-hint type-hint-boolean">boolean</a></td><td><div class="ngsharepoint-spfolder-remove-page"><p>Indicates if the folder is recycled or removed permanently.</p>
 </div></td></tr></tbody></table><h5 id="methods_remove_returns">Returns</h5><table class="variables-matrix"><tr><td><a href="" class="label type-hint type-hint-promise">promise</a></td><td><div class="ngsharepoint-spfolder-remove-page"><p>promise with the result of the REST query.</p>
 </div></td></tr></table></div>
