@@ -185,13 +185,12 @@ angular.module('ngSharePoint').factory('SPWeb',
 		SPWebObj.prototype.getProperties = function(query) {
 
 			var self = this;
-			var def = $q.defer();
 			var defaultExpandProperties = 'RegionalSettings/TimeZone';
 
 			return SPUtils.SharePointReady().then(function() {
 
 				if (query) {
-					query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+					query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
 				} else {
 					query = { 
 						$expand: defaultExpandProperties
@@ -203,14 +202,12 @@ angular.module('ngSharePoint').factory('SPWeb',
 				return SPHttp.get(url).then(function(data) {
 
 					utils.cleanDeferredProperties(data);
-					
 					angular.extend(self, data);
-					def.resolve(data);
+
+					return data;
 						
 				});
 			});
-
-			// return def.promise;
 
 		}; // getProperties
 

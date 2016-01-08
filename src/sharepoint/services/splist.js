@@ -185,7 +185,7 @@ angular.module('ngSharePoint').factory('SPList',
             var defaultExpandProperties = 'Views';
 
             if (query) {
-                query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+                query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
             } else {
                 query = {
                     $expand: defaultExpandProperties
@@ -916,7 +916,7 @@ angular.module('ngSharePoint').factory('SPList',
             } else {
 
                 if (query) {
-                    query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');
+                    query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
                 } else {
                     query = {
                         $expand: defaultExpandProperties
@@ -1032,7 +1032,7 @@ angular.module('ngSharePoint').factory('SPList',
             var executor = new SP.RequestExecutor(self.web.url);
             var defaultExpandProperties = 'ContentType,File,File/ParentFolder,Folder,Folder/ParentFolder';
             var query = {
-                $expand: defaultExpandProperties + (expandProperties ? ', ' + expandProperties : '')
+                $expand: defaultExpandProperties + (expandProperties ? ',' + expandProperties : '')
             };
 
             executor.executeAsync({

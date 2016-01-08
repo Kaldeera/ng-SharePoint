@@ -172,7 +172,7 @@ angular.module('ngSharePoint').factory('SPFile',
 
 			} else {
 
-				this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+				this.getProperties({ $expand: 'ListItemAllFields,ListItemAllFields/ParentList'}).then(function() {
 
 					var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
 					self.List = list;
@@ -207,7 +207,7 @@ angular.module('ngSharePoint').factory('SPFile',
 
 				if (this.List !== void 0) {
 
-					this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+					this.getProperties({ $expand: 'ListItemAllFields,ListItemAllFields/ParentList'}).then(function() {
 
 						self.ListItem = SPObjectProvider.getSPListItem(self.List, self.ListItemAllFields);
 						self.updateAPIUrlById(self.List, self.ListItem.Id);
@@ -371,35 +371,6 @@ angular.module('ngSharePoint').factory('SPFile',
 			
 			var url = self.apiUrl + '/moveto(newurl=\'' + pathToMove + '/' + self.Name + '\',flags=1)';
 
-			/**
-				This 'standard' SharePoint code will crash on IE10 due a InvalidClientQueryException (incorrect JSON format)
-
-				var executor = new SP.RequestExecutor(self.web.url);
-				executor.executeAsync({
-					url: url,
-					method: 'POST',
-					headers: headers,
-
-					success: function () {
-						def.resolve();
-					},
-
-					error: function (data, errorCode, errorMessage) {
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
-				});
-
-			**/
-
-			/**
-				The same call through a simple $http call works well :-)
-			**/
 			$http({
 
 				method: 'POST',
@@ -451,35 +422,6 @@ angular.module('ngSharePoint').factory('SPFile',
 			}
 
 			var url = self.apiUrl + '/copyto(strnewurl=\'' + pathToCopy + '/' + self.Name + '\',boverwrite=true)';
-
-			/**
-				This 'standard' SharePoint code will crash on IE10 due a InvalidClientQueryException (incorrect JSON format)
-
-				var executor = new SP.RequestExecutor(self.web.url);
-				executor.executeAsync({
-					url: url,
-					method: 'POST',
-					headers: headers,
-
-					success: function () {
-						def.resolve();
-					},
-
-					error: function (data, errorCode, errorMessage) {
-						var err = utils.parseError({
-							data: data,
-							errorCode: errorCode,
-							errorMessage: errorMessage
-						});
-
-						def.reject(err);
-					}
-				});
-			**/
-
-			/**
-				The same call through a simple $http call works well :-)
-			**/
 
 			$http({
 
@@ -534,7 +476,7 @@ angular.module('ngSharePoint').factory('SPFile',
 				success: function() {
 
 					self.getProperties({
-						$expand: 'CheckedOutByUser, ModifiedBy'
+						$expand: 'CheckedOutByUser,ModifiedBy'
 					}).then(function() {
 						def.resolve();
 					});
@@ -550,7 +492,7 @@ angular.module('ngSharePoint').factory('SPFile',
 					});
 
 					self.getProperties({
-						$expand: 'CheckedOutByUser, ModifiedBy'
+						$expand: 'CheckedOutByUser,ModifiedBy'
 					}).then(function() {
 						def.reject(err);
 					});
@@ -586,7 +528,7 @@ angular.module('ngSharePoint').factory('SPFile',
 				success: function() {
 
 					self.getProperties({
-						$expand: 'CheckedOutByUser, ModifiedBy'
+						$expand: 'CheckedOutByUser,ModifiedBy'
 					}).then(function() {
 						delete self.CheckedOutByUser;
 						def.resolve();
@@ -603,7 +545,7 @@ angular.module('ngSharePoint').factory('SPFile',
 					});
 
 					self.getProperties({
-						$expand: 'CheckedOutByUser, ModifiedBy'
+						$expand: 'CheckedOutByUser,ModifiedBy'
 					}).then(function() {
 						def.reject(err);
 					});

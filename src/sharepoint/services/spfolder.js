@@ -348,7 +348,7 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 			} else {
 
-				this.getProperties({ $expand: 'ListItemAllFields, ListItemAllFields/ParentList'}).then(function() {
+				this.getProperties({ $expand: 'ListItemAllFields,ListItemAllFields/ParentList'}).then(function() {
 
 					var list = SPObjectProvider.getSPList(self.web, self.ListItemAllFields.ParentList.Id, self.ListItemAllFields.ParentList);
 					self.List = list;
