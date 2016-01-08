@@ -183,10 +183,6 @@ angular.module('ngSharePoint').factory('SPList',
             var self = this;
             var def = $q.defer();
             var defaultExpandProperties = 'Views';
-            // NOTA: Se ha eliminado la expansión automática del objeto 'Forms' debido a
-            // que si la lista es la 'SiteUserInfoList' se genera un error porque no
-            // tiene formularios sino que se utiliza la página /_layouts/15/UserDisp.aspx
-            // para visualizar un usuario y un popup para la edición.
 
             if (query) {
                 query.$expand = defaultExpandProperties + (query.$expand ? ', ' + query.$expand : '');

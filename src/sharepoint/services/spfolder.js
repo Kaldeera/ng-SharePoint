@@ -5,9 +5,8 @@
  * @description
  * Provides functionality to manage SharePoint folders.
  *
- * *At the moment, not all methods for manage folder objects are implemented in ngSharePoint*
+ * *At the moment, not all methods for managing folder objects are implemented in ngSharePoint*
  *
- * *Documentation is pending*
  */
 
 angular.module('ngSharePoint').factory('SPFolder', 
@@ -19,12 +18,29 @@ angular.module('ngSharePoint').factory('SPFolder',
 		'use strict';
 
 
-		// ****************************************************************************
-		// SPFolder constructor
-		//
-		// @web: SPWeb instance that contains the folder in SharePoint.
-		// @path: Name the folder you want to instantiate.
-		//
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#constructor
+         * @constructor
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Instantiates a new `SPFolder` object that points to a specific SharePoint folder. With a
+         * folder instance it is possible to access their properties and get files and subfolders.
+         *
+         * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the folder is located
+         * @param {string} path Server relative path to the folder.
+         * @param {object} folderProperties Properties to initialize the object
+         *
+         * @example
+         * <pre>
+         * var folder = new SPFolder(web, '/Shared documents');
+         * // ... do something with the 'folder' object
+         * folder.getFiles().then(...);
+         * </pre>
+         *
+         */
 		var SPFolderObj = function(web, path, folderProperties) {
 
 			if (web === void 0) {
@@ -54,13 +70,45 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// getProperties
-		//
-		// Gets folder properties and attach it to 'this' object.
-		//
-		// @returns: Promise with the result of the REST query.
-		//
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#getProperties
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Makes a call to the SharePoint server and collects all folder properties.
+         * The current object is extended with the recovered properties.
+         *
+         * For a complete list of folder properties go to Microsoft
+         * SharePoint {@link https://msdn.microsoft.com/EN-US/library/office/dn450841.aspx#bk_FolderProperties folder api reference}
+         *
+         * SharePoint REST api only returns certain folder properties that have primary values. Properties with complex structures
+         * like `ParentFolder` or `Files` are not returned directly by the api and it is necessary to extend the query
+         * to retrieve their values. It is possible to accomplish this with the `query` param.
+         *
+         * @param {object=} query This parameter specifies which folder properties will be extended and retrieved from the server.
+         * @returns {promise} promise with an object with the folder object
+         *
+         * @example
+         * This example shows how to retrieve folder properties:
+         * <pre>
+         *
+         *   SharePoint.getCurrentWeb(function(web) {
+         *
+         *     web.getFolder("/Images").then(function(folder) {
+         *
+         *        folder.getProperties().then(function() {
+         *
+         *            // at this point we have all folder properties
+         *            window.location = folder.WelcomePage;
+         *        });
+         *     });
+         *
+         *   });
+         * </pre>
+         *
+         */
 		SPFolderObj.prototype.getProperties = function(query) {
 
 			var self = this;
@@ -103,13 +151,34 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// getFiles
-		//
-		// Gets folder files
-		//
-		// @returns: Promise with the result of the REST query.
-		//
+
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPFolder#getFiles
+	     * @methodOf ngSharePoint.SPFolder
+	     *
+	     * @description
+		 * Gets the collection of all {@link ngSharePoint.SPFile files} contained in the folder.
+	     *
+         * @param {object=} query An object with all query options used to retrieve files.
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPFile SPFile} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(web) {
+		 *		var folder = new SPFolder(web, '/images');
+		 *		folder.getFiles().then(function(files) {
+		 *       
+		 *           angular.forEach(files, function(file) {
+	     *           
+	     *               console.log(file.Name + ' ' + file.Length);
+		 *           });
+		 *      });
+		 *
+		 *   });
+		 * </pre>
+		 */		
 		SPFolderObj.prototype.getFiles = function(query) {
 
 			var self = this;
@@ -162,13 +231,34 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// getFolders
-		//
-		// Gets folder files
-		//
-		// @returns: Promise with the result of the REST query.
-		//
+
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPFolder#getFolders
+	     * @methodOf ngSharePoint.SPFolder
+	     *
+	     * @description
+	     * Gets the collection of folders contained in the folder.
+	     *
+         * @param {object=} query An object with all query options used to retrieve folders.
+	     * @returns {promise} promise with an array of {@link ngSharePoint.SPFolder SPFolder} objects.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(web) {
+		 *		var folder = new SPFolder(web, '/images');
+		 *		folder.getFolders().then(function(folders) {
+		 *       
+		 *           angular.forEach(folders, function(folder) {
+	     *           
+	     *               console.log(folder.Name + ' ' + folder.ItemCount);
+		 *           });
+		 *      });
+		 *
+		 *   });
+		 * </pre>
+		 */
 		SPFolderObj.prototype.getFolders = function(query) {
 
 			var self = this;
@@ -222,13 +312,19 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// getList
-		//
-		// Gets the list that contains the curruent folder
-		//
-		// @returns: Promise with the new SPFolder object.
-		//
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#getList
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Returns an SPList object corresponding with the list or document library that contains the folder.
+         * If the folder doesn't corresponds with a list or document library, this method throws an error.
+         *
+         * @returns {promise} promise with an {@link ngSharePoint.SPList SPList} object.
+         *
+         */
 		SPFolderObj.prototype.getList = function() {
 
 			var def = $q.defer();
@@ -266,13 +362,21 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// getFolderListItem
-		//
-		// Gets the list item object correspondig with the current folder
-		//
-		// @returns: Promise with the new SPFolder object.
-		//
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#getFolderListItem
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Gets the list item object corresponding with the current folder.
+         *
+         * If the folder isn't in a list or document library, then there isn't an item
+         * that corresponds with it and this method throws an error.
+         *
+         * @returns {promise} promise with an {@link ngSharePoint.SPListItem SPListItem} object.
+         *
+         */
 		SPFolderObj.prototype.getFolderListItem = function() {
 
 			var def = $q.defer();
@@ -298,14 +402,30 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// addFolder
-		//
-		// Create a new folder under the current folder
-		//
-		// @folderName: The name of the new folder
-		// @returns: Promise with the new SPFolder object.
-		//
+
+		/**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#addFolder
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Creates a new folder within the current folder.
+         *
+         * @param {string} folderName The name of the folder to be created.
+         * @returns {promise} promise with the new {@link ngSharePoint.SPFolder SPFolder} object.
+         *
+		 * @example
+		 * <pre>
+		 *
+		 *	var folder = new SPFolder(web, '/public-documents');
+		 *	folder.addFolder('manuals').then(function(manualsFolder) {
+		 *
+		 *		// . . . 
+		 *      
+		 *	});
+		 *
+		 * </pre>
+         */
 		SPFolderObj.prototype.addFolder = function(folderName) {
 
 			var self = this;
@@ -367,16 +487,22 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-        // ****************************************************************************
-        // addFile
-        //
-        // Uploads a new binary file to current folder
-        //
-        // @fileName: The name of the new file to upload
-        // @file: A file object to upload
-        // @overwrite: A boolean value indicating if the file must be overwrited if already exists.
-        // @returns: Promise with the new SPFolder object.
-        //
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#addFile
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Uploads a new binary file to current folder.
+         *
+         * @param {string} fileName The name of the new file to upload.
+         * @param {stream} file A stream with the content of the file to be uploaded. The maximum size of a binary file that you can add by using this method is 2 GB.
+         * @param {boolean=} overwrite If a file with the same name exists on the server, this parameter
+         * indicates if the file will be overwritten
+         * @returns {promise} promise with the new {@link ngSharePoint.SPFile SPFile} object.
+         *
+         */
         SPFolderObj.prototype.addFile = function(fileName, file, overwrite) {
 
             var self = this;
@@ -435,14 +561,22 @@ angular.module('ngSharePoint').factory('SPFolder',
         
 
 
-		// ******************************************
-		// rename
-		//
-		// Renames the current folder with the new name
-		//
-		// @folderName: The new name of the folder
-		// @returns: Promise with the result.
-		//
+
+		/**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#rename
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * Changes the name of the current folder.
+         *
+         * @param {string} newName The new name to be applied to the folder.
+         * @returns {promise} promise with the operation results.
+         *
+         * **Limitations**:
+         * This method uses JSOM to rename the folder. This means
+         * that this method can't be executed outside of the SharePoint page context.
+         */
 		SPFolderObj.prototype.rename = function(newName) {
 
 			var self = this;
@@ -492,15 +626,20 @@ angular.module('ngSharePoint').factory('SPFolder',
 
 
 
-		// ****************************************************************************
-		// removeFolder
-		//
-		// Delete the specified folder under the current folder
-		//
-		// @folderName: The name of the folder to remove
-		// @permanent: Indicates if the folder is recycled or removed permanently
-		// @returns: Promise with the new SPFolder object.
-		//
+
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPFolder#remove
+         * @methodOf ngSharePoint.SPFolder
+         *
+         * @description
+         * This method removes the folder from the server.
+         * 
+         * @param {string|object} folder Can be an SPFolder object or the name of the folder to be removed.
+         * @param {boolean=} permanent Indicates if the folder is recycled or removed permanently.
+         * @returns {promise} promise with the result of the REST query.
+         *
+         */
 		SPFolderObj.prototype.removeFolder = function(folder, permament) {
 
 			var self = this;
