@@ -856,8 +856,9 @@ angular.module('ngSharePoint').factory('SPList',
             // Make the call.
             // ----------------------------------------------------------------------------
             executor.executeAsync({
-				url: self.apiUrl + "/renderlistdata(@viewXml)?@viewXml='" + viewXml + "'",
+				url: self.apiUrl + "/renderlistdata()",
                 method: 'POST',
+                body: angular.toJson({viewXml: viewXml}),
                 headers: headers,
                 success: function(data) {
 	                var d = angular.fromJson(utils.parseSPResponse(data).RenderListData);
