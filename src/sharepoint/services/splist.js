@@ -845,14 +845,6 @@ angular.module('ngSharePoint').factory('SPList',
                 "content-type": "application/json;odata=verbose"
             };
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
-            // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-            // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
             // Make the call.
             // ----------------------------------------------------------------------------
             executor.executeAsync({
