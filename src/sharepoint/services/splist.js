@@ -224,7 +224,7 @@ angular.module('ngSharePoint').factory('SPList',
 
 
             // Make the query to the server.
-            var executor = new SP.RequestExecutor(self.web.url);
+            /*var executor = new SP.RequestExecutor(self.web.url);
 
             executor.executeAsync({
 
@@ -232,9 +232,13 @@ angular.module('ngSharePoint').factory('SPList',
                 method: 'GET',
                 headers: {
                     "Accept": "application/json; odata=verbose"
-                },
+                },*/
 
-                success: function(data) {
+            var url = self.apiUrl + utils.parseQuery(query);
+
+            SPHttp.get(url).then(
+
+                /*success:*/ function(data) {
 
                     var d = utils.parseSPResponse(data);
                     utils.cleanDeferredProperties(d);
@@ -273,7 +277,7 @@ angular.module('ngSharePoint').factory('SPList',
                     def.resolve(d);
                 },
 
-                error: function(data, errorCode, errorMessage) {
+                /*error:*/ function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
