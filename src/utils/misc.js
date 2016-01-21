@@ -244,7 +244,7 @@ var utils = {
 		
 		// If a new REQUESTDIGEST value was received in the last server call,
 		// update the __REQUESTDIGEST form control with the new value.
-		if (response.headers !== null && response.headers['X-REQUESTDIGEST']) {
+		if (response.headers && response.headers['X-REQUESTDIGEST']) {
 
 			var requestDigest = document.getElementById('__REQUESTDIGEST');
 			if (requestDigest !== null) {

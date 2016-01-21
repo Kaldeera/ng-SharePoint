@@ -19,9 +19,9 @@
 
 angular.module('ngSharePoint').factory('SPListItem', 
 
-    ['$q', 'SPUtils', 
+    ['$q', 'SPUtils', 'SPHttp', 
 
-    function SPListItem_Factory($q, SPUtils) {
+    function SPListItem_Factory($q, SPUtils, SPHttp) {
 
         'use strict';
 
@@ -828,7 +828,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
             self.list.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
-                var executor = new SP.RequestExecutor(self.list.web.url);
+                //var executor = new SP.RequestExecutor(self.list.web.url);
 
 
                 // Set the contents for the REST API call.
@@ -917,14 +917,6 @@ angular.module('ngSharePoint').factory('SPListItem',
                     "content-type": "application/json;odata=verbose"
                 };
 
-                var requestDigest = document.getElementById('__REQUESTDIGEST');
-                // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-                // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-                if (requestDigest !== null) {
-                    headers['X-RequestDigest'] = requestDigest.value;
-                }
-
                 // If the item has 'Id', means that is not a new item, so set the call headers for make an update.
                 if (!self.isNew()) {
 
@@ -936,10 +928,51 @@ angular.module('ngSharePoint').factory('SPListItem',
                     });
                 }
 
+                var url = self.getAPIUrl();
+
+                SPHttp.post(url, headers, body).then(
+                    function(data){
+
+                        utils.cleanDeferredProperties(data);
+                        angular.extend(self, data);
+
+                        /**
+                         * On a document library, if user changes the name of the 
+                         * file (by the FileLeafRef field), the .File property that
+                         * points to the File object on the server, will have a bad 
+                         * api url
+                         * This problem can solfe with a call to updateAPIUrlById method
+                         * that modifies the apiURL property correctly
+
+                        if (self.File !== undefined) {
+                            self.File.updateAPIUrlById(self.list, self.Id);
+                        }
+                        
+                        */
+
+                        // After save, process the attachments.
+                        self.processAttachments().then(function() {
+                            def.resolve(data);
+                        }, function() {
+                            def.resolve(data);
+                        });
+
+                    },
+                    function(data, errorCode, errorMessage) {
+
+                        var err = utils.parseError({
+                            data: data,
+                            errorCode: errorCode,
+                            errorMessage: errorMessage
+                        });
+
+                        def.reject(err);
+                    });
+
 
                 // Make the call.
                 // ----------------------------------------------------------------------------
-                executor.executeAsync({
+                /*executor.executeAsync({
 
                     url: self.getAPIUrl(),
                     method: 'POST',
@@ -964,7 +997,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                             self.File.updateAPIUrlById(self.list, self.Id);
                         }
                         
-                        */
+                        *
 
                         // After save, process the attachments.
                         self.processAttachments().then(function() {
@@ -984,7 +1017,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                         def.reject(err);
                     }
-                });
+                });*/
 
             });
 

@@ -18,9 +18,9 @@
 
 angular.module('ngSharePoint').factory('SPList',
 
-    ['$q', 'SPHttp', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider',
+    ['$q', 'SPHttp', 'SPUtils', 'SPCache', 'SPFolder', 'SPListItem', 'SPContentType', 'SPObjectProvider',
 
-    function SPList_Factory($q, SPHttp, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
+    function SPList_Factory($q, SPHttp, SPUtils, SPCache, SPFolder, SPListItem, SPContentType, SPObjectProvider) {
 
         'use strict';
 
@@ -181,7 +181,7 @@ angular.module('ngSharePoint').factory('SPList',
         SPListObj.prototype.getProperties = function(query) {
 
             var self = this;
-            var def = $q.defer();
+            //var def = $q.defer();
             var defaultExpandProperties = 'Views';
 
             if (query) {
@@ -215,8 +215,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                 if (infoIsOk) {
 
-                    def.resolve(this);
-                    return def.promise;
+                    return this;
 
                 }
 
@@ -224,23 +223,15 @@ angular.module('ngSharePoint').factory('SPList',
 
 
             // Make the query to the server.
-            /*var executor = new SP.RequestExecutor(self.web.url);
-
-            executor.executeAsync({
-
-                url: self.apiUrl + utils.parseQuery(query),
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
-                },*/
 
             var url = self.apiUrl + utils.parseQuery(query);
 
-            SPHttp.get(url).then(
+            return SPHttp.get(url).then(
 
-                /*success:*/ function(data) {
+                function(data) {
 
-                    var d = utils.parseSPResponse(data);
+                    var d = data;
+
                     utils.cleanDeferredProperties(d);
 
                     angular.extend(self, d);
@@ -274,10 +265,10 @@ angular.module('ngSharePoint').factory('SPList',
                         self.ContentTypes = contentTypes;
                     }
 
-                    def.resolve(d);
+                    return d;
                 },
 
-                /*error:*/ function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -285,13 +276,10 @@ angular.module('ngSharePoint').factory('SPList',
                         errorMessage: errorMessage
                     });
 
-                    def.reject(err);
+                    return err;
                 }
-            });
-
-            return def.promise;
-
-        }; // getProperties
+            );
+        };
 
 
 
@@ -464,31 +452,24 @@ angular.module('ngSharePoint').factory('SPList',
          */
         SPListObj.prototype.getFields = function() {
 
-            var self = this;
             var def = $q.defer();
+            var self = this;
 
             if (this.Fields !== void 0) {
 
-                def.resolve(this.Fields);
+                def.resolve(self.Fields);
 
             } else {
 
-                var executor = new SP.RequestExecutor(self.web.url);
+                var url = self.apiUrl + '/Fields';
 
-                executor.executeAsync({
+                SPHttp.get(url).then(
 
-                    url: self.apiUrl + '/Fields',
-                    method: 'GET',
-                    headers: {
-                        "Accept": "application/json; odata=verbose"
-                    },
+                    function(data) {
 
-                    success: function(data) {
-
-                        var d = utils.parseSPResponse(data);
                         var fields = {};
 
-                        angular.forEach(d, function(field) {
+                        angular.forEach(data, function(field) {
                             fields[field.InternalName] = field;
                         });
 
@@ -499,7 +480,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     },
 
-                    error: function(data, errorCode, errorMessage) {
+                    function(data, errorCode, errorMessage) {
 
                         var err = utils.parseError({
                             data: data,
@@ -509,11 +490,10 @@ angular.module('ngSharePoint').factory('SPList',
 
                         def.reject(err);
                     }
-                });
+                );
             }
 
             return def.promise;
-
         }; // getFields
 
 
@@ -546,8 +526,8 @@ angular.module('ngSharePoint').factory('SPList',
         */
         SPListObj.prototype.getContentTypes = function() {
 
-            var self = this;
             var def = $q.defer();
+            var self = this;
 
             if (this.ContentTypes !== void 0) {
 
@@ -555,25 +535,17 @@ angular.module('ngSharePoint').factory('SPList',
 
             } else {
 
-                var executor = new SP.RequestExecutor(self.web.url);
-
                 // We don't cache the content types due to that the user can
                 // change its order (the default content type) anytime.
 
-                executor.executeAsync({
+                var url = self.apiUrl + '/ContentTypes';
 
-                    url: self.apiUrl + '/ContentTypes',
-                    method: 'GET',
-                    headers: {
-                        "Accept": "application/json; odata=verbose"
-                    },
+                SPHttp.get(url).then(
+                    function(data) {
 
-                    success: function(data) {
-
-                        var d = utils.parseSPResponse(data);
                         var contentTypes = [];
 
-                        angular.forEach(d, function(contentType) {
+                        angular.forEach(data, function(contentType) {
 
                             contentTypes.push(new SPContentType(self, contentType.StringId, contentType));
 
@@ -585,7 +557,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     },
 
-                    error: function(data, errorCode, errorMessage) {
+                    function(data, errorCode, errorMessage) {
 
                         var err = utils.parseError({
                             data: data,
@@ -595,11 +567,10 @@ angular.module('ngSharePoint').factory('SPList',
 
                         def.reject(err);
                     }
-                });
+                );
+
+                return def.promise;
             }
-
-            return def.promise;
-
         }; // getContentTypes
 
 
@@ -706,26 +677,19 @@ angular.module('ngSharePoint').factory('SPList',
 
             } else {
 
-                var executor = new SP.RequestExecutor(self.web.url);
+                var url = self.apiUrl + '/RootFolder';
 
-                executor.executeAsync({
+                SPHttp.get(url).then(
 
-                    url: self.apiUrl + '/RootFolder',
-                    method: 'GET',
-                    headers: {
-                        "Accept": "application/json; odata=verbose"
-                    },
+                    function(data) {
 
-                    success: function(data) {
-
-                        var d = utils.parseSPResponse(data);
-                        this.RootFolder = new SPFolder(self.web, d.ServerRelativeUrl, d);
+                        this.RootFolder = new SPFolder(self.web, data.ServerRelativeUrl, data);
                         this.RootFolder.List = self;
 
                         def.resolve(this.RootFolder);
                     },
 
-                    error: function(data, errorCode, errorMessage) {
+                    function(data, errorCode, errorMessage) {
 
                         var err = utils.parseError({
                             data: data,
@@ -735,11 +699,10 @@ angular.module('ngSharePoint').factory('SPList',
 
                         def.reject(err);
                     }
-                });
+                );
             }
 
             return def.promise;
-
         }; // getRootFolder
 
 
@@ -774,31 +737,24 @@ angular.module('ngSharePoint').factory('SPList',
             var self = this;
             var def = $q.defer();
 
-            var executor = new SP.RequestExecutor(self.web.url);
-
             var params = utils.parseQuery({
                 $filter: "enabled eq true and Name eq '" + workflowName + "'"
             });
 
-            executor.executeAsync({
+            var url = self.apiUrl + '/WorkflowAssociations' + params;
 
-                url: self.apiUrl + '/WorkflowAssociations' + params,
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
-                },
+            SPHttp.get(url).then(
 
-                success: function(data) {
+                function(data) {
 
-                    var d = utils.parseSPResponse(data);
-                    if (d.length > 0) {
-                        def.resolve(d[0]);
+                    if (data.length > 0) {
+                        def.resolve(data[0]);
                     } else {
                         def.resolve(undefined);
                     }
                 },
 
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -808,10 +764,9 @@ angular.module('ngSharePoint').factory('SPList',
 
                     def.reject(err);
                 }
-            });
+            );
 
             return def.promise;
-
         };  // getWorkflowAssociationByName
 
 
@@ -908,8 +863,6 @@ angular.module('ngSharePoint').factory('SPList',
         SPListObj.prototype.getListItems = function(query, resetPagination) {
 
             var self = this;
-            var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
             var defaultExpandProperties = 'ContentType,File,File/ParentFolder,Folder,Folder/ParentFolder';
             var urlParams = '';
 
@@ -930,19 +883,15 @@ angular.module('ngSharePoint').factory('SPList',
                 urlParams = utils.parseQuery(query);
             }
 
-            executor.executeAsync({
+            var url = self.apiUrl + '/Items' + urlParams;
 
-                url: self.apiUrl + '/Items' + urlParams,
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
-                },
+            return SPHttp.get(url).then(
 
-                success: function(data) {
-                    var d = utils.parseSPResponse(data);
+                function(data) {
+
                     var items = [];
 
-                    angular.forEach(d, function(item) {
+                    angular.forEach(data, function(item) {
 
                         if (item.File !== undefined && item.File.__deferred === undefined) {
                             var newFile = SPObjectProvider.getSPFile(self.web, item.File.ServerRelativeUrl, item.File);
@@ -970,11 +919,11 @@ angular.module('ngSharePoint').factory('SPList',
                     }
 
                     // Returns an array of initialized 'SPListItem' objects.
-                    def.resolve(items);
+                    return items;
 
                 },
 
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -982,12 +931,9 @@ angular.module('ngSharePoint').factory('SPList',
                         errorMessage: errorMessage
                     });
 
-                    def.reject(err);
+                    return err;
                 }
-            });
-
-            return def.promise;
-
+            );
         }; // getListItems
 
 
@@ -1033,40 +979,33 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
             var defaultExpandProperties = 'ContentType,File,File/ParentFolder,Folder,Folder/ParentFolder';
             var query = {
                 $expand: defaultExpandProperties + (expandProperties ? ',' + expandProperties : '')
             };
 
-            executor.executeAsync({
+            var url = self.apiUrl + '/getItemById(' + ID + ')' + utils.parseQuery(query);
 
-                url: self.apiUrl + '/getItemById(' + ID + ')' + utils.parseQuery(query),
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
-                },
+            return SPHttp.get(url).then(
 
-                success: function(data) {
+                function(data) {
 
-                    var d = utils.parseSPResponse(data);
-
-                    if (d.File !== undefined && d.File.__deferred === undefined) {
-                        var newFile = SPObjectProvider.getSPFile(self.web, d.File.ServerRelativeUrl, d.File);
+                    if (data.File !== undefined && data.File.__deferred === undefined) {
+                        var newFile = SPObjectProvider.getSPFile(self.web, data.File.ServerRelativeUrl, data.File);
                         newFile.List = self;
-                        d.File = newFile;
+                        data.File = newFile;
                     }
-                    if (d.Folder !== undefined && d.Folder.__deferred === undefined) {
-                        var newFolder = SPObjectProvider.getSPFolder(self.web, d.Folder.ServerRelativeUrl, d.Folder);
+                    if (data.Folder !== undefined && data.Folder.__deferred === undefined) {
+                        var newFolder = SPObjectProvider.getSPFolder(self.web, data.Folder.ServerRelativeUrl, data.Folder);
                         newFolder.List = self;
-                        d.Folder = newFolder;
+                        data.Folder = newFolder;
                     }
 
-                    var spListItem = new SPListItem(self, d);
-                    def.resolve(spListItem);
+                    var spListItem = new SPListItem(self, data);
+                    return spListItem;
                 },
 
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -1074,12 +1013,9 @@ angular.module('ngSharePoint').factory('SPList',
                         errorMessage: errorMessage
                     });
 
-                    def.reject(err);
+                    return err;
                 }
-            });
-
-            return def.promise;
-
+            );
         }; // getItemByID
 
 
@@ -1123,23 +1059,17 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
 
-            executor.executeAsync({
+            var url = self.apiUrl + '/getItemById(' + ID + ')/' + query.ltrim('/');
 
-                url: self.apiUrl + '/getItemById(' + ID + ')/' + query.ltrim('/'),
-                method: 'GET',
-                headers: {
-                    "Accept": "application/json; odata=verbose"
+            return SPHttp.get(url).then(
+
+                function(data) {
+                    
+                    return data;
                 },
 
-                success: function(data) {
-
-                    var d = utils.parseSPResponse(data);
-                    def.resolve(d);
-                },
-
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -1147,12 +1077,9 @@ angular.module('ngSharePoint').factory('SPList',
                         errorMessage: errorMessage
                     });
 
-                    def.reject(err);
+                    return err;
                 }
-            });
-
-            return def.promise;
-
+            );
         }; // getItemProperty
 
 
