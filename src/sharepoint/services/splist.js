@@ -810,6 +810,74 @@ angular.module('ngSharePoint').factory('SPList',
 
         };  // getWorkflowAssociationByName
 
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#renderListData
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * This method return an array of objects from the list
+         *
+         * @param {string} viewXml The CAML query.
+         * @returns {promise} promise with an object with all caml options used to retrieve list items
+         *
+         * @example
+         * This example retrieves one associated workflow
+         * <pre>
+         *   list.renderListData('<View><Query></Query><RowLimit>10</RowLimit></View>').then(function(items) {
+         *
+         *      console.log(items.toJson());
+         *      . . .
+         *
+         *   });
+         * </pre>
+         *
+        */
+        SPListObj.prototype.renderListData = function(viewXml) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+			// Set the headers for the REST API call.
+            // ----------------------------------------------------------------------------
+            var headers = {
+                "Accept": "application/json; odata=verbose",
+                "content-type": "application/json;odata=verbose"
+            };
+
+            // Make the call.
+            // ----------------------------------------------------------------------------
+            executor.executeAsync({
+				url: self.apiUrl + "/renderlistdata()",
+                method: 'POST',
+                body: angular.toJson({viewXml: viewXml}),
+                headers: headers,
+                success: function(data) {
+	                var d = angular.fromJson(utils.parseSPResponse(data).RenderListData);
+                    angular.forEach(d.Row, function(item) {
+						// convert single arrays to object
+				        angular.forEach(item, function(value, key) {
+				            if (angular.isArray(value) && value.length === 1) {
+				            	item[key] = value[0];
+				            }
+				        });
+                    });
+                    def.resolve(d.Row);
+                },
+                error: function(data, errorCode, errorMessage) {
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }                    
+            });
+          
+            return def.promise;
+
+        };  // renderListData 
 
 
 
