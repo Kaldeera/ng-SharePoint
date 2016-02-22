@@ -66,33 +66,33 @@
             //       The strings are located at wss.resx that currently can't load dinamically.
 
 
-            scope.isNewItem = scope.item.isNew();
+            if (scope.item !== void 0) {
+    
+                if (!scope.item.isNew()) {
 
+                    // Gets the item info
+                    scope.createdDate = scope.item.Created;
+                    scope.modifiedDate = scope.item.Modified;
+                    scope.authorName = null;
+                    scope.editorName = null;
 
-            if (scope.item && !scope.isNewItem) {
+                    // Gets 'Author' properties
+                    scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
 
-                // Gets the item info
-                scope.createdDate = scope.item.Created;
-                scope.modifiedDate = scope.item.Modified;
-                scope.authorName = null;
-                scope.editorName = null;
+                        scope.authorName = author.Title;
+                        scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
 
-                // Gets 'Author' properties
-                scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
+                    });
 
-                    scope.authorName = author.Title;
-                    scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
+                    // Gets 'Editor' properties
+                    scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
 
-                });
+                        scope.editorName = editor.Title;
+                        scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
 
-                // Gets 'Editor' properties
-                scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
+                    });
 
-                    scope.editorName = editor.Title;
-                    scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
-
-                });
-
+                }
             }
 
 
