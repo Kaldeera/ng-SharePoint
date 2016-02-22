@@ -1,18 +1,11 @@
-/*
-    SPExpressionResolver - service
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
-
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
-
-
-
-///////////////////////////////////////
-//  SPExpressionResolver
-///////////////////////////////////////
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolver
+ *
+ * @description
+ * SPExpressionResolver factory provides functionality to solve forms and rule expressions.
+ *
+ */
 
 angular.module('ngSharePoint').service('SPExpressionResolver', 
 

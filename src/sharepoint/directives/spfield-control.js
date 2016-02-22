@@ -23,13 +23,15 @@ angular.module('ngSharePoint').directive('spfieldControl',
         var spfieldControl_DirectiveDefinitionObject = {
 
             restrict: 'EA',
-            require: '^spform',
+            require: '?^spform',
             replace: true,
             templateUrl: 'templates/form-templates/spfield-control.html',
 
 
             link: function($scope, $element, $attrs, spformController) {
 
+                if (spformController === null) return;
+                
                 var name = ($attrs.name || $attrs.spfieldControl);
                 var schema = spformController.getFieldSchema(name);
                 
