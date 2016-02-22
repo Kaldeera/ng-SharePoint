@@ -28,6 +28,8 @@ angular.module('ngSharePoint').directive('spfield',
 
 			link: function($scope, $element, $attrs, spformController) {
 
+				if (spformController === null) return;
+				
 				var name = ($attrs.name || $attrs.spfield);
 				var schema;
 
@@ -54,6 +56,8 @@ angular.module('ngSharePoint').directive('spfield',
 
 					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
+						if ($element.parent().length === 0) return;
+						
 						var originalAttrs = $element[0].attributes;
 						var elementAttributes = '';
 						var cssClasses = ['spfield-wrapper'];
