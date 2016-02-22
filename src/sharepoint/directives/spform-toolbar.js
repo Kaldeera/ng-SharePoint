@@ -24,7 +24,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
             restrict: 'EA',
             templateUrl: 'templates/form-templates/spform-toolbar.html',
-            require: '^spform',
+            require: '?^spform',
             replace: true,
             transclude: true,
 
@@ -57,6 +57,8 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
             link: function($scope, $element, $attrs, spformController, transcludeFn) {
 
+                if (spformController === null) return;
+                
                 $scope.formCtrl = spformController;
                 $scope.ribbonToolbar = null;
 

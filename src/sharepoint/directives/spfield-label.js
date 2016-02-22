@@ -23,7 +23,7 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 		var spfieldLabel_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
-			require: '^spform',
+			require: '?^spform',
 			replace: true,
 			scope: {
 				mode: '@'
@@ -32,6 +32,8 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 
 
 			link: function($scope, $element, $attrs, spformController) {
+
+				if (spformController === null) return;
 
 				$scope.schema = spformController.getFieldSchema($attrs.name);
 
