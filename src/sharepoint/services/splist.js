@@ -219,7 +219,6 @@ angular.module('ngSharePoint').factory('SPList',
                     return def.promise;
 
                 }
-
             }
 
 
