@@ -95,6 +95,14 @@
             //
 
 
+            function allowRedirect() {
+
+                if (attrs.noredirect !== void 0) return false;
+                return spformToolbarController.allowRedirect;
+            }
+
+
+
             function processAction() {
 
 
@@ -296,7 +304,7 @@
 
                         //var redirectUrl = scope.redirectUrl;
 
-                        if (redirectUrl) {
+                        if (redirectUrl && allowRedirect()) {
 
                             var item = scope.formCtrl.getItem();
                             var list = item.list;

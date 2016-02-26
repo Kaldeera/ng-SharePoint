@@ -274,12 +274,12 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        fieldFocused = this.focusElements[0].element;
+                        fieldFocused = this.focusElements[0];
 
                     }
 
                     // Set the focus on the final element if exists.
-                    if (fieldFocused.length > 0) {
+                    if (fieldFocused !== void 0 && fieldFocused.length > 0) {
 
                         fieldFocused[0].focus();
 
@@ -614,8 +614,8 @@ angular.module('ngSharePoint').directive('spform',
                                 $scope.childScope.$destroy();
                             }
                             $scope.childScope = $scope.$new();
-                                                        // Store a copy of the original item.
-                            
+
+                            // Store a copy of the original item.
                             // See 'onPreSave', 'onPostSave' and 'onCancel' callbacks in the controller's 'save' method.
 
                             // Using the 'angular.copy' method, the objects __proto__ are different.
@@ -778,8 +778,10 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                 transclusionContainer.empty(); // Needed?
-                                // Initialize the 'rules' array for debug purposes.
+                                
+                                // Initialize the 'rules' array.
                                 $scope.rules = [];
+                                $scope.expressions = {};
 
 
                                 // Check for 'templateUrl' attribute
