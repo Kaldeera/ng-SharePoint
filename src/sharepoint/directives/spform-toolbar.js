@@ -51,6 +51,11 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                 };
 
+
+                this.allowRedirect = function() {
+                    return $scope.noredirect;
+                };
+
             },
 
 
@@ -71,6 +76,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     //if($scope.currentMode === newValue) return;
 
                     $scope.currentMode = newValue;
+                    $scope.noredirect = ($attrs.noredirect !== void 0);
                     processToolbar();
 
                 });
