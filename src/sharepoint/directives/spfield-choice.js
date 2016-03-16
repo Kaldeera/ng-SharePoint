@@ -6,6 +6,30 @@
 
     Copyright (c) 2014
     Licensed under the MIT License
+
+
+
+    Minimal Schema definition and extended properties:
+
+    FieldXXXX: {
+        TypeAsString: 'Choice',
+        FillInChoice: false,
+        EditFormat: 0,          // 0 - DropDown, 1 - RadioButton
+        Choices: {              // ListQuery only apply if results === undefined
+            ListQuery: {
+                Web: '/path/to/valid/web',  // Optional (by default gets the curerent web)
+                List: 'ListName',
+                Field: 'Title',             // Optional (by default gets the 'Title')
+                Query: {                    // Optional. All query properties of OData query operations are valid
+                                            // https://msdn.microsoft.com/en-us/library/office/fp142385%28v=office.15%29.aspx
+                    $orderBy: 'Title'
+                }
+            },
+            // If you don't want to make a list query, you can specify one custom array of options
+            results: ['Activity 1', 'Activity 2', 'Activity 3', '...']
+        }
+    },
+
 */
 
 
@@ -16,9 +40,9 @@
 
 angular.module('ngSharePoint').directive('spfieldChoice', 
 
-    ['SPFieldDirective',
+    ['SharePoint', 'SPFieldDirective', '$q',
 
-    function spfieldChoice_DirectiveFactory(SPFieldDirective) {
+    function spfieldChoice_DirectiveFactory(SharePoint, SPFieldDirective, $q) {
 
         var spfieldChoice_DirectiveDefinitionObject = {
 
@@ -41,7 +65,18 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                     init: function() {
 
-                        $scope.choices = $scope.schema.Choices.results;
+                        if ($scope.schema.Choices.results === undefined) {
+
+                            if ($scope.schema.Choices.ListQuery !== undefined) {
+
+                                getResultsFromListQuery($scope.schema.Choices.ListQuery);
+                            }
+
+                        } else {
+
+                            $scope.choices = $scope.schema.Choices.results;
+                        }
+
                         $scope.chooseText = STSHtmlEncode(Strings.STS.L_Choose_Text);
                         $scope.choiceFillInDisplayText = STSHtmlEncode(Strings.STS.L_ChoiceFillInDisplayText);
                         $scope.selectedOption = null;
@@ -65,7 +100,9 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                                 case 0:
                                     // Dropdown
-                                    $scope.dropDownValue = $scope.value;
+                                    if ($scope.choices !== void 0) {
+                                        $scope.dropDownValue = $scope.value;
+                                    }
                                     $scope.selectedOption = 'DropDownButton';
                                     break;
 
@@ -103,7 +140,6 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                     if ($scope.selectedOption == 'FillInButton') {
 
                         $scope.modelCtrl.$setViewValue($scope.fillInChoiceValue);
-//                        $scope.value = $scope.fillInChoiceValue;
 
                         var fillInChoiceElement = document.getElementById($scope.schema.InternalName + '_' + $scope.schema.Id + '_$FillInChoice');
 
@@ -156,6 +192,42 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                     $scope.selectedOption = 'FillInButton';
 
                 };
+
+
+                ///////////////////////////////////////////////////////////////////
+                function getResultsFromListQuery(ListQuery) {
+
+                    var def = $q.defer();
+                    var webPromise = $scope.item.list.web;
+
+                    if (ListQuery.Web !== undefined) {
+                        webPromise = SharePoint.getWeb(ListQuery.Web);
+                    }
+
+                    $q.when(webPromise).then(function(web) {
+
+                        web.getList(ListQuery.List).then(function(list) {
+
+                            list.getListItems(ListQuery.Query).then(function(items) {
+
+                                $scope.choices = [];
+                                angular.forEach(items, function(item) {
+                                    $scope.choices.push(item[ListQuery.Field || 'Title']);
+                                });
+                                $scope.dropDownValue = $scope.value;
+                            });
+
+                        }, function(err) {
+
+                            def.reject(err);
+                        });
+
+                    });
+
+                    return def.promise;
+                }
+
+
 
             } // link
 
