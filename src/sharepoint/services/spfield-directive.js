@@ -239,7 +239,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     //
 
 
-                    if (angular.isDefined($scope.schema.extendedTemplate)) {
+                    if (angular.isDefined($scope.schema) && angular.isDefined($scope.schema.extendedTemplate)) {
 
                         var finalHtml = html;
                         var templateEx = $scope.schema.extendedTemplate;
@@ -345,7 +345,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     $q.when(directive.onValidateFn.apply(directive, arguments)).then(function() {
 
-                        if ($scope.schema.onValidate !== undefined) {
+                        if ($scope.schema !== undefined && $scope.schema.onValidate !== undefined) {
 
                             $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
 
@@ -360,7 +360,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                 } else {
 
-                    if ($scope.schema.onValidate !== undefined) {
+                    if ($scope.schema !== undefined && $scope.schema.onValidate !== undefined) {
 
                         $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
 
