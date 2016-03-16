@@ -26,7 +26,7 @@
                 }
             },
             // If you don't want to make a list query, you can specify one custom array of options
-            results: ['Actividad 1', 'Actividad 2', 'Actividad 3', '...']
+            results: ['Activity 1', 'Activity 2', 'Activity 3', '...']
         }
     },
 
