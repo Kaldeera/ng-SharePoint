@@ -1546,105 +1546,24 @@ angular.module('ngSharePoint').factory('SPContentType',
     }
 ]);
 
-/*
-    SPExpressionResolver - service
-    
-    Pau Codina (pau.codina@kaldeera.com)
-    Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolvercurrentUser
+ *
+ * @description
+ * SPExpressionResolvercurrentUser provides functionality to solve current user expressions.
+ * 
+ */
 
-    Copyright (c) 2014
-    Licensed under the MIT License
-*/
+angular.module('ngSharePoint').factory('SPExpressionResolvercurrentUser', 
 
+    ['SharePoint', 
 
-
-///////////////////////////////////////
-//  SPExpressionResolver
-///////////////////////////////////////
-
-angular.module('ngSharePoint').service('SPExpressionResolver', 
-
-    ['$q', 'SharePoint', '$parse',
-
-    function SPExpressionResolver_Factory($q, SharePoint, $parse) {
+    function SPExpressionResolvercurrentUser_Factory(SharePoint) {
 
         'use strict';
 
-
-        //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
-        var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g; //-> Faster but less accurate
-        //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
         var PARTS_REGEXP = /[\[./]([\w )]+)/g;
-
-
-        // ****************************************************************************
-        // Private methods
-        //
-
-        function resolveExpression(expressionsArray, scope, index, deferred) {
-
-            index = index || 0;
-            deferred = deferred || $q.defer();
-
-            var expression = expressionsArray[index++];
-
-            if (expression === void 0) {
-
-                deferred.resolve();
-                return deferred.promise;
-            }
-
-
-            // Extract the expression type.
-            var expressionType = expression.substring(0, expression.indexOf(/\W/.exec(expression)));
-            var expressionPromise;
-
-            switch (expressionType) {
-
-                case 'param':
-                    var paramName = getExpressionParts(expression)[0];
-                    expressionPromise = utils.getQueryStringParamByName(paramName);
-                    break;
-
-                case 'item':
-                    expressionPromise = resolveItemExpression(expression, scope);
-                    break;
-
-                case 'currentUser':
-                    expressionPromise = resolveCurrentUserExpression(expression);
-                    break;
-
-                case 'fn':
-                    var functionExpression = /\W(.*)/.exec(expression)[1];
-                    expressionPromise = resolveFunctionExpression(functionExpression, scope);
-                    break;
-            }
-
-
-            // Resolve/Reject the current expression promise
-            $q.when(expressionPromise).then(function(result) {
-
-                // Sets the resolved value for the current expression
-                expressionsArray[index - 1] = result;
-
-                // Resolve next expression
-                resolveExpression(expressionsArray, scope, index, deferred);
-
-            }, function(result) {
-
-                // Even with a promise rejection, sets the result in the current expression
-                expressionsArray[index - 1] = result;
-                
-                // Resolve next expression
-                resolveExpression(expressionsArray, scope, index, deferred);
-
-            });
-
-
-            return deferred.promise;
-        }
-
-
 
         function getExpressionParts(text) {
 
@@ -1660,111 +1579,694 @@ angular.module('ngSharePoint').service('SPExpressionResolver',
             return matches;
         }
 
+        function createExpressionValue(scope, name, value) {
 
+            if (scope.expressions !== void 0) {
 
-        function resolveItemExpression(expression, scope) {
+                var extendedExpression = {
+                    currentUser: {
+                    }
+                };
+                if (angular.isArray(name)) {
 
-            var queryParts = getExpressionParts(expression);
+                    var valueObject = value;
 
-            if (queryParts.length == 1) {
+                    for(var r = name.length - 1; r > 0; r--) {
 
-                return scope.item[queryParts[0]];
+                        var childValue = valueObject;
+                        valueObject = {};
+                        valueObject[name[r]] = childValue;
 
-            } else {
+                    }
 
-                return scope.item.list.getItemProperty(scope.item.Id, queryParts.join('/')).then(function(data) {
+                    extendedExpression.currentUser[name[0]] = valueObject;
 
-                    return data[queryParts[queryParts.length - 1]];
-            
-                }, function() {
+                } else {
+                    extendedExpression.currentUser[name] = value;
+                }
 
-                    return undefined;
-                });
+                scope.expressions = utils.deepExtend(extendedExpression, scope.expressions);
             }
-            
+
         }
 
+        return {
+
+            resolve: function(expression, scope) {
+
+                return SharePoint.getCurrentWeb().then(function(web) {
+                
+                    return web.getList('UserInfoList').then(function(list) {
+
+                        var queryParts = getExpressionParts(expression);
+
+                        return list.getItemProperty(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
+
+                            var value = data[queryParts[queryParts.length - 1]];
+                            createExpressionValue(scope, queryParts, value);
+                            return 'expressions.currentUser.' + queryParts.join('.');
+
+                        }, function() {
+
+                            return 'expressions.currentUser.' + queryParts.join('.');
+                        });
+                    });
+                });
+            }
+
+        };
+
+    }
+]);
 
 
-        function resolveCurrentUserExpression(expression) {
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolveritem
+ *
+ * @description
+ * SPExpressionResolverItem provides functionality to solve item expressions.
+ * 
+ */
 
-            return SharePoint.getCurrentWeb().then(function(web) {
-            
-                return web.getList('UserInfoList').then(function(list) {
+angular.module('ngSharePoint').factory('SPExpressionResolveritem', 
 
-                    var queryParts = getExpressionParts(expression);
+    [
 
-                    return list.getItemProperty(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
+    function SPExpressionResolverItem_Factory() {
+
+        'use strict';
+
+        var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+        function getExpressionParts(text) {
+
+            var matches = [];
+            var match;
+
+            while ((match = PARTS_REGEXP.exec(text))) {
+
+                match.shift();
+                matches.push(match.join(''));
+            }
+
+            return matches;
+        }
+
+        function createExpressionValue(scope, name, value) {
+
+            if (scope.expressions !== void 0) {
+
+                var extendedExpression = {
+                    item: {
+                    }
+                };
+                if (angular.isArray(name)) {
+
+                    var valueObject = value;
+
+                    for(var r = name.length - 1; r > 0; r--) {
+
+                        var childValue = valueObject;
+                        valueObject = {};
+                        valueObject[name[r]] = childValue;
+
+                    }
+
+                    extendedExpression.item[name[0]] = valueObject;
+
+                } else {
+                    extendedExpression.item[name] = value;
+                }
+
+                scope.expressions = utils.deepExtend(extendedExpression, scope.expressions);
+            }
+
+        }
+
+        return {
+
+            resolve: function(expression, scope) {
+
+                var queryParts = getExpressionParts(expression);
+
+                if (queryParts.length == 1) {
+
+                    var value = scope.item[queryParts[0]];
+                    createExpressionValue(scope, queryParts[0], value);
+                    return 'expressions.item.' + queryParts[0];
+
+                } else {
+
+                    return scope.item.list.getItemProperty(scope.item.Id, queryParts.join('/')).then(function(data) {
+
+                        var value = data[queryParts[queryParts.length - 1]];
+                        createExpressionValue(scope, queryParts, value);
+                        return 'expressions.item.' + queryParts.join('.');
+                
+                    }, function() {
+
+                        return 'expressions.item.' + queryParts.join('.');
+                    });
+                }
+            }
+
+        };
+
+    }
+]);
+
+
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolverlist
+ *
+ * @description
+ * SPExpressionResolverlist provides functionality to solve list expressions.
+ * 
+ */
+
+angular.module('ngSharePoint').factory('SPExpressionResolverlist', 
+
+    [
+
+    function SPExpressionResolverList_Factory() {
+
+        'use strict';
+
+        var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+        function getExpressionParts(text) {
+
+            var matches = [];
+            var match;
+
+            while ((match = PARTS_REGEXP.exec(text))) {
+
+                match.shift();
+                matches.push(match.join(''));
+            }
+
+            return matches;
+        }
+
+        function createExpressionValue(scope, name, value) {
+
+            if (scope.expressions !== void 0) {
+
+                var extendedExpression = {
+                    list: {
+                    }
+                };
+                if (angular.isArray(name)) {
+
+                    var valueObject = value;
+
+                    for(var r = name.length - 1; r > 0; r--) {
+
+                        var childValue = valueObject;
+                        valueObject = {};
+                        valueObject[name[r]] = childValue;
+
+                    }
+
+                    extendedExpression.list[name[0]] = valueObject;
+
+                } else {
+                    extendedExpression.list[name] = value;
+                }
+
+                scope.expressions = utils.deepExtend(extendedExpression, scope.expressions);
+            }
+
+        }
+
+        return {
+
+            resolve: function(expression, scope) {
+
+                var queryParts = getExpressionParts(expression);
+
+                return scope.item.list.getProperties().then(function(properties) {
+
+                    var value = properties[queryParts[0]];
+                    createExpressionValue(scope, queryParts[0], value);
+                    return 'expressions.list.' + queryParts[0];
+                });
+            }
+
+        };
+
+    }
+]);
+
+
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolverparam
+ *
+ * @description
+ * SPExpressionResolverparam provides functionality to solve param expressions.
+ * 
+ */
+
+angular.module('ngSharePoint').factory('SPExpressionResolverparam', 
+
+    [
+
+    function SPExpressionResolverParam_Factory() {
+
+        'use strict';
+
+        var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+        function getExpressionParts(text) {
+
+            var matches = [];
+            var match;
+
+            while ((match = PARTS_REGEXP.exec(text))) {
+
+                match.shift();
+                matches.push(match.join(''));
+            }
+
+            return matches;
+        }
+
+        return {
+
+            resolve: function(expression, scope) {
+
+                var paramName = getExpressionParts(expression)[0];
+                var value = utils.getQueryStringParamByName(paramName);
+
+                if (scope.expressions !== void 0) {
+
+                    var extendedExpression = {
+                        param: {
+                        }
+                    };
+                    extendedExpression.param[paramName] = value;
+
+                    scope.expressions = utils.deepExtend(extendedExpression, scope.expressions);
+                }
+                return 'expressions.param.' + paramName;
+            }
+
+        };
+
+    }
+]);
+
+
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolverweb
+ *
+ * @description
+ * SPExpressionResolverweb provides functionality to solve web expressions.
+ * 
+ */
+
+angular.module('ngSharePoint').factory('SPExpressionResolverweb', 
+
+    [
+
+    function SPExpressionResolverWeb_Factory() {
+
+        'use strict';
+
+        var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+        function getExpressionParts(text) {
+
+            var matches = [];
+            var match;
+
+            while ((match = PARTS_REGEXP.exec(text))) {
+
+                match.shift();
+                matches.push(match.join(''));
+            }
+
+            return matches;
+        }
+
+        function createExpressionValue(scope, name, value) {
+
+            if (scope.expressions !== void 0) {
+
+                var extendedExpression = {
+                    web: {
+                    }
+                };
+                if (angular.isArray(name)) {
+
+                    var valueObject = value;
+
+                    for(var r = name.length - 1; r > 0; r--) {
+
+                        var childValue = valueObject;
+                        valueObject = {};
+                        valueObject[name[r]] = childValue;
+
+                    }
+
+                    extendedExpression.web[name[0]] = valueObject;
+
+                } else {
+                    extendedExpression.web[name] = value;
+                }
+
+                scope.expressions = utils.deepExtend(extendedExpression, scope.expressions);
+            }
+
+        }
+
+        return {
+
+            resolve: function(expression, scope) {
+
+                var queryParts = getExpressionParts(expression);
+
+                return scope.item.list.web.getProperties().then(function(properties) {
+
+                    var value = properties[queryParts[0]];
+                    createExpressionValue(scope, queryParts[0], value);
+                    return 'expressions.web.' + queryParts[0];
+                });
+            }
+
+        };
+
+    }
+]);
+
+
+/**
+ * @ngdoc object
+ * @name ngSharePoint.SPExpressionResolver
+ *
+ * @description
+ * SPExpressionResolver provides functionality to solve expressions.
+ *
+ * The method creates new scope variable called `expressions` that contains variables with the name of the expression 
+ * provider used and their corresponding values. With this way, when AngularJS analizes the 
+ * expressions, its will be evaluated correctly.
+ *
+ * Valid expressions should match the next pattern:
+ * <pre>
+ * {provider.value}
+ * </pre>
+ * Where `provider` refers to the provider who will solve the expression, and `value` refers
+ * to the valuo to solve.
+ * 
+ * Actually the only providers that you can use are:
+ * - `item`: solves item related values
+ * - `currentUser`: solves current user related values (site user info list)
+ * - `param`: solves page parameters
+ * - `web`: solves web properties
+ * - `list`: solves list properties
+ * - `userProfile`: (coming soon)
+ *
+ * Expression, also, can be composed by complex values like:
+ * <pre>
+ * {provider.value1.value2....valuen}
+ * </pre>
+ * This only apply to `currentUser` or `item` values.
+ *
+ * @example
+ * Example of expressions:
+ * <pre>
+ * {item.Status}=='Closed'
+ * </pre>
+ * <pre>
+ * {currentUser.JobTitle}
+ * </pre>
+ * This expression creates a new variable called `currentUser` with the next composition:
+ * <pre>
+ * scope.expressions = {
+ *      currentUser: {
+ *           JobTitle: 'value' 
+ *      }
+ * }
+ * </pre>
+ *
+ * <pre>
+ * {item.Department.Manager.Email}
+ * </pre>
+ * Refers to the manager's email of the department where the item is referenced.
+ * This expressions creates the next object composition:
+ * <pre>
+ * scope.expressions = {
+ *      item: {
+ *          Department: {
+ *              Manager: {
+ *                  Email: 'useremail@company.com'
+ *              }
+ *          }
+ *      }
+ * }
+ * </pre>
+ *
+ * <pre>
+ * {currentUser.Area.Address}
+ * </pre>
+ * 
+ */
+
+angular.module('ngSharePoint').provider('SPExpressionResolver', 
+
+    [
+
+    function SPExpressionResolver_Provider() {
+
+        'use strict';
+
+        var CustomExpresionProviders = {
+            /*
+            'currentUser': 'SPExpressionResolvercurrentUser',
+            'currentUser': 'otherCurrentUserProvider'
+            */
+        };
+
+        var SPExpressionResolver = function($injector, $q, SharePoint, $parse) {
+
+            //var OLD_EXPRESSION_REGEXP = /{\b([\w+( |.)]*|[\[\w+\]]*)}/g;
+            var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g; //-> Faster but less accurate
+            //var EXPRESSION_REGEXP = /{(\w+?(?:[.\/\[](?! )[\w \]]*?)+?)}(?!})/g; //-> More accurate but slower
+            var PARTS_REGEXP = /[\[./]([\w )]+)/g;
+
+
+            // ****************************************************************************
+            // Private methods
+            //
+
+            function resolveExpression(expressionsArray, scope, index, deferred) {
+
+                index = index || 0;
+                deferred = deferred || $q.defer();
+
+                var expression = expressionsArray[index++];
+
+                if (expression === void 0) {
+
+                    deferred.resolve();
+                    return deferred.promise;
+                }
+
+
+                // Extract the expression type.
+                var expressionType = expression.substring(0, expression.indexOf(/\W/.exec(expression)));
+
+                var expressionProviderName = 'SPExpressionResolver' + expressionType;
+                if (CustomExpresionProviders[expressionType] !== void 0) {
+                    expressionProviderName = CustomExpresionProviders[expressionType];
+                }
+
+                var service = $injector.get(expressionProviderName);
+                var expressionPromise = service.resolve(expression, scope);
+
+                // Resolve/Reject the current expression promise
+                $q.when(expressionPromise).then(function(result) {
+
+                    // Sets the resolved value for the current expression
+                    expressionsArray[index - 1] = result;
+
+                    // Resolve next expression
+                    resolveExpression(expressionsArray, scope, index, deferred);
+
+                }, function(result) {
+
+                    // Even with a promise rejection, sets the result in the current expression
+                    expressionsArray[index - 1] = result;
+                    
+                    // Resolve next expression
+                    resolveExpression(expressionsArray, scope, index, deferred);
+
+                });
+
+
+                return deferred.promise;
+            }
+
+
+
+            function getExpressionParts(text) {
+
+                var matches = [];
+                var match;
+
+                while ((match = PARTS_REGEXP.exec(text))) {
+
+                    match.shift();
+                    matches.push(match.join(''));
+                }
+
+                return matches;
+            }
+
+
+
+            function resolveItemExpression(expression, scope) {
+
+                var queryParts = getExpressionParts(expression);
+
+                if (queryParts.length == 1) {
+
+                    return scope.item[queryParts[0]];
+
+                } else {
+
+                    return scope.item.list.getItemProperty(scope.item.Id, queryParts.join('/')).then(function(data) {
 
                         return data[queryParts[queryParts.length - 1]];
-
+                
                     }, function() {
 
                         return undefined;
                     });
-                });
-            });
-        }
-
-
-
-        function resolveFunctionExpression(functionExpression, scope) {
-
-            return scope.$eval($parse(functionExpression));
-
-        }
-
-
-
-        // ****************************************************************************
-        // Public methods (Service API)
-        //
-
-        this.resolve = function(text, scope) {
-
-            var deferred = $q.defer();
-            var expressionsArray = [];
-
-            if (angular.isString(text)) {
+                }
                 
-                // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
-                text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
+            }
 
-                    // Check if the expression is already added.
-                    // This way resolves the expression only once and replaces it in all places 
-                    // where appears in the text.
-                    var pos = expressionsArray.indexOf(p1);
 
-                    if (pos == -1) {
-                        expressionsArray.push(p1);
-                        pos = expressionsArray.length - 1;
-                    }
 
-                    return '{e:' + pos + '}';
+            function resolveCurrentUserExpression(expression) {
 
+                return SharePoint.getCurrentWeb().then(function(web) {
+                
+                    return web.getList('UserInfoList').then(function(list) {
+
+                        var queryParts = getExpressionParts(expression);
+
+                        return list.getItemProperty(_spPageContextInfo.userId, queryParts.join('/')).then(function(data) {
+
+                            return data[queryParts[queryParts.length - 1]];
+
+                        }, function() {
+
+                            return undefined;
+                        });
+                    });
                 });
+            }
+
+
+
+            function resolveFunctionExpression(functionExpression, scope) {
+
+                return scope.$eval($parse(functionExpression));
 
             }
 
-            // Resolve the 'expressionsArray' with promises
-            resolveExpression(expressionsArray, scope).then(function() {
 
-                // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expressions values.
-                for (var i = 0; i < expressionsArray.length; i++) {
-                    text = text.replace(new RegExp('{e:' + i + '}', 'g'), expressionsArray[i]);
+
+            // ****************************************************************************
+            // Public methods (Service API)
+            //
+
+            /**
+             * @ngdoc function
+             * @name ngSharePoint.SPExpressionResolver#resolve
+             * @methodOf ngSharePoint.SPExpressionResolver
+             * 
+             * @description
+             * This method solves all expressions contained within the text received as parameter.
+             *
+             * @param {string} Text expression to solve
+             * @param {object} scope with the context where `expressions` values will be placed.
+             * @returns {promise} Promise with the solved expressions
+             * 
+             * @example
+             * <pre>
+             * var textToEvaluate = '{currentUser.Id}=={item.Author.Id} and {params.Close}=="Yes"';
+             * SPExpressionResolver.resolve(textToEvaluate, $scope).then(function(sentence) {
+             *
+             *      // At this point, expressions are solved and scope variables created
+             *      // We can evaluate the sentence
+             *
+             *      if ($scope.$eval(sentence)) {
+             *
+             *          // The current user is the author of the current item and exists
+             *          // a page param equals to `Yes`
+             *      }
+             *  });
+             * </pre>
+             */
+            this.resolve = function(text, scope) {
+
+                var deferred = $q.defer();
+                var expressionsArray = [];
+
+                if (angular.isString(text)) {
+                    
+                    // Use 'replace' function to extract the expressions and replace them for {e:1} to {e:n}.
+                    text = text.replace(EXPRESSION_REGEXP, function(match, p1, offset, originalText) {
+
+                        // Check if the expression is already added.
+                        // This way resolves the expression only once and replaces it in all places 
+                        // where appears in the text.
+                        var pos = expressionsArray.indexOf(p1);
+
+                        if (pos == -1) {
+                            expressionsArray.push(p1);
+                            pos = expressionsArray.length - 1;
+                        }
+
+                        return '{e:' + pos + '}';
+
+                    });
+
                 }
 
-                // Resolve the main promise
-                deferred.resolve(text);
+                // Resolve the 'expressionsArray' with promises
+                resolveExpression(expressionsArray, scope).then(function() {
 
-            });
+                    // Replace {e:1} to {e:n} in the 'text' with the corresponding resolved expressions values.
+                    for (var i = 0; i < expressionsArray.length; i++) {
+                        text = text.replace(new RegExp('{e:' + i + '}', 'g'), expressionsArray[i]);
+                    }
+
+                    // Resolve the main promise
+                    deferred.resolve(text);
+
+                });
 
 
-            return deferred.promise;
+                return deferred.promise;
 
-        }; // resolve method
+            }; // resolve method
 
-    } // SPExpressionResolver factory
+        };
+
+
+        this.$get = function($injector, $q, SharePoint, $parse) {
+            return new SPExpressionResolver($injector, $q, SharePoint, $parse);
+        };
+
+    }
 
 ]);
 
@@ -2009,7 +2511,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     //
 
 
-                    if (angular.isDefined($scope.schema.extendedTemplate)) {
+                    if (angular.isDefined($scope.schema) && angular.isDefined($scope.schema.extendedTemplate)) {
 
                         var finalHtml = html;
                         var templateEx = $scope.schema.extendedTemplate;
@@ -2115,7 +2617,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     $q.when(directive.onValidateFn.apply(directive, arguments)).then(function() {
 
-                        if ($scope.schema.onValidate !== undefined) {
+                        if ($scope.schema !== undefined && $scope.schema.onValidate !== undefined) {
 
                             $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
 
@@ -2130,7 +2632,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                 } else {
 
-                    if ($scope.schema.onValidate !== undefined) {
+                    if ($scope.schema !== undefined && $scope.schema.onValidate !== undefined) {
 
                         $q.when(SPUtils.callFunctionWithParams($scope.schema.onValidate, $scope)).then(function(result) {
 
@@ -4063,7 +4565,6 @@ angular.module('ngSharePoint').factory('SPList',
                     return def.promise;
 
                 }
-
             }
 
 
@@ -4654,6 +5155,74 @@ angular.module('ngSharePoint').factory('SPList',
 
         };  // getWorkflowAssociationByName
 
+        /**
+         * @ngdoc function
+         * @name ngSharePoint.SPList#renderListData
+         * @methodOf ngSharePoint.SPList
+         *
+         * @description
+         * This method return an array of objects from the list
+         *
+         * @param {string} viewXml The CAML query.
+         * @returns {promise} promise with an object with all caml options used to retrieve list items
+         *
+         * @example
+         * This example retrieves one associated workflow
+         * <pre>
+         *   list.renderListData('<View><Query></Query><RowLimit>10</RowLimit></View>').then(function(items) {
+         *
+         *      console.log(items.toJson());
+         *      . . .
+         *
+         *   });
+         * </pre>
+         *
+        */
+        SPListObj.prototype.renderListData = function(viewXml) {
+
+            var self = this;
+            var def = $q.defer();
+            var executor = new SP.RequestExecutor(self.web.url);
+			// Set the headers for the REST API call.
+            // ----------------------------------------------------------------------------
+            var headers = {
+                "Accept": "application/json; odata=verbose",
+                "content-type": "application/json;odata=verbose"
+            };
+
+            // Make the call.
+            // ----------------------------------------------------------------------------
+            executor.executeAsync({
+				url: self.apiUrl + "/renderlistdata()",
+                method: 'POST',
+                body: angular.toJson({viewXml: viewXml}),
+                headers: headers,
+                success: function(data) {
+	                var d = angular.fromJson(utils.parseSPResponse(data).RenderListData);
+                    angular.forEach(d.Row, function(item) {
+						// convert single arrays to object
+				        angular.forEach(item, function(value, key) {
+				            if (angular.isArray(value) && value.length === 1) {
+				            	item[key] = value[0];
+				            }
+				        });
+                    });
+                    def.resolve(d.Row);
+                },
+                error: function(data, errorCode, errorMessage) {
+                    var err = utils.parseError({
+                        data: data,
+                        errorCode: errorCode,
+                        errorMessage: errorMessage
+                    });
+
+                    def.reject(err);
+                }                    
+            });
+          
+            return def.promise;
+
+        };  // renderListData 
 
 
 
@@ -8781,6 +9350,14 @@ angular.module('ngSharePoint').factory('SPWeb',
             //
 
 
+            function allowRedirect() {
+
+                if (attrs.noredirect !== void 0) return false;
+                return spformToolbarController.allowRedirect;
+            }
+
+
+
             function processAction() {
 
 
@@ -8982,7 +9559,7 @@ angular.module('ngSharePoint').factory('SPWeb',
 
                         //var redirectUrl = scope.redirectUrl;
 
-                        if (redirectUrl) {
+                        if (redirectUrl && allowRedirect()) {
 
                             var item = scope.formCtrl.getItem();
                             var list = item.list;
@@ -10010,13 +10587,15 @@ angular.module('ngSharePoint').directive('spfieldControl',
         var spfieldControl_DirectiveDefinitionObject = {
 
             restrict: 'EA',
-            require: '^spform',
+            require: '?^spform',
             replace: true,
             templateUrl: 'templates/form-templates/spfield-control.html',
 
 
             link: function($scope, $element, $attrs, spformController) {
 
+                if (spformController === null) return;
+                
                 var name = ($attrs.name || $attrs.spfieldControl);
                 var schema = spformController.getFieldSchema(name);
                 
@@ -10659,7 +11238,7 @@ angular.module('ngSharePoint').directive('spfieldDescription',
 
 
 			restrict: 'EA',
-			require: '^spform',
+			require: '?^spform',
 			replace: true,
 			scope: {
 				mode: '@'
@@ -10669,9 +11248,9 @@ angular.module('ngSharePoint').directive('spfieldDescription',
 
 			link: function($scope, $element, $attrs, spformController) {
 
+				if (spformController === null) return;
+				
 				$scope.schema = spformController.getFieldSchema($attrs.name);
-
-
 
 				// ****************************************************************************
 				// Watch for form mode changes.
@@ -10900,7 +11479,7 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 		var spfieldLabel_DirectiveDefinitionObject = {
 
 			restrict: 'EA',
-			require: '^spform',
+			require: '?^spform',
 			replace: true,
 			scope: {
 				mode: '@'
@@ -10909,6 +11488,8 @@ angular.module('ngSharePoint').directive('spfieldLabel',
 
 
 			link: function($scope, $element, $attrs, spformController) {
+
+				if (spformController === null) return;
 
 				$scope.schema = spformController.getFieldSchema($attrs.name);
 
@@ -13668,6 +14249,8 @@ angular.module('ngSharePoint').directive('spfield',
 
 			link: function($scope, $element, $attrs, spformController) {
 
+				if (spformController === null) return;
+				
 				var name = ($attrs.name || $attrs.spfield);
 				var schema;
 
@@ -13694,6 +14277,8 @@ angular.module('ngSharePoint').directive('spfield',
 
 					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
 
+						if ($element.parent().length === 0) return;
+						
 						var originalAttrs = $element[0].attributes;
 						var elementAttributes = '';
 						var cssClasses = ['spfield-wrapper'];
@@ -13789,7 +14374,7 @@ angular.module('ngSharePoint').directive('spformRule',
 
 			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
-				if ($element.parent().length > 0) {
+//				if ($element.parent().length > 0) {
 
 					if ($attrs.templateUrl) {
 
@@ -13816,7 +14401,7 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element.remove();
 						$element = null;
 					}
-				}
+//				}
 				
 			} // link
 
@@ -13855,7 +14440,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
             restrict: 'EA',
             templateUrl: 'templates/form-templates/spform-toolbar.html',
-            require: '^spform',
+            require: '?^spform',
             replace: true,
             transclude: true,
 
@@ -13882,12 +14467,19 @@ angular.module('ngSharePoint').directive('spformToolbar',
 
                 };
 
+
+                this.allowRedirect = function() {
+                    return $scope.noredirect;
+                };
+
             },
 
 
 
             link: function($scope, $element, $attrs, spformController, transcludeFn) {
 
+                if (spformController === null) return;
+                
                 $scope.formCtrl = spformController;
                 $scope.ribbonToolbar = null;
 
@@ -13900,6 +14492,7 @@ angular.module('ngSharePoint').directive('spformToolbar',
                     //if($scope.currentMode === newValue) return;
 
                     $scope.currentMode = newValue;
+                    $scope.noredirect = ($attrs.noredirect !== void 0);
                     processToolbar();
 
                 });
@@ -14095,8 +14688,8 @@ angular.module('ngSharePoint').directive('spform',
             scope: {
                 item: '=item',
                 mode: '=mode',
-                extendedSchema: '=',
-                extendedController: '=',
+                extendedSchema: '=?',
+                extendedController: '=?',
             },
             templateUrl: 'templates/form-templates/spform.html',
 
@@ -14341,14 +14934,14 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        fieldFocused = this.focusElements[0].element;
+                        fieldFocused = this.focusElements[0];
 
                     }
 
                     // Set the focus on the final element if exists.
-                    if (fieldFocused) {
+                    if (fieldFocused !== void 0 && fieldFocused.length > 0) {
 
-                        fieldFocused.focus();
+                        fieldFocused[0].focus();
 
                     }
 
@@ -14655,6 +15248,13 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (newValue === void 0 || newValue === oldValue) return;
 
+                            if ($scope.childScope !== void 0) {
+
+                                $scope.childScope.$destroy();
+                            }
+                            $scope.childScope = $scope.$new();
+
+
                             loadItemInfrastructure().then(function() {
                                 loadItemTemplate();
                             });
@@ -14668,6 +15268,12 @@ angular.module('ngSharePoint').directive('spform',
 
                             // Checks if the item has a value
                             if (newValue === void 0) return;
+
+                            if ($scope.childScope !== void 0) {
+
+                                $scope.childScope.$destroy();
+                            }
+                            $scope.childScope = $scope.$new();
 
                             // Store a copy of the original item.
                             // See 'onPreSave', 'onPostSave' and 'onCancel' callbacks in the controller's 'save' method.
@@ -14803,6 +15409,8 @@ angular.module('ngSharePoint').directive('spform',
 
                         function loadItemTemplate() {
 
+                            // If there is a previous form (other item or other mode), how we can destroy?
+
                             $q.when(SPUtils.callFunctionWithParams($scope.onPreBind, $scope)).then(function(result) {
 
                                 // Search for the 'transclusion-container' attribute in the 'spform' template elements.
@@ -14830,6 +15438,10 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                 transclusionContainer.empty(); // Needed?
+                                
+                                // Initialize the 'rules' array.
+                                $scope.rules = [];
+                                $scope.expressions = {};
 
 
                                 // Check for 'templateUrl' attribute
@@ -14867,7 +15479,7 @@ angular.module('ngSharePoint').directive('spform',
                                 } else {
 
                                     // Apply transclusion
-                                    transcludeFn($scope, function(clone) {
+                                    transcludeFn($scope.childScope, function(clone, newScope) {
                                         
                                         parseRules(transclusionContainer, clone, true).then(function() {
 
@@ -14917,7 +15529,7 @@ angular.module('ngSharePoint').directive('spform',
 
                         function compile(element) {
 
-                            $q.when($compile(element)($scope)).then(function() {
+                            $q.when($compile(element)($scope.childScope)).then(function() {
 
                                 // Remove the 'loading animation' element if still present.
                                 var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
@@ -14995,10 +15607,6 @@ angular.module('ngSharePoint').directive('spform',
                                 deferred.resolve();
                                 return deferred.promise;
                             }
-
-
-                            // Initialize the 'rules' array for debug purposes.
-                            $scope.rules = $scope.rules || [];
 
 
                             // Check if 'elem' is a <spform-rule> element.
@@ -15227,33 +15835,33 @@ angular.module('ngSharePoint').directive('spform',
             //       The strings are located at wss.resx that currently can't load dinamically.
 
 
-            scope.isNewItem = scope.item.isNew();
+            if (scope.item !== void 0) {
+    
+                if (!scope.item.isNew()) {
 
+                    // Gets the item info
+                    scope.createdDate = scope.item.Created;
+                    scope.modifiedDate = scope.item.Modified;
+                    scope.authorName = null;
+                    scope.editorName = null;
 
-            if (scope.item && !scope.isNewItem) {
+                    // Gets 'Author' properties
+                    scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
 
-                // Gets the item info
-                scope.createdDate = scope.item.Created;
-                scope.modifiedDate = scope.item.Modified;
-                scope.authorName = null;
-                scope.editorName = null;
+                        scope.authorName = author.Title;
+                        scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
 
-                // Gets 'Author' properties
-                scope.item.list.web.getUserById(scope.item.AuthorId).then(function(author) {
+                    });
 
-                    scope.authorName = author.Title;
-                    scope.authorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.AuthorId;
+                    // Gets 'Editor' properties
+                    scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
 
-                });
+                        scope.editorName = editor.Title;
+                        scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
 
-                // Gets 'Editor' properties
-                scope.item.list.web.getUserById(scope.item.EditorId).then(function(editor) {
+                    });
 
-                    scope.editorName = editor.Title;
-                    scope.editorLink = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/userdisp.aspx?ID=' + scope.item.EditorId;
-
-                });
-
+                }
             }
 
 
@@ -15510,9 +16118,9 @@ angular.module('ngSharePointFormPage').config(
 
 angular.module('ngSharePointFormPage').directive('spformpage', 
 
-    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', 'SPExpressionResolver', '$window', 
+    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', '$window', 
 
-    function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, SPExpressionResolver, $window) {
+    function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, $window) {
         
         return {
 
