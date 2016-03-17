@@ -684,7 +684,8 @@ angular.module('ngSharePoint').directive('spform',
                                             // There are dialog args ?
                                             var dialogExtendedSchema = {};
 
-                                            var dlg = SP.UI.ModalDialog.get_childDialog();
+                                            var SP = SP || null;
+                                            var dlg = (SP) ? SP.UI.ModalDialog.get_childDialog() : null;
                                             if (dlg !== null) {
                                                 var args = dlg.get_args();
                                                 if (args !== null && args.extendedSchema !== undefined) {

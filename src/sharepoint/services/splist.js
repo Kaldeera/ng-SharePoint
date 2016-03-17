@@ -568,9 +568,10 @@ angular.module('ngSharePoint').factory('SPList',
                         def.reject(err);
                     }
                 );
-
-                return def.promise;
             }
+            
+            return def.promise;
+            
         }; // getContentTypes
 
 

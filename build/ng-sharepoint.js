@@ -3883,7 +3883,7 @@ angular.module('ngSharePoint').service('SPHttp',
             var pathArray = location.href.split( '/' );
             var protocol = pathArray[0];
             var host = pathArray[2];
-            var url = /*protocol + '//' + host +*/ '/_api/contextinfo';
+            var url = '/_api/contextinfo';
 
             return $http({
                 url: url,
@@ -4465,9 +4465,10 @@ angular.module('ngSharePoint').factory('SPList',
                         def.reject(err);
                     }
                 );
-
-                return def.promise;
             }
+            
+            return def.promise;
+            
         }; // getContentTypes
 
 
@@ -7697,9 +7698,10 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
             inDesignMode: function () {
+                var MSOWebPartPageFormName = MSOWebPartPageFormName || null;
                 var publishingEdit = window.g_disableCheckoutInEditMode;
-                var form = document.forms[MSOWebPartPageFormName];
-                var input = form.MSOLayout_InDesignMode || form._wikiPageMode;
+                var form = (MSOWebPartPageFormName) ? document.forms[MSOWebPartPageFormName] : null;
+                var input = (form) ? form.MSOLayout_InDesignMode || form._wikiPageMode : null;
 
                 return !!(publishingEdit || (input && input.value));
             },
@@ -14768,7 +14770,8 @@ angular.module('ngSharePoint').directive('spform',
                                             // There are dialog args ?
                                             var dialogExtendedSchema = {};
 
-                                            var dlg = SP.UI.ModalDialog.get_childDialog();
+                                            var SP = SP || null;
+                                            var dlg = (SP) ? SP.UI.ModalDialog.get_childDialog() : null;
                                             if (dlg !== null) {
                                                 var args = dlg.get_args();
                                                 if (args !== null && args.extendedSchema !== undefined) {

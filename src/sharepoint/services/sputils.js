@@ -25,9 +25,10 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 
             inDesignMode: function () {
+                var MSOWebPartPageFormName = MSOWebPartPageFormName || null;
                 var publishingEdit = window.g_disableCheckoutInEditMode;
-                var form = document.forms[MSOWebPartPageFormName];
-                var input = form.MSOLayout_InDesignMode || form._wikiPageMode;
+                var form = (MSOWebPartPageFormName) ? document.forms[MSOWebPartPageFormName] : null;
+                var input = (form) ? form.MSOLayout_InDesignMode || form._wikiPageMode : null;
 
                 return !!(publishingEdit || (input && input.value));
             },
