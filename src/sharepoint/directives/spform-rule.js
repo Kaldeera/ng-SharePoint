@@ -27,7 +27,7 @@ angular.module('ngSharePoint').directive('spformRule',
 
 			link: function ($scope, $element, $attrs, ctrl, transcludeFn) {
 
-				if ($element.parent().length > 0) {
+//				if ($element.parent().length > 0) {
 
 					if ($attrs.templateUrl) {
 
@@ -54,7 +54,7 @@ angular.module('ngSharePoint').directive('spformRule',
 						$element.remove();
 						$element = null;
 					}
-				}
+//				}
 				
 			} // link
 

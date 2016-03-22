@@ -28,8 +28,8 @@ angular.module('ngSharePoint').directive('spform',
             scope: {
                 item: '=item',
                 mode: '=mode',
-                extendedSchema: '=',
-                extendedController: '=',
+                extendedSchema: '=?',
+                extendedController: '=?',
             },
             templateUrl: 'templates/form-templates/spform.html',
 
@@ -274,14 +274,14 @@ angular.module('ngSharePoint').directive('spform',
                     // If there are not invalid field focused, focus the first field.
                     if (!fieldFocused && this.focusElements.length > 0) {
 
-                        fieldFocused = this.focusElements[0].element;
+                        fieldFocused = this.focusElements[0];
 
                     }
 
                     // Set the focus on the final element if exists.
-                    if (fieldFocused) {
+                    if (fieldFocused !== void 0 && fieldFocused.length > 0) {
 
-                        fieldFocused.focus();
+                        fieldFocused[0].focus();
 
                     }
 
@@ -588,6 +588,13 @@ angular.module('ngSharePoint').directive('spform',
 
                             if (newValue === void 0 || newValue === oldValue) return;
 
+                            if ($scope.childScope !== void 0) {
+
+                                $scope.childScope.$destroy();
+                            }
+                            $scope.childScope = $scope.$new();
+
+
                             loadItemInfrastructure().then(function() {
                                 loadItemTemplate();
                             });
@@ -601,6 +608,12 @@ angular.module('ngSharePoint').directive('spform',
 
                             // Checks if the item has a value
                             if (newValue === void 0) return;
+
+                            if ($scope.childScope !== void 0) {
+
+                                $scope.childScope.$destroy();
+                            }
+                            $scope.childScope = $scope.$new();
 
                             // Store a copy of the original item.
                             // See 'onPreSave', 'onPostSave' and 'onCancel' callbacks in the controller's 'save' method.
@@ -737,6 +750,8 @@ angular.module('ngSharePoint').directive('spform',
 
                         function loadItemTemplate() {
 
+                            // If there is a previous form (other item or other mode), how we can destroy?
+
                             $q.when(SPUtils.callFunctionWithParams($scope.onPreBind, $scope)).then(function(result) {
 
                                 // Search for the 'transclusion-container' attribute in the 'spform' template elements.
@@ -764,6 +779,10 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                 transclusionContainer.empty(); // Needed?
+                                
+                                // Initialize the 'rules' array.
+                                $scope.rules = [];
+                                $scope.expressions = {};
 
 
                                 // Check for 'templateUrl' attribute
@@ -801,7 +820,7 @@ angular.module('ngSharePoint').directive('spform',
                                 } else {
 
                                     // Apply transclusion
-                                    transcludeFn($scope, function(clone) {
+                                    transcludeFn($scope.childScope, function(clone, newScope) {
                                         
                                         parseRules(transclusionContainer, clone, true).then(function() {
 
@@ -851,7 +870,7 @@ angular.module('ngSharePoint').directive('spform',
 
                         function compile(element) {
 
-                            $q.when($compile(element)($scope)).then(function() {
+                            $q.when($compile(element)($scope.childScope)).then(function() {
 
                                 // Remove the 'loading animation' element if still present.
                                 var loadingAnimation = document.querySelector('#form-loading-animation-wrapper-' + $scope.$id);
@@ -929,10 +948,6 @@ angular.module('ngSharePoint').directive('spform',
                                 deferred.resolve();
                                 return deferred.promise;
                             }
-
-
-                            // Initialize the 'rules' array for debug purposes.
-                            $scope.rules = $scope.rules || [];
 
 
                             // Check if 'elem' is a <spform-rule> element.
