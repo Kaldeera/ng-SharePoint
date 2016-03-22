@@ -13980,7 +13980,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 
 /*
     SPFieldValue - directive
-    
+
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
     Pau Codina (pau.codina@kaldeera.com)
 
@@ -13996,7 +13996,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 //////////////////////////////////////////////////
 
 (function() {
-    
+
     'use strict';
 
     angular
@@ -14025,7 +14025,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 
         return directive;
 
-        
+
 
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -14044,8 +14044,9 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
             scope.fieldValue = '';
 
 
-            var fieldType = scope.field.TypeAsString;
-            var fieldName = scope.field.InternalName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+            var fieldType = scope.field.TypeAsString || scope.field.Type;
+            var fieldName = scope.field.InternalName || scope.field.Name;
+            fieldName = fieldName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
             var fieldValue = scope.item[fieldName] || '';
 
 
@@ -14117,7 +14118,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
                     default:
                         scope.fieldValue = '<span>' + fieldValue + '</span>';
                 }
-                
+
             }
 
 
@@ -14185,7 +14186,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
                                     } else {
 
                                         url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
-                                        
+
                                     }
 
 
@@ -14225,6 +14226,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
     } // Directive factory function
 
 })();
+
 /*
 	SPFieldWorkflowStatus - directive
 	
