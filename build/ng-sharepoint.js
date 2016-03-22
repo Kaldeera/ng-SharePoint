@@ -6201,23 +6201,16 @@ angular.module('ngSharePoint').service('SPHttp',
         * Makes a POST call to a specified REST api
         * *Internal use*
         */
-        this.post = function(url, headers, body) {
+        this.post = function(spweb, url, headers, body) {
 
             var self = this;
             var def = $q.defer();
+            var d = null;
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
+            spweb.getDigestValue()
+            .then(function(digestValue){
 
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
-            self.getDigest()
-            .then(function(data){
-
-                if(!headers['X-RequestDigest']){
-                    headers['X-RequestDigest'] = data.data.d.GetContextWebInformation.FormDigestValue;
-                }
+                headers['X-RequestDigest'] = digestValue;
 
                 return $http({
                     method: "POST",
@@ -6225,10 +6218,27 @@ angular.module('ngSharePoint').service('SPHttp',
                     data: body,  
                     headers: headers 
                 });
+            },
+            function(data, errorCode, errorMessage){
+
+                var err = utils.parseError({
+                    data: data.config,
+                    errorCode: data.status,
+                    errorMessage: data.statusText
+                });
+
+                def.reject(err);
             })
             .then(function(data) {
 
-                var d = utils.parseSPResponse(data);
+                console.log(data);
+
+                d = utils.parseSPResponse(data);
+
+                if (data.headers && data.headers['X-REQUESTDIGEST']) {
+                    spweb.FormDigestValue = data.headers['X-REQUESTDIGEST'];
+                }
+
                 def.resolve(d);
                     
             }, function(data, errorCode, errorMessage) {
@@ -6245,21 +6255,6 @@ angular.module('ngSharePoint').service('SPHttp',
             return def.promise;
 
         };
-
-        this.getDigest = function(){
-
-            var pathArray = location.href.split( '/' );
-            var protocol = pathArray[0];
-            var host = pathArray[2];
-            var url = '/_api/contextinfo';
-
-            return $http({
-                url: url,
-                method: "POST",
-                headers: { "Accept": "application/json; odata=verbose"}
-            });
-        };
-
     }
 ]);
 
@@ -6584,7 +6579,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
 
             var body = {
                 __metadata: {
@@ -6606,25 +6600,7 @@ angular.module('ngSharePoint').factory('SPList',
                                 // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
             };
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
-            // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-            // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
-
-            // Make the call.
-            // ----------------------------------------------------------------------------
-            executor.executeAsync({
-
-                url: self.apiUrl,
-                method: 'POST',
-                body: angular.toJson(body),
-                headers: headers,
-
-                success: function(data) {
+            SPHttp.post(self.web, self.apiUrl, headers, angular.toJson(body)).then(function(data) {
 
                     var d = utils.parseSPResponse(data);
 
@@ -6633,8 +6609,7 @@ angular.module('ngSharePoint').factory('SPList',
                     def.resolve(properties);
 
                 },
-
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -6643,9 +6618,7 @@ angular.module('ngSharePoint').factory('SPList',
                     });
 
                     def.reject(err);
-                }
-            });
-
+                });
 
             return def.promise;
 
@@ -11128,6 +11101,40 @@ angular.module('ngSharePoint').factory('SPWeb',
 			return $q.when(siteGroups); 
 
 
+		};
+
+
+		SPWebObj.prototype.refreshDigestValue = function(){
+
+			var def = $q.defer();
+			var self = this;
+
+			SPUtils.refreshDigestValue(self.Url).then(function(FormDigestValue){
+				self.FormDigestValue = FormDigestValue;
+				def.resolve(FormDigestValue);
+			}, function(err){
+				def.reject(err);
+			});
+
+			return def.promise;
+		};
+
+
+		SPWebObj.prototype.getDigestValue = function(){
+			var def = $q.defer();
+			var self = this;
+
+			if(self.FormDigestValue !== void 0){
+				def.resolve(self.FormDigestValue);
+			} else {
+				self.refreshDigestValue().then(function(FormDigestValue){
+					def.resolve(FormDigestValue);
+				}, function(err){
+					def.reject(err);
+				});
+			}
+
+			return def.promise;
 		};
 
 

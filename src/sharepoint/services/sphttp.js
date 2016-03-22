@@ -61,23 +61,16 @@ angular.module('ngSharePoint').service('SPHttp',
         * Makes a POST call to a specified REST api
         * *Internal use*
         */
-        this.post = function(url, headers, body) {
+        this.post = function(spweb, url, headers, body) {
 
             var self = this;
             var def = $q.defer();
+            var d = null;
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
+            spweb.getDigestValue()
+            .then(function(digestValue){
 
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
-            self.getDigest()
-            .then(function(data){
-
-                if(!headers['X-RequestDigest']){
-                    headers['X-RequestDigest'] = data.data.d.GetContextWebInformation.FormDigestValue;
-                }
+                headers['X-RequestDigest'] = digestValue;
 
                 return $http({
                     method: "POST",
@@ -85,10 +78,25 @@ angular.module('ngSharePoint').service('SPHttp',
                     data: body,  
                     headers: headers 
                 });
+            },
+            function(data, errorCode, errorMessage){
+
+                var err = utils.parseError({
+                    data: data.config,
+                    errorCode: data.status,
+                    errorMessage: data.statusText
+                });
+
+                def.reject(err);
             })
             .then(function(data) {
 
-                var d = utils.parseSPResponse(data);
+                d = utils.parseSPResponse(data);
+
+                if (data.headers && data.headers['X-REQUESTDIGEST']) {
+                    spweb.FormDigestValue = data.headers['X-REQUESTDIGEST'];
+                }
+
                 def.resolve(d);
                     
             }, function(data, errorCode, errorMessage) {
@@ -105,20 +113,5 @@ angular.module('ngSharePoint').service('SPHttp',
             return def.promise;
 
         };
-
-        this.getDigest = function(){
-
-            var pathArray = location.href.split( '/' );
-            var protocol = pathArray[0];
-            var host = pathArray[2];
-            var url = '/_api/contextinfo';
-
-            return $http({
-                url: url,
-                method: "POST",
-                headers: { "Accept": "application/json; odata=verbose"}
-            });
-        };
-
     }
 ]);

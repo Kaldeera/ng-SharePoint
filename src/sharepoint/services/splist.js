@@ -319,7 +319,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
 
             var body = {
                 __metadata: {
@@ -341,25 +340,7 @@ angular.module('ngSharePoint').factory('SPList',
                                 // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
             };
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
-            // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-            // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
-
-            // Make the call.
-            // ----------------------------------------------------------------------------
-            executor.executeAsync({
-
-                url: self.apiUrl,
-                method: 'POST',
-                body: angular.toJson(body),
-                headers: headers,
-
-                success: function(data) {
+            SPHttp.post(self.web, self.apiUrl, headers, angular.toJson(body)).then(function(data) {
 
                     var d = utils.parseSPResponse(data);
 
@@ -368,8 +349,7 @@ angular.module('ngSharePoint').factory('SPList',
                     def.resolve(properties);
 
                 },
-
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -378,9 +358,7 @@ angular.module('ngSharePoint').factory('SPList',
                     });
 
                     def.reject(err);
-                }
-            });
-
+                });
 
             return def.promise;
 

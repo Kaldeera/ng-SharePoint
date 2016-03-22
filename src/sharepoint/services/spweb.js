@@ -508,6 +508,40 @@ angular.module('ngSharePoint').factory('SPWeb',
 		};
 
 
+		SPWebObj.prototype.refreshDigestValue = function(){
+
+			var def = $q.defer();
+			var self = this;
+
+			SPUtils.refreshDigestValue(self.Url).then(function(FormDigestValue){
+				self.FormDigestValue = FormDigestValue;
+				def.resolve(FormDigestValue);
+			}, function(err){
+				def.reject(err);
+			});
+
+			return def.promise;
+		};
+
+
+		SPWebObj.prototype.getDigestValue = function(){
+			var def = $q.defer();
+			var self = this;
+
+			if(self.FormDigestValue !== void 0){
+				def.resolve(self.FormDigestValue);
+			} else {
+				self.refreshDigestValue().then(function(FormDigestValue){
+					def.resolve(FormDigestValue);
+				}, function(err){
+					def.reject(err);
+				});
+			}
+
+			return def.promise;
+		};
+
+
 
 		// Returns the SPWebObj class
 		return SPWebObj;
