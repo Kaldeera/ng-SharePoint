@@ -1,6 +1,6 @@
 /*
     SPFieldValue - directive
-    
+
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
     Pau Codina (pau.codina@kaldeera.com)
 
@@ -16,7 +16,7 @@
 //////////////////////////////////////////////////
 
 (function() {
-    
+
     'use strict';
 
     angular
@@ -45,7 +45,7 @@
 
         return directive;
 
-        
+
 
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -64,8 +64,9 @@
             scope.fieldValue = '';
 
 
-            var fieldType = scope.field.TypeAsString;
-            var fieldName = scope.field.InternalName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+            var fieldType = scope.field.TypeAsString || scope.field.Type;
+            var fieldName = scope.field.InternalName || scope.field.Name;
+            fieldName = fieldName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
             var fieldValue = scope.item[fieldName] || '';
 
 
@@ -137,7 +138,7 @@
                     default:
                         scope.fieldValue = '<span>' + fieldValue + '</span>';
                 }
-                
+
             }
 
 
@@ -205,7 +206,7 @@
                                     } else {
 
                                         url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
-                                        
+
                                     }
 
 
