@@ -55,7 +55,7 @@
             scope.contentTypeText = 'Content Type';
             // NOTA: El ContentType únicamente se muestra cuando está activa la administración de tipos de contenido en la lista.
 
-            scope.versionText = SP.Res.storefront_AppDetails_Version;
+            scope.versionText = (typeof SP != 'undefined') ? SP.Res.storefront_AppDetails_Version : 'version';
             // NOTA: La versión únicamente se muestra cuando está activo en control de versiones en la lista.
 
             scope.createdAtText = 'Created at';
