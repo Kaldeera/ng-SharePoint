@@ -69,13 +69,42 @@
             fieldName = fieldName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
             var fieldValue = scope.item[fieldName] || '';
 
+            if (fieldType === 'Calculated') {
+                switch (scope.field.OutputType) {
+                    case SP.FieldType.dateTime:
+                    case 'DateTime':
+                        fieldType = 'DateTime';
+                        break;
+                    case SP.FieldType.boolean:
+                    case 'Boolean':
+                        fieldType = 'Boolean';
+                        break;
+                    case SP.FieldType.number:
+                    case 'Number':
+                        fieldType = 'Number';
+                        break;
+                    case SP.FieldType.currency:
+                    case 'Currency':
+                        fieldType = 'Number';
+                        break;
+                    default:
+                        fieldType = 'Text';
+                        break;
+                }
+            }
+
+            if (fieldType === 'Number') {
+                fieldValue = parseFloat(fieldValue);
+                if (isNaN(fieldValue)) fieldValue = undefined;
+            }
+
 
             if (fieldValue !== '') {
 
+                var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
                 switch(fieldType) {
 
                     case 'DateTime':
-                        var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
                         scope.fieldValue = '<span>' + new Date(fieldValue).format(cultureInfo.dateTimeFormat.ShortDatePattern) + '</span>';
                         break;
 
@@ -132,6 +161,20 @@
                         if (scope.field.DisplayFormat === 1) {
                             scope.fieldValue += '<img src="' + fieldValue.Url + '" alt="' + fieldValue.Description + '" />';
                         }
+
+                        break;
+
+                    case 'Number':
+                        var value = '';
+
+                        if (fieldValue !== undefined) {
+                            value = fieldValue.toFixed(scope.field.Decimals);
+                            if (scope.field.Percentage) {
+                                value = value + cultureInfo.numberFormat.PercentSymbol;
+                            }
+                        }
+
+                        scope.fieldValue = '<span>' + value + '</span>';
 
                         break;
 
