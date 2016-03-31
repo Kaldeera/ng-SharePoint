@@ -72,7 +72,6 @@ module.exports = function(grunt) {
             }
         },
 
-
         ngdocs: {
             options: {
                 dest: 'docs',
@@ -106,8 +105,19 @@ module.exports = function(grunt) {
                 src: ['src/**/*.js'],
                 title: 'API Reference'
             }
-        }
-
+        },
+		
+		less: {
+		  GenericStyles: {
+			options: {
+			  compress: true,
+			  optimization: 2
+			},
+			files: [
+			  {'build/ng-sharepoint.min.css': 'ui/sharepoint/css/ng-sharepoint.less'},
+			]
+		  }
+		},
     });
 
     /*
@@ -121,16 +131,23 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-html2js');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-ngdocs');
 
 
     // Default task(s).
     grunt.registerTask('docs', ['ngdocs']);
-    grunt.registerTask('default', ['jshint:all', 'concat:ngSharePoint', 'uglify', 'html2js:sharepoint']);
     // grunt.registerTask('publishcdn', ['copy']);
     grunt.registerTask('debug', ['concat']);
-
     grunt.registerTask('documentation', ['ngdocs']);
+    grunt.registerTask('styles', ['less:GenericStyles']);
+    grunt.registerTask('default', [
+		'jshint:all',
+		'concat:ngSharePoint',
+		'uglify',
+		'less:GenericStyles',
+		'html2js:sharepoint'
+	]);
 
 
 

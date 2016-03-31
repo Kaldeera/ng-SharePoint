@@ -479,11 +479,14 @@ angular.module("templates/form-templates/spfield-workflowstatus-display.html", [
 
 angular.module("templates/form-templates/spfield.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield.html",
-    "<div class=\"{{classAttr}}\" style=\"display: table-row; width: 100%;\">\n" +
-    "    <div class=\"ms-formlabel spfield-label\" style=\"display: table-cell; vertical-align: top; width: 113px;\">\n" +
+    "<div class=\"{{classAttr}}\"\n" +
+    "	 style=\"display: table-row; width: 100%;\">\n" +
+    "    <div class=\"ms-formlabel spfield-label\"\n" +
+    "		 style=\"display: table-cell; vertical-align: top; width: 113px;\">\n" +
     "        <spfield-label {{attributes}}></spfield-label>\n" +
     "    </div>\n" +
-    "    <div class=\"ms-formbody spfield-body\" style=\"display: table-cell; vertical-align: top; width: 350px;\">\n" +
+    "    <div class=\"ms-formbody spfield-body\"\n" +
+    "		 style=\"display: table-cell; vertical-align: top; width: 350px;\">\n" +
     "        <spfield-control {{attributes}}></spfield-control>\n" +
     "        <spfield-description {{attributes}}></spfield-description>\n" +
     "    </div>\n" +
