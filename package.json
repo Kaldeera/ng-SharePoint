@@ -17,5 +17,9 @@
     "grunt-html2js": "^0.3.0",
     "shelljs": "^0.5.3"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "grunt-contrib-less": "^1.2.0",
+    "grunt-ngdocs": "^0.2.9"
+  }
 }
