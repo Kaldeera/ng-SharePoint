@@ -6,11 +6,10 @@
 	@borderColor: #d6d6d6;
 	@LabelColor: #999999;
 	@OddBackground: #fafafa;
-	@EvenBackground: #f1f1f1;
+	@EvenBackground: #f1f1f1;	
 	
 	
-	
-	.spform.spform-display {
+	.spform {
 		
 		.spfield-wrapper {
 		
@@ -34,12 +33,19 @@
 /******************************************************************************
 	Media queries
 ******************************************************************************/
-	
-	@media (max-width: 640px) {
+
+	@media (max-width: 480px) {
 		
-		/* ng-SharePoint */
+		.spfield-body input {
+			
+			box-sizing: border-box;
+			width: 100% !important;
+		}	
+	}
 	
-		.spform.spform-display {
+	@media (max-width: 640px) { 
+	
+		.spform {
 		
 			.spfield-label,
 			.spfield-body {
