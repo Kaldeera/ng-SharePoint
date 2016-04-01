@@ -3,10 +3,7 @@
     NG SharePoint generic styles
 ******************************************************************************/
 
-	@borderColor: #d6d6d6;
-	@LabelColor: #999999;
-	@OddBackground: #fafafa;
-	@EvenBackground: #f1f1f1;	
+	@borderColor: #d6d6d6;	
 	
 	
 	.spform {
@@ -26,7 +23,6 @@
 		.spfield-label h3.ms-standardheader {
 			
 			font-weight: bold;
-			color: @LabelColor;
 		}
 	}
 
@@ -34,16 +30,7 @@
 	Media queries
 ******************************************************************************/
 
-	@media (max-width: 480px) {
-		
-		.spfield-body input {
-			
-			box-sizing: border-box;
-			width: 100% !important;
-		}	
-	}
-	
-	@media (max-width: 640px) { 
+	@media (max-width: 768px) { 
 	
 		.spform {
 		
@@ -54,5 +41,11 @@
 				width: 100% !important;
 				padding: 2px 0;
 			}
+		
+			.spfield-body input { // extend other input types
+				
+				box-sizing: border-box;
+				width: 100% !important;
+			}	
 		}
 	}
