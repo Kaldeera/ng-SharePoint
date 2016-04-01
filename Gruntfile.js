@@ -118,6 +118,11 @@ module.exports = function(grunt) {
 			]
 		  }
 		},
+	
+		watch: {
+			files: 'ui/sharepoint/css/**/*',
+			tasks: ['less:GenericStyles']
+		}
     });
 
     /*
@@ -133,6 +138,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-ngdocs');
+  	grunt.loadNpmTasks('grunt-contrib-watch');
 
 
     // Default task(s).
@@ -141,6 +147,7 @@ module.exports = function(grunt) {
     grunt.registerTask('debug', ['concat']);
     grunt.registerTask('documentation', ['ngdocs']);
     grunt.registerTask('styles', ['less:GenericStyles']);
+	grunt.registerTask('rebuild', ['watch']);
     grunt.registerTask('default', [
 		'jshint:all',
 		'concat:ngSharePoint',
