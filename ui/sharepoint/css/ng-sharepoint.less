@@ -1,10 +1,24 @@
 
+
+/******************************************************************************
+	Responsive overridings
+******************************************************************************/
+
+	.ms-core-tableNoSpace {
+
+		width: 100%;
+	}
+
+	#contentBox {
+
+		min-width: inherit;
+	}
+	
 /******************************************************************************
     NG SharePoint generic styles
 ******************************************************************************/
 
-	@borderColor: #d6d6d6;	
-	
+	@borderColor: #d6d6d6;		
 	
 	.spform {
 		
@@ -17,6 +31,38 @@
 			&:nth-of-type(1) {
 				
 				margin-top: 10px;
+			}
+		
+			.spfield-label,
+			.spfield-body {
+				
+				display: inline-block !important;
+			}
+			
+			
+			.spfield-label {
+				
+				width: 38%;
+				
+				h3 {
+					
+					box-sizing: border-box;
+					width: 100%;
+					padding: 0 5px 0 0;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+			}
+			
+			.spfield-body {
+				
+				width: 60%;
+				
+				> div > div > img {
+					
+					width: 100%;
+				}
 			}
 		}
 	
@@ -42,10 +88,66 @@
 				padding: 2px 0;
 			}
 		
-			.spfield-body input { // extend other input types
+			.spfield-body input,
+			.spfield-body textarea,
+			.spfield-body .sp-peoplepicker-topLevel,
+			.spfield-body .ms-rtefield,
+			.spfield-body table.ms-long,
+			.spfield-body .ms-rtefield {
 				
 				box-sizing: border-box;
+				min-width: inherit;
 				width: 100% !important;
+				margin: 0 !important;
+			}
+				
+			.spfield-body table.ms-long td {
+				
+				display: block !important;
 			}	
+				
+			.spfield-body table[id*="MultiLookup_topTable"] {
+				
+				select {
+					
+					width: 100% !important;
+				}
+			
+				td:nth-of-type(3) {
+				
+					padding: 12px 0;
+				}	
+			}
+		
+			.spform-item-info {
+				
+				float: none !important;
+				
+				table {
+				
+					word-wrap:break-word;
+					
+					td {
+					
+						white-space: normal !important;	
+					}
+				}
+			}
+			
+			div[name="Attachments"] {
+				
+				tr {
+					
+					display: block;
+					margin-bottom: 5px;
+				}
+				
+				td {
+				
+					display: block;
+					width: 100%;
+					padding: 0 !important;
+				}
+			}
 		}
 	}
