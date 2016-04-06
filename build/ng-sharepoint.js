@@ -10295,7 +10295,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 
 /*
     SPFieldChoice - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -10310,7 +10310,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
         TypeAsString: 'Choice',
         FillInChoice: false,
         EditFormat: 0,          // 0 - DropDown, 1 - RadioButton
-        Choices: {              // ListQuery only apply if results === undefined
+        Choices: {              // ListQuery apply if exists and removes current results
             ListQuery: {
                 Web: '/path/to/valid/web',  // Optional (by default gets the curerent web)
                 List: 'ListName',
@@ -10333,7 +10333,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 //  SPFieldChoice
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldChoice', 
+angular.module('ngSharePoint').directive('spfieldChoice',
 
     ['SharePoint', 'SPFieldDirective', '$q',
 
@@ -10348,24 +10348,22 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                 mode: '@'
             },
             templateUrl: 'templates/form-templates/spfield-control.html',
-            
+
 
             link: function($scope, $element, $attrs, controllers) {
 
 
                 var directive = {
-                    
+
                     fieldTypeName: 'choice',
                     replaceAll: false,
 
                     init: function() {
 
-                        if ($scope.schema.Choices.results === undefined) {
+                        if ($scope.schema.Choices.ListQuery !== undefined) {
 
-                            if ($scope.schema.Choices.ListQuery !== undefined) {
-
-                                getResultsFromListQuery($scope.schema.Choices.ListQuery);
-                            }
+                            $scope.choices = [];
+                            getResultsFromListQuery($scope.schema.Choices.ListQuery);
 
                         } else {
 
@@ -10410,7 +10408,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                         }
                     }
                 };
-                
+
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
@@ -10443,7 +10441,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                             fillInChoiceElement.focus();
 
                         }
-                        
+
                     } else {
 
                         switch($scope.schema.EditFormat) {
