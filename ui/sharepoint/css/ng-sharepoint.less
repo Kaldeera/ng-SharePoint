@@ -1,5 +1,4 @@
 
-
 /******************************************************************************
 	Responsive overridings
 ******************************************************************************/
@@ -22,6 +21,9 @@
 	
 	.spform {
 		
+		position: relative;
+		overflow: hidden;
+		
 		.spfield-wrapper {
 		
 			display: block !important;
@@ -32,43 +34,96 @@
 				
 				margin-top: 10px;
 			}
+		}
 		
-			.spfield-label,
-			.spfield-body {
+		.spfield-label,
+		.spfield-body {
+			
+			display: inline-block !important;
+		}
+		
+		
+		.spfield-label {
+			
+			width: 38%;
+			
+			h3 {
 				
-				display: inline-block !important;
+				box-sizing: border-box;
+				width: 100%;
+				padding: 0 5px 0 0;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
+		}
+		
+		.spfield-body {
 			
+			width: 60%;
 			
-			.spfield-label {
+			> div > div > img {
 				
-				width: 38%;
-				
-				h3 {
-					
-					box-sizing: border-box;
-					width: 100%;
-					padding: 0 5px 0 0;
-					white-space: nowrap;
-					overflow: hidden;
-					text-overflow: ellipsis;
-				}
-			}
-			
-			.spfield-body {
-				
-				width: 60%;
-				
-				> div > div > img {
-					
-					width: 100%;
-				}
+				width: 100%;
 			}
 		}
 	
 		.spfield-label h3.ms-standardheader {
 			
 			font-weight: bold;
+		}
+		
+		.Currency {
+		
+			white-space: nowrap;	
+		}
+		
+		// Visuals
+		
+		&.spform-display {
+		
+			.CornerFlag {
+				
+				position: absolute;
+				top: 0;
+				left: 0;
+				overflow: hidden;
+					
+				&.Top {
+					
+					bottom: auto;
+					top: 0; 
+				}		
+					
+				&.Left {
+					
+					Right: auto;
+					left: 0;
+				}		
+					
+				&.Right {
+					
+					Right: 0;
+					Left: auto;
+				}	
+						
+				&.Bottom {
+					
+					top: auto;
+					bottom: 0;
+				}
+				
+				.field-display-value {
+					
+					padding: 5px 20px;
+					background-color: #ccc;
+					transform: rotate(0deg);
+					/*
+					-ms-transform: rotate(45deg);
+					-webkit-transform: rotate(45deg);
+					*/
+				}
+			}
 		}
 	}
 
@@ -97,7 +152,7 @@
 				
 				box-sizing: border-box;
 				min-width: inherit;
-				width: 100% !important;
+				width: auto !important;
 				margin: 0 !important;
 			}
 				
