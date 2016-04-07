@@ -4138,7 +4138,7 @@ angular.module('ngSharePoint').provider('SPExpressionResolver',
 
 /*
     SPFieldDirective - Service
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -4152,7 +4152,7 @@ angular.module('ngSharePoint').provider('SPExpressionResolver',
 //  SPFieldDirective
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').service('SPFieldDirective', 
+angular.module('ngSharePoint').service('SPFieldDirective',
 
     ['$compile', '$http', '$templateCache', '$q', 'SPUtils',
 
@@ -4200,7 +4200,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *
          * The 'this' word in this function is the directive object defined in the
          * 'spfield-xxx' directive. See the definition of the 'directive object' below.
-         * 
+         *
          * Example of use in a directive 'post-link' function:
          *
          *      // Define the 'directive' object
@@ -4210,7 +4210,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *          replaceAll: false,
          *          init: function() {
          *              $scope.SomeText = 'My directive';
-         *          
+         *
          *              // Call some private function
          *              MyPrivateFunction();
          *          }
@@ -4222,21 +4222,21 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *      // (Becomes the 'this' word within the 'baseLinkFn' function).
          *
          *      SPFieldDirective.baseLinkFn.apply(directiveObj, arguments);
-         *      
+         *
          *
          * 'directiveObj' definition:
          *
          *        Required properties:
          *        --------------------
          *
-         *              fieldTypeName: The type name of the directive to load the 
+         *              fieldTypeName: The type name of the directive to load the
          *                             correct directive template.
          *
-         *              
+         *
          *        Optional properties/functions:
          *        ------------------------------
          *
-         *              replaceAll: If set to true, the 'renderField' function will replace 
+         *              replaceAll: If set to true, the 'renderField' function will replace
          *                          the entire element instead its contents.
          *
          *              displayTemplateUrl: Custom field template for display rendering.
@@ -4245,24 +4245,24 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *
          *              init (function): An initialization function for the directive.
          *
-         *              parserFn (function): If defined, add this parser function to the 
+         *              parserFn (function): If defined, add this parser function to the
          *              (view to model)      model controller '$parsers' array.
-         *                                   Used to sanitize/convert the value as well as 
+         *                                   Used to sanitize/convert the value as well as
          *                                   validation.
-         *                                   Working examples are in the 'spfieldMultichoice' 
+         *                                   Working examples are in the 'spfieldMultichoice'
          *                                   or 'spfieldLookupmulti' directives.
          *
-         *              formatterFn (function): If defined, add this formatter function to the 
+         *              formatterFn (function): If defined, add this formatter function to the
          *              (model to view)         model controller '$formatters' array.
-         *                                      Used to format/convert values for display in the 
+         *                                      Used to format/convert values for display in the
          *                                      control and validation.
          *
-         *              watchModeFn (function): If defined, replace the default behavior in the 
+         *              watchModeFn (function): If defined, replace the default behavior in the
          *                                      'Watch for form mode changes' function.
-         *                                      The default behavior is to call the 'renderField' 
+         *                                      The default behavior is to call the 'renderField'
          *                                      function.
-         *                          
-         *              watchValueFn (function): If defined, applies it after the default behavior 
+         *
+         *              watchValueFn (function): If defined, applies it after the default behavior
          *                                       in the 'Watch for field value changes' function.
          *                                       Deprecated: new spfield-* don't have attribute:
          *                                          value: '=ngModel'
@@ -4273,7 +4273,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
          *                                       set's the scope.value variable with the new value
          *                                       (modelCtrl.$viewValue)
 
-         *              onValidateFn (function): If defined, applies it after the default behavior 
+         *              onValidateFn (function): If defined, applies it after the default behavior
          *                                       in the '$scope.$on('validate', ...)' function.
          *
          *              postRenderFn (function): If defined, will be executed after the default
@@ -4298,10 +4298,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             $scope.$on('$destroy', function() {
                 $scope.formCtrl.unregisterField(directive);
             });
-
-
-            // Apply the directive initializacion if specified.
-            if (angular.isFunction(directive.init)) directive.init();
 
 
             // Apply the directive parser function if specified.
@@ -4355,9 +4351,9 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     // extendedTemplate: {
                     //     html: A string that contains the HTML.
                     //     url: Url to the template that contains the HTML. This overwrites 'html' property
-                    //     replaceOnDisplay: true or false that indicates if the template will replace the 
+                    //     replaceOnDisplay: true or false that indicates if the template will replace the
                     //                       default field template on 'display' mode.
-                    //     replaceOnEdit: true or false that indicates if the template will replace the default 
+                    //     replaceOnEdit: true or false that indicates if the template will replace the default
                     //                    field template on 'edit' mode.
                     //     replace: true or false that indicates if the template will replace the default field
                     //              template on both form modes (display and edit).
@@ -4372,7 +4368,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     //         html: String
                     //         url: String
                     //         replace: Boolean
-                    //     }   
+                    //     }
                     // }
                     //
 
@@ -4390,7 +4386,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                         }
 
                         var replace = (
-                            ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) || 
+                            ($scope.currentMode === 'display' && templateEx.replaceOnDisplay === true) ||
                             ($scope.currentMode === 'edit' && templateEx.replaceOnEdit === true) ||
                             templateEx.replace === true
                         );
@@ -4405,7 +4401,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                             });
 
                         } else if (angular.isDefined(templateEx.html)) {
-                            
+
                             finalHtml = replace ? templateEx.html : html + templateEx.html;
                             deferred.resolve(finalHtml);
 
@@ -4423,7 +4419,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                     }
 
                 });
-                
+
 
                 return deferred.promise;
 
@@ -4438,7 +4434,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             directive.renderField = function() {
 
                 directive.getFieldTemplate().then(function(html) {
-                        
+
                     directive.setElementHTML(html);
                     if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
 
@@ -4516,42 +4512,6 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
 
             // ****************************************************************************
-            // Watch for form mode changes.
-            //
-            $scope.$watch(function() {
-
-                return $scope.mode || $scope.formCtrl.getFormMode();
-
-            }, function(newValue, oldValue) {
-
-                // Sets field current mode
-                $scope.currentMode = newValue;
-                
-                // Renders the field or apply the specific field type function
-                if (angular.isFunction(directive.watchModeFn)) {
-
-                    directive.watchModeFn.apply(directive, arguments);
-
-                } else {
-
-                    directive.renderField();
-                }
-            });
-
-
-
-            // ****************************************************************************
-            // Watch for field value changes.
-            //
-            $scope.$watch('value', function(newValue, oldValue) {
-
-                defaultWatchValueFn.apply($scope, arguments);
-                if (angular.isFunction(directive.watchValueFn)) directive.watchValueFn.apply(directive, arguments);
-
-            }, true);
-
-
-            // ****************************************************************************
             // New model value ... render
             //
             $scope.modelCtrl.$render = function() {
@@ -4565,6 +4525,48 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             };
 
 
+            // Apply the directive initializacion if specified.
+            var init = true;
+            if (angular.isFunction(directive.init)) init = directive.init();
+
+            $q.when(init).then(function() {
+
+                // ****************************************************************************
+                // Watch for form mode changes.
+                //
+                $scope.$watch(function() {
+
+                    return $scope.mode || $scope.formCtrl.getFormMode();
+
+                }, function(newValue, oldValue) {
+
+                    // Sets field current mode
+                    $scope.currentMode = newValue;
+
+                    // Renders the field or apply the specific field type function
+                    if (angular.isFunction(directive.watchModeFn)) {
+
+                        directive.watchModeFn.apply(directive, arguments);
+
+                    } else {
+
+                        directive.renderField();
+                    }
+                });
+
+
+
+                // ****************************************************************************
+                // Watch for field value changes.
+                //
+                $scope.$watch('value', function(newValue, oldValue) {
+
+                    defaultWatchValueFn.apply($scope, arguments);
+                    if (angular.isFunction(directive.watchValueFn)) directive.watchValueFn.apply(directive, arguments);
+
+                }, true);
+
+            });
 
 
 
@@ -12185,7 +12187,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 
 /*
     SPFieldChoice - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -12200,7 +12202,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
         TypeAsString: 'Choice',
         FillInChoice: false,
         EditFormat: 0,          // 0 - DropDown, 1 - RadioButton
-        Choices: {              // ListQuery only apply if results === undefined
+        Choices: {              // ListQuery apply if exists and removes current results
             ListQuery: {
                 Web: '/path/to/valid/web',  // Optional (by default gets the curerent web)
                 List: 'ListName',
@@ -12223,7 +12225,7 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 //  SPFieldChoice
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldChoice', 
+angular.module('ngSharePoint').directive('spfieldChoice',
 
     ['SharePoint', 'SPFieldDirective', '$q',
 
@@ -12238,24 +12240,22 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                 mode: '@'
             },
             templateUrl: 'templates/form-templates/spfield-control.html',
-            
+
 
             link: function($scope, $element, $attrs, controllers) {
 
 
                 var directive = {
-                    
+
                     fieldTypeName: 'choice',
                     replaceAll: false,
 
                     init: function() {
 
-                        if ($scope.schema.Choices.results === undefined) {
+                        if ($scope.schema.Choices.ListQuery !== undefined) {
 
-                            if ($scope.schema.Choices.ListQuery !== undefined) {
-
-                                getResultsFromListQuery($scope.schema.Choices.ListQuery);
-                            }
+                            $scope.choices = [];
+                            getResultsFromListQuery($scope.schema.Choices.ListQuery);
 
                         } else {
 
@@ -12300,7 +12300,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                         }
                     }
                 };
-                
+
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
@@ -12333,7 +12333,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                             fillInChoiceElement.focus();
 
                         }
-                        
+
                     } else {
 
                         switch($scope.schema.EditFormat) {
@@ -15872,7 +15872,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 
 /*
     SPFieldValue - directive
-    
+
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
     Pau Codina (pau.codina@kaldeera.com)
 
@@ -15888,7 +15888,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 //////////////////////////////////////////////////
 
 (function() {
-    
+
     'use strict';
 
     angular
@@ -15917,7 +15917,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 
         return directive;
 
-        
+
 
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -15936,17 +15936,47 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
             scope.fieldValue = '';
 
 
-            var fieldType = scope.field.TypeAsString;
-            var fieldName = scope.field.InternalName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
+            var fieldType = scope.field.TypeAsString || scope.field.Type;
+            var fieldName = scope.field.InternalName || scope.field.Name;
+            fieldName = fieldName + (fieldType == 'Lookup' || fieldType == 'LookupMulti' || fieldType == 'User' || fieldType == 'UserMulti' ? 'Id' : '');
             var fieldValue = scope.item[fieldName] || '';
+
+            if (fieldType === 'Calculated') {
+                switch (scope.field.OutputType) {
+                    case SP.FieldType.dateTime:
+                    case 'DateTime':
+                        fieldType = 'DateTime';
+                        break;
+                    case SP.FieldType.boolean:
+                    case 'Boolean':
+                        fieldType = 'Boolean';
+                        break;
+                    case SP.FieldType.number:
+                    case 'Number':
+                        fieldType = 'Number';
+                        break;
+                    case SP.FieldType.currency:
+                    case 'Currency':
+                        fieldType = 'Number';
+                        break;
+                    default:
+                        fieldType = 'Text';
+                        break;
+                }
+            }
+
+            if (fieldType === 'Number') {
+                fieldValue = parseFloat(fieldValue);
+                if (isNaN(fieldValue)) fieldValue = undefined;
+            }
 
 
             if (fieldValue !== '') {
 
+                var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
                 switch(fieldType) {
 
                     case 'DateTime':
-                        var cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
                         scope.fieldValue = '<span>' + new Date(fieldValue).format(cultureInfo.dateTimeFormat.ShortDatePattern) + '</span>';
                         break;
 
@@ -16006,10 +16036,24 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
 
                         break;
 
+                    case 'Number':
+                        var value = '';
+
+                        if (fieldValue !== undefined) {
+                            value = fieldValue.toFixed(scope.field.Decimals);
+                            if (scope.field.Percentage) {
+                                value = value + cultureInfo.numberFormat.PercentSymbol;
+                            }
+                        }
+
+                        scope.fieldValue = '<span>' + value + '</span>';
+
+                        break;
+
                     default:
                         scope.fieldValue = '<span>' + fieldValue + '</span>';
                 }
-                
+
             }
 
 
@@ -16077,7 +16121,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
                                     } else {
 
                                         url = lookupItem.list.Forms.results[0].ServerRelativeUrl + '?ID=' + lookupValue + '&Source=' + encodeURIComponent(window.location);
-                                        
+
                                     }
 
 
@@ -16117,6 +16161,7 @@ angular.module('ngSharePoint').directive('spfieldValidationMessages',
     } // Directive factory function
 
 })();
+
 /*
 	SPFieldWorkflowStatus - directive
 	

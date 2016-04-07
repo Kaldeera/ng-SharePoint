@@ -774,7 +774,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             var self = this;
             var def = $q.defer();
-            var executor = new SP.RequestExecutor(self.web.url);
 			// Set the headers for the REST API call.
             // ----------------------------------------------------------------------------
             var headers = {
@@ -784,12 +783,9 @@ angular.module('ngSharePoint').factory('SPList',
 
             // Make the call.
             // ----------------------------------------------------------------------------
-            executor.executeAsync({
-				url: self.apiUrl + "/renderlistdata()",
-                method: 'POST',
-                body: angular.toJson({viewXml: viewXml}),
-                headers: headers,
-                success: function(data) {
+            SPHttp.post(self.web, self.apiUrl + "/renderlistdata()", headers, angular.toJson({viewXml: viewXml}))
+            .then(
+                function(data) {
 	                var d = angular.fromJson(utils.parseSPResponse(data).RenderListData);
                     angular.forEach(d.Row, function(item) {
 						// convert single arrays to object
@@ -801,7 +797,7 @@ angular.module('ngSharePoint').factory('SPList',
                     });
                     def.resolve(d.Row);
                 },
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
                     var err = utils.parseError({
                         data: data,
                         errorCode: errorCode,
@@ -810,7 +806,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     def.reject(err);
                 }                    
-            });
+            );
           
             return def.promise;
 
@@ -1414,8 +1410,6 @@ angular.module('ngSharePoint').factory('SPList',
 
             self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
 
-                var executor = new SP.RequestExecutor(self.web.url);
-
 
                 // Set the contents for the REST API call.
                 // ----------------------------------------------------------------------------
@@ -1435,32 +1429,16 @@ angular.module('ngSharePoint').factory('SPList',
                     "content-type": "application/json;odata=verbose"
                 };
 
-                var requestDigest = document.getElementById('__REQUESTDIGEST');
-                // Remote apps that use OAuth can get the form digest value from the http://<site url>/_api/contextinfo endpoint.
-                // SharePoint-hosted apps can get the value from the #__REQUESTDIGEST page control if it's available on the SharePoint page.
-
-                if (requestDigest !== null) {
-                    headers['X-RequestDigest'] = requestDigest.value;
-                }
-
-
-                // Make the call.
-                // ----------------------------------------------------------------------------
-                executor.executeAsync({
-
-                    url: self.apiUrl + '/items',
-                    method: 'POST',
-                    body: angular.toJson(body),
-                    headers: headers,
-
-                    success: function(data) {
+                SPHttp.post(self.web, self.apiUrl + '/items', headers, angular.toJson(body))
+                .then(
+                    function(data) {
 
                         var d = utils.parseSPResponse(data);
 
                         def.resolve(d);
                     },
 
-                    error: function(data, errorCode, errorMessage) {
+                    function(data, errorCode, errorMessage) {
 
                         var err = utils.parseError({
                             data: data,
@@ -1470,7 +1448,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                         def.reject(err);
                     }
-                });
+                );
 
             });
 
@@ -1492,8 +1470,6 @@ angular.module('ngSharePoint').factory('SPList',
 
 
             self.getListItemEntityTypeFullName().then(function(listItemEntityTypeFullName) {
-
-                var executor = new SP.RequestExecutor(self.web.url);
 
 
                 // Set the contents for the REST API call.
@@ -1517,30 +1493,19 @@ angular.module('ngSharePoint').factory('SPList',
                                     // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
                 };
 
-                var requestDigest = document.getElementById('__REQUESTDIGEST');
-
-                if (requestDigest !== null) {
-                    headers['X-RequestDigest'] = requestDigest.value;
-                }
-
 
                 // Make the call.
                 // ----------------------------------------------------------------------------
-                executor.executeAsync({
-
-                    url: self.apiUrl + '/items(' + id + ')',
-                    method: 'POST',
-                    body: angular.toJson(body),
-                    headers: headers,
-
-                    success: function(data) {
+                SPHttp.post(self.web, self.apiUrl + '/items(' + id + ')', headers, angular.toJson(body))
+                .then(
+                    function(data) {
 
                         var d = utils.parseSPResponse(data);
 
                         def.resolve(d);
                     },
 
-                    error: function(data, errorCode, errorMessage) {
+                    function(data, errorCode, errorMessage) {
 
                         var err = utils.parseError({
                             data: data,
@@ -1550,7 +1515,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                         def.reject(err);
                     }
-                });
+                );
 
             });
 
@@ -1580,29 +1545,19 @@ angular.module('ngSharePoint').factory('SPList',
                 "IF-MATCH": "*"
             };
 
-            var requestDigest = document.getElementById('__REQUESTDIGEST');
-
-            if (requestDigest !== null) {
-                headers['X-RequestDigest'] = requestDigest.value;
-            }
-
 
             // Make the call.
             // ----------------------------------------------------------------------------
-            executor.executeAsync({
-
-                url: self.apiUrl + '/items(' + id + ')',
-                method: 'POST',
-                headers: headers,
-
-                success: function(data) {
+            SPHttp.post(self.web, self.apiUrl + '/items(' + id + ')', headers)
+            .then(
+                function(data) {
 
                     var d = utils.parseSPResponse(data);
 
                     def.resolve(d);
                 },
 
-                error: function(data, errorCode, errorMessage) {
+                function(data, errorCode, errorMessage) {
 
                     var err = utils.parseError({
                         data: data,
@@ -1612,7 +1567,7 @@ angular.module('ngSharePoint').factory('SPList',
 
                     def.reject(err);
                 }
-            });
+            );
 
 
             return def.promise;
