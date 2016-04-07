@@ -1,6 +1,6 @@
 /*
 	SPFieldCurrency - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //	SPFieldCurrency
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldCurrency', 
+angular.module('ngSharePoint').directive('spfieldCurrency',
 
 	['SPFieldDirective',
 
@@ -29,13 +29,13 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control.html',
-			
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
 
 				var directive = {
-					
+
 					fieldTypeName: 'currency',
 					replaceAll: false,
 
@@ -50,18 +50,17 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					},
 
-					parserFn: function(viewValue) {
+					formatterFn: function(modelValue) {
 
-						// Adjust value to match field type 'Double' in SharePoint.
-						if (viewValue === '' || viewValue === void 0) {
-						
-							viewValue = null;
-						}
-						
-						return viewValue;
-					}
+                        if (typeof modelValue === 'string') {
+                            modelValue = parseFloat(modelValue);
+							if (isNaN(modelValue)) modelValue = undefined;
+                        }
+
+                        return modelValue;
+                    }
 				};
-				
+
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 

@@ -1,7 +1,7 @@
 /*
 	SPFieldNumber - directive
 	SPNumber - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -15,7 +15,7 @@
 //	SPFieldNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldNumber', 
+angular.module('ngSharePoint').directive('spfieldNumber',
 
 	['SPFieldDirective', 'SPUtils',
 
@@ -36,7 +36,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 
 				var directive = {
-					
+
 					fieldTypeName: 'number',
 					replaceAll: false,
 
@@ -50,16 +50,15 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 					},
 
-					parserFn: function(viewValue) {
-						
-						// Adjust value to match field type 'Double' in SharePoint.
-						if (viewValue === '' || viewValue === void 0) {
-						
-							viewValue = null;
-						}
-						
-						return viewValue;
-					}
+					formatterFn: function(modelValue) {
+
+                        if (typeof modelValue === 'string') {
+                            modelValue = parseFloat(modelValue);
+							if (isNaN(modelValue)) modelValue = undefined;
+                        }
+
+                        return modelValue;
+                    }
 				};
 
 
@@ -89,7 +88,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 //	SPNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spPercentage', 
+angular.module('ngSharePoint').directive('spPercentage',
 
 	[
 

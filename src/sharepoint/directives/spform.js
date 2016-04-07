@@ -1,6 +1,6 @@
 /*
     SPForm - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPForm
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spform', 
+angular.module('ngSharePoint').directive('spform',
 
     ['SPUtils', '$compile', '$templateCache', '$http', '$q', '$timeout', '$injector', 'SPExpressionResolver', 'SPListItem',
 
@@ -45,7 +45,7 @@ angular.module('ngSharePoint').directive('spform',
                     PROCESSING: 1
                 };
 
-                
+
                 this.getItem = function() {
 
                     return $scope.item;
@@ -110,12 +110,14 @@ angular.module('ngSharePoint').directive('spform',
 
                                         case 'undefined':
                                         case undefined:
+                                        case '':
                                         case null:
                                             value = undefined;
                                             break;
 
                                         default:
                                             value = new Date(solvedDefaultValue);
+                                            if (isNaN(value.getTime())) value = undefined;
                                             break;
                                     }
 
@@ -133,6 +135,14 @@ angular.module('ngSharePoint').directive('spform',
                                 case 'User':
                                     if (solvedDefaultValue !== null) {
                                         $scope.item[fieldName + 'Id'] = parseInt(solvedDefaultValue);
+                                    }
+                                    break;
+
+                                case 'Number':
+                                case 'Currency':
+                                    var num = parseFloat(solvedDefaultValue);
+                                    if (!isNaN(num)) {
+                                        $scope.item[fieldName] = num;
                                     }
                                     break;
 
@@ -157,7 +167,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                 this.getFieldSchema = function(fieldName) {
-    
+
                     if (utils.isGuid(fieldName)) {
 
                         var fieldSchema = void 0;
@@ -186,7 +196,7 @@ angular.module('ngSharePoint').directive('spform',
 
                     // Propagate to parent Elements/Controllers
                     $scope.$emit(fieldName + '_changed', newValue, oldValue, params);
-                    
+
                 };
 
 
@@ -247,7 +257,7 @@ angular.module('ngSharePoint').directive('spform',
                     // the first field.
 
                     for (var i = 0; i < this.focusElements.length; i++) {
-                        
+
                         if (fieldName !== void 0) {
 
                             // If argument @fieldName is defined, set the focus in the field specified (if found).
@@ -429,20 +439,20 @@ angular.module('ngSharePoint').directive('spform',
 
                                         // Close the 'Working on it...' dialog.
                                         closeDialog();
-                                        
+
                                     }, function() {
 
-                                        // At this point, the 'OnPostSave' promise has been rejected 
+                                        // At this point, the 'OnPostSave' promise has been rejected
                                         // due to an exception or manually by the user.
 
                                         closeDialog();
                                         def.reject();
-                                        
+
                                     });
 
                                 }, function(err) {
 
-                                    // At this point, the 'item.save' promise has been rejected 
+                                    // At this point, the 'item.save' promise has been rejected
                                     // due to an exception.
 
                                     console.error(err);
@@ -466,17 +476,17 @@ angular.module('ngSharePoint').directive('spform',
 
                             } else {
 
-                                // At this point, the 'OnPreSave' promise has been canceled 
+                                // At this point, the 'OnPreSave' promise has been canceled
                                 // by the user (By the 'onPreSave' method implemented by the user).
 
                                 closeDialog();
                                 def.reject();
 
                             }
-                            
+
                         }, function() {
 
-                            // At this point, the 'OnPreSave' promise has been rejected 
+                            // At this point, the 'OnPreSave' promise has been rejected
                             // due to an exception or manually by the user.
 
                             closeDialog();
@@ -533,21 +543,21 @@ angular.module('ngSharePoint').directive('spform',
 
                     return def.promise;
                 };
- 
- 
- 
+
+
+
                 this.closeForm = function(redirectUrl) {
- 
+
                     if (redirectUrl !== void 0) {
- 
+
                         window.location = redirectUrl;
- 
+
                     } else {
-                         
+
                         window.location = utils.getQueryStringParamByName('Source') || _spPageContextInfo.webServerRelativeUrl;
- 
+
                     }
- 
+
                 };
 
             }], // controller property
@@ -559,7 +569,7 @@ angular.module('ngSharePoint').directive('spform',
                 return {
 
                     pre: function prelink($scope, $element, $attrs, spformController, transcludeFn) {
-                    
+
                         // Sets the form 'name' attribute if user don't provide it.
                         // This way has always available the 'ng-form' directive controller for form validations.
                         if (!$attrs.name) {
@@ -667,10 +677,10 @@ angular.module('ngSharePoint').directive('spform',
                             }
 
                             // Gets the schema (fields) of the list.
-                            // Really, gets the fields of the list content type specified in the 
+                            // Really, gets the fields of the list content type specified in the
                             // item or, if not specified, the default list content type.
                             $scope.item.list.getProperties({
-                            
+
                                 $expand: 'Fields,ContentTypes,ContentTypes/Fields'
 
                             }).then(function() {
@@ -778,7 +788,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
                                 transclusionContainer.empty(); // Needed?
-                                
+
                                 // Initialize the 'rules' array.
                                 $scope.rules = [];
                                 $scope.expressions = {};
@@ -820,7 +830,7 @@ angular.module('ngSharePoint').directive('spform',
 
                                     // Apply transclusion
                                     transcludeFn($scope.childScope, function(clone, newScope) {
-                                        
+
                                         parseRules(transclusionContainer, clone, true).then(function() {
 
                                             // If no content was detected within the 'spform' element, generates a default form template.
@@ -924,7 +934,7 @@ angular.module('ngSharePoint').directive('spform',
                                 }
 
                                 if (forceRuleElement !== '') {
-                                    
+
                                     return SPExpressionResolver.resolve(forceRuleElement.outerHTML, $scope).then(function(elemResolved) {
 
                                         targetElement.append(angular.element(elemResolved)[0]);
@@ -1004,9 +1014,9 @@ angular.module('ngSharePoint').directive('spform',
 
                                                     // Add the rule to the 'rules' array for debug purposes.
                                                     $scope.rules.push({
-                                                        test: testExpression, 
-                                                        testResolved: testResolved, 
-                                                        terminal: terminalExpression, 
+                                                        test: testExpression,
+                                                        testResolved: testResolved,
+                                                        terminal: terminalExpression,
                                                         terminalResolved: terminalResolved,
                                                         solved: true,
                                                         name: ruleName
@@ -1023,11 +1033,11 @@ angular.module('ngSharePoint').directive('spform',
 
                                             if (isTransclude) {
 
-                                                // NOTE: If this function is called from a transclusion function, removes the 'spform-rule' 
+                                                // NOTE: If this function is called from a transclusion function, removes the 'spform-rule'
                                                 //       elements when the expression in its 'test' attribute evaluates to FALSE.
-                                                //       This is because when the transclusion is performed the elements are inside the 
+                                                //       This is because when the transclusion is performed the elements are inside the
                                                 //       current 'spform' element and should be removed.
-                                                //       When this function is called from an asynchronous template load ('templete-url' attribute), 
+                                                //       When this function is called from an asynchronous template load ('templete-url' attribute),
                                                 //       the elements are not yet in the element.
                                                 elem.remove();
                                                 elem = null;
@@ -1036,9 +1046,9 @@ angular.module('ngSharePoint').directive('spform',
 
                                             // Add the rule to the 'rules' array for debug purposes.
                                             $scope.rules.push({
-                                                test: testExpression, 
+                                                test: testExpression,
                                                 testResolved: testResolved,
-                                                terminal: terminalExpression, 
+                                                terminal: terminalExpression,
                                                 terminalResolved: 'n/a',
                                                 solved: false,
                                                 name: ruleName
@@ -1048,7 +1058,7 @@ angular.module('ngSharePoint').directive('spform',
                                             // Process the next element
                                             parseRules(targetElement, sourceElements, isTransclude, elementIndex, deferred, terminalRuleAdded);
                                         }
-                                        
+
                                     });
 
                                 } else {
@@ -1075,7 +1085,7 @@ angular.module('ngSharePoint').directive('spform',
 
 
 
-                        // Checks if SharePoint is rendering the form in a dialog, and if so 
+                        // Checks if SharePoint is rendering the form in a dialog, and if so
                         // resizes it after de DOM is loaded using the $timeout service.
                         //
                         function dialogResize() {
