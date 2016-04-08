@@ -1,6 +1,6 @@
 /*
     SPFieldControl - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPFieldControl
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldControl', 
+angular.module('ngSharePoint').directive('spfieldControl',
 
     ['$compile', '$templateCache', '$http',
 
@@ -31,10 +31,10 @@ angular.module('ngSharePoint').directive('spfieldControl',
             link: function($scope, $element, $attrs, spformController) {
 
                 if (spformController === null) return;
-                
+
                 var name = ($attrs.name || $attrs.spfieldControl);
                 var schema = spformController.getFieldSchema(name);
-                
+
                 if (schema !== void 0) {
 
                     // Checks if attachments are enabled in the list when process the 'Attachments' field.
@@ -51,12 +51,12 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         }
 
                     }
-                    
+
 
                     // Sets the default value for the field
                     spformController.initField(schema.EntityPropertyName).then(function() {
 
-                        // NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize 
+                        // NOTE: Include a <spfield-control name="<name_of_the_field>" mode="hidden" /> to initialize
                         //       the field with it's default value, but without showing it up in the form.
                         if ($attrs.mode == 'hidden') {
                             $element.addClass('ng-hide');
@@ -105,8 +105,8 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         if (getFieldMode() == 'edit') {
                             validationAttributes = ' ng-required="' + schema.Required + '"';
                         }
-                        
-                        
+
+
                         // Specific field type validation attributes
                         switch(schema.TypeAsString) {
 
@@ -132,7 +132,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         angular.forEach($attrs.$attr, function(attr, normalizedAttr) {
 
                             if (processedAttributes.indexOf(normalizedAttr) == -1) {
-                                
+
                                 otherAttributes += ' ' + attr + '="' + $attrs[normalizedAttr] + '"';
 
                             }
@@ -146,10 +146,10 @@ angular.module('ngSharePoint').directive('spfieldControl',
                             validationAttributes = '';
 
                         }
-                        
+
 
                         // Mount the field directive HTML
-                        var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + ' class="' + fieldType + '"></spfield-' + fieldType + '>';
+                        var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + ' class="spfield-body-control ' + fieldType + '"></spfield-' + fieldType + '>';
                         var newElement = $compile(fieldControlHTML)($scope);
 
                         $element.replaceWith(newElement);
@@ -166,7 +166,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                     $element.replaceWith(errorElement);
                     $element = errorElement;
                     */
-                    
+
                     setEmptyElement();
 
                 }
