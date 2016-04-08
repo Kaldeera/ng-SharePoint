@@ -149,7 +149,7 @@ angular.module('ngSharePoint').directive('spfieldControl',
                         
 
                         // Mount the field directive HTML
-                        var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + '></spfield-' + fieldType + '>';
+                        var fieldControlHTML = '<spfield-' + fieldType + ngModelAttr + nameAttr + modeAttr + dependsOnAttr + hiddenAttr + validationAttributes + otherAttributes + ' class="' + fieldType + '"></spfield-' + fieldType + '>';
                         var newElement = $compile(fieldControlHTML)($scope);
 
                         $element.replaceWith(newElement);
