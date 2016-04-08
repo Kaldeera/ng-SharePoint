@@ -21,8 +21,7 @@
 	
 	.spform {
 		
-		position: relative;
-		overflow: hidden;
+		padding-top: 20px;
 		
 		.spfield-wrapper {
 		
@@ -40,12 +39,12 @@
 		.spfield-body {
 			
 			display: inline-block !important;
-		}
-		
+			min-height: 17px;
+		}		
 		
 		.spfield-label {
 			
-			width: 38%;
+			width: 30% !important;
 			
 			h3 {
 				
@@ -60,7 +59,7 @@
 		
 		.spfield-body {
 			
-			width: 60%;
+			width: 68% !important;
 			
 			> div > div > img {
 				
@@ -78,51 +77,96 @@
 			white-space: nowrap;	
 		}
 		
+		// Layout
+		
+		@MaxColumns: 8;
+		@ColumnMargin: 10px;
+		@SpanBase: 100% / @MaxColumns;
+		
+		div.Row {
+			
+			float: none;
+			clear: both;
+			margin: 0 - @ColumnMargin;
+		
+			div.Column {
+				
+				float: left;
+				padding: 0 @ColumnMargin;
+				width: 100% / 8;
+				box-sizing: border-box;
+				
+				&.Span_1 { width: @SpanBase * 1; }
+				&.Span_2 { width: @SpanBase * 2; }
+				&.Span_3 { width: @SpanBase * 3; }
+				&.Span_4 { width: @SpanBase * 4; }
+				&.Span_5 { width: @SpanBase * 5; }
+				&.Span_6 { width: @SpanBase * 6; }
+				&.Span_7 { width: @SpanBase * 7; }
+				&.Span_8 { width: @SpanBase * 8; }
+				
+				&:last-child { padding-right: 0; }
+			}
+		}
+		
 		// Visuals
 		
 		&.spform-display {
+			
+			overflow: hidden;
+			position: relative;
 		
+			/* NGSP */
+			
 			.CornerFlag {
 				
 				position: absolute;
 				top: 0;
-				left: 0;
-				overflow: hidden;
-					
-				&.Top {
-					
-					bottom: auto;
-					top: 0; 
-				}		
-					
-				&.Left {
-					
-					Right: auto;
-					left: 0;
-				}		
-					
-				&.Right {
-					
-					Right: 0;
-					Left: auto;
-				}	
-						
-				&.Bottom {
-					
-					top: auto;
-					bottom: 0;
-				}
+				right: 0;
+			}			
+			
+			.CornerFlag .field-display-value {
 				
-				.field-display-value {
-					
-					padding: 5px 20px;
-					background-color: #ccc;
-					transform: rotate(0deg);
-					/*
-					-ms-transform: rotate(45deg);
-					-webkit-transform: rotate(45deg);
-					*/
-				}
+				position: absolute;
+				box-sizing: content-box;
+				
+				width: 150px;
+				padding: 5px 250px;
+				background-color: #ccc; 
+				text-align: center; 
+				
+				top: 0;
+				right: 0;
+				
+				transform-origin: 50% 0;
+				transform: translateY(52px) translateX(272px) rotate(45deg);
+			}
+			
+			.CornerFlag.Top { 		top: 0; 			bottom: inherit	; }
+			.CornerFlag.Bottom { 	top: inherit; 		bottom: 0; }
+			.CornerFlag.Left { 		left: 0; 			right: inherit; }
+			.CornerFlag.Right { 	left: inherit; 		right: 0; }	
+			
+			.CornerFlag.Bottom .field-display-value {
+				
+				top: inherit;
+				bottom: 0;
+				transform-origin: 50% 100%;
+				transform: translateY(-52px) translateX(272px) rotate(-45deg);
+			}
+			
+			.CornerFlag.Bottom.Left .field-display-value  {
+				
+				left: 0;
+				right: inherit;
+				transform: translateY(-53px) translateX(-272px) rotate(45deg);
+			}
+			
+			.CornerFlag.Top.Left .field-display-value  {
+				
+				left: 0;
+				right: inherit;
+				transform: translateY(55px) translateX(-271px) rotate(-45deg);
 			}
 		}
 	}
@@ -203,6 +247,15 @@
 					width: 100%;
 					padding: 0 !important;
 				}
+			}
+			
+			// Layout
+			
+			div.Column {
+				
+				float: none !important;
+				margin-right: 0 !important;
+				width: 100% !important;
 			}
 		}
 	}
