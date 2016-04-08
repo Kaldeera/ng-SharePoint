@@ -786,7 +786,7 @@ angular.module('ngSharePoint').factory('SPList',
             SPHttp.post(self.web, self.apiUrl + "/renderlistdata()", headers, angular.toJson({viewXml: viewXml}))
             .then(
                 function(data) {
-	                var d = angular.fromJson(utils.parseSPResponse(data).RenderListData);
+	                var d = angular.fromJson(utils.parseSPResponse(data.RenderListData));
                     angular.forEach(d.Row, function(item) {
 						// convert single arrays to object
 				        angular.forEach(item, function(value, key) {
