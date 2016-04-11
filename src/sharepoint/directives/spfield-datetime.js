@@ -1,6 +1,6 @@
 /*
     SPFieldDateTime - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPFieldDateTime
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldDatetime', 
+angular.module('ngSharePoint').directive('spfieldDatetime',
 
     ['SPFieldDirective', '$filter', '$timeout', '$q', 'SPUtils',
 
@@ -30,24 +30,23 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                 value: '=ngModel'
             },
             templateUrl: 'templates/form-templates/spfield-control.html',
-            
+
 
             link: function($scope, $element, $attrs, controllers) {
 
-
                 var directive = {
-                    
+
                     fieldTypeName: 'datetime',
                     replaceAll: false,
 
-/*
                     parserFn: function(viewValue) {
 
-                        var isDate = angular.isDate($scope.value);
-                        directive.setValidity('date', !isDate || (isDate && isNaN($scope.value)));
+                        // Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+						$scope.lastValue = viewValue;
 
+						return viewValue;
                     },
-*/
 
                     renderFn: function() {
 
@@ -59,6 +58,9 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                         if (typeof modelValue === 'string') {
                             modelValue = new Date(modelValue);
                         }
+
+                        $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
 
                         return modelValue;
                     },
@@ -124,7 +126,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             // La clase Sys.CultureInfo contiene la información de la cultura actual del servidor.
                             // Para recuperar la información de la cultura seleccionada en la configuración regional del usuario
                             // se deben realizar los siguientes pasos:
-                            // 
+                            //
                             // 1. Establecer el valor del atributo EnableScriptGlobalization a true en el tag <asp:ScriptManager ... />:
                             //
                             //    <asp:ScriptManager runat="server" ... EnableScriptGlobalization="true" EnableScriptLocalization="true" ScriptMode="Debug" />
@@ -159,18 +161,18 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             $scope.minutes = minutes;
                             $scope.hours = ($scope.hoursMode24 ? hours24 : hours12);
                             $scope.datePickerPath = getDatePickerPath();
-                            $scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) + 
-                                                   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) + 
+                            $scope.datePickerUrl = STSHtmlEncode($scope.datePickerPath) +
+                                                   'iframe.aspx?cal=' + STSHtmlEncode(String($scope.webRegionalSettings.CalendarType)) +
                                                    '&lcid=' + STSHtmlEncode($scope.lcid) +                                  // Locale (User Regional Settings)
                                                    '&langid=' + STSHtmlEncode(_spPageContextInfo.currentLanguage) +         // Language (UI Language)
-                                                   '&tz=' + STSHtmlEncode(TimeZoneDifference) + 
-                                                   '&ww=' + STSHtmlEncode(WorkWeek) + 
-                                                   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) + 
-                                                   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) + 
+                                                   '&tz=' + STSHtmlEncode(TimeZoneDifference) +
+                                                   '&ww=' + STSHtmlEncode(WorkWeek) +
+                                                   '&fdow=' + STSHtmlEncode($scope.webRegionalSettings.FirstDayOfWeek) +
+                                                   '&fwoy=' + STSHtmlEncode($scope.webRegionalSettings.FirstWeekOfYear) +
                                                    '&hj=' + STSHtmlEncode($scope.webRegionalSettings.AdjustHijriDays) +     // HijriAdjustment ?
                                                    '&swn=' + STSHtmlEncode($scope.webRegionalSettings.ShowWeeks) +          // ShowWeekNumber ?
-                                                   '&minjday=' + STSHtmlEncode(MinJDay) + 
-                                                   '&maxjday=' + STSHtmlEncode(MaxJDay) + 
+                                                   '&minjday=' + STSHtmlEncode(MinJDay) +
+                                                   '&maxjday=' + STSHtmlEncode(MaxJDay) +
                                                    '&date=';
 
                             $scope.DatePickerFrameID = g_strDatePickerFrameID;
@@ -180,7 +182,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             var value = $scope.modelCtrl.$viewValue;
 
                             if (value !== null && value !== void 0) {
-                                
+
                                 $scope.dateModel = new Date(value);
                                 $scope.dateOnlyModel = $filter('date')($scope.dateModel, $scope.cultureInfo.dateTimeFormat.ShortDatePattern);
                                 $scope.minutesModel = $scope.dateModel.getMinutes().toString();
@@ -265,7 +267,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                                 });
                             });
                         };
-                        
+
                     } else {
 
                         // Can't catch the result value from the DatetimePicker IFRAME...
@@ -301,7 +303,7 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                             var dateValues = $scope.dateOnlyModel.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
                             var dateParts = $scope.cultureInfo.dateTimeFormat.ShortDatePattern.split($scope.cultureInfo.dateTimeFormat.DateSeparator);
                             var dateComponents = {};
-                            
+
                             for(var i = 0; i < dateParts.length; i++) {
                                 dateComponents[dateParts[i]] = dateValues[i];
                             }

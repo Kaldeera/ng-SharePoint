@@ -111,7 +111,25 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                             }
 
                         }
+                    },
+
+                    formatterFn: function(modelValue) {
+
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
+                        return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+						$scope.lastValue = viewValue;
+
+						return viewValue;
                     }
+
                 };
 
 

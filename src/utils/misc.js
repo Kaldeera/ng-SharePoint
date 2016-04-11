@@ -16,12 +16,12 @@
 // ***************************************************************************
 // javascript extensions
 //
-String.prototype.ltrim = function(s) { 
-    return this.replace(new RegExp("^" + s), ''); 
+String.prototype.ltrim = function(s) {
+    return this.replace(new RegExp("^" + s), '');
 };
 
 
-String.prototype.rtrim = function(s) { 
+String.prototype.rtrim = function(s) {
     return this.replace(new RegExp(s + "*$"), '');
 };
 
@@ -50,11 +50,11 @@ var utils = {
 
 	/* No external dependences! */
 	/*
-	x2js: new X2JS({ 
+	x2js: new X2JS({
 		attributePrefix: ''
 	}),
 	*/
-	
+
 
 
 	// ***************************************************************************
@@ -140,7 +140,7 @@ var utils = {
 	// ***************************************************************************
 	// parseQuery
 	//
-	// Converts the key/value properties of the object passed in the @query parameter 
+	// Converts the key/value properties of the object passed in the @query parameter
 	// to a string ready to use for REST query options QueryString parameters.
 	//
 	// @query: Object with REST query options like a key/value pairs properties.
@@ -149,7 +149,7 @@ var utils = {
 	parseQuery: function(query) {
 
 		if (query === void 0) return '';
-		
+
 		var strQuery = '';
 
 		angular.forEach(query, function(value, key) {
@@ -241,7 +241,7 @@ var utils = {
 			}
 
 		}
-		
+
 		// If a new REQUESTDIGEST value was received in the last server call,
 		// update the __REQUESTDIGEST form control with the new value.
 		if (response.headers !== null && response.headers['X-REQUESTDIGEST']) {
@@ -321,7 +321,7 @@ var utils = {
 		for (var i = 1, length = arguments.length; i < length; i++) {
 
 			source = arguments[i];
-			
+
 			for (prop in source) {
 				if (hasOwnProperty.call(source, prop)) {
 					obj[prop] = source[prop];
@@ -401,3 +401,31 @@ var utils = {
 	}	// deepExtend
 
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// This method is used to solve the bug of SharePoint Datepicker that jumps to
+// top of window in Chrome.
+function OnIframeLoadFinish() {
+    var picker;
+
+    if (typeof this.Picker !== 'undefined')
+        picker = this.Picker;
+    if (picker !== null && typeof picker.readyState !== 'undefined' && picker.readyState !== null && picker.readyState === "complete") {
+        document.body.scrollLeft = g_scrollLeft;
+        document.body.scrollTop = g_scrollTop;
+        g_scrollTop = document.getElementById('s4-workspace').scrollTop;
+        picker.style.display = "block";
+        if (typeof document.frames !== 'undefined' && Boolean(document.frames)) {
+            var frame = document.frames[picker.id];
+
+            if (frame !== null && typeof frame.focus === 'function')
+                frame.focus();
+        }
+        else {
+            picker.focus();
+        }
+    }
+    setTimeout(function(){
+        document.getElementById('s4-workspace').scrollTop = g_scrollTop;
+    }, 1);
+}

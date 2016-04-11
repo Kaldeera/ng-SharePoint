@@ -1,6 +1,6 @@
 /*
 	SPFieldAttachments - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //	SPFieldAttachments
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldAttachments', 
+angular.module('ngSharePoint').directive('spfieldAttachments',
 
 	['SPFieldDirective',
 
@@ -29,7 +29,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 				mode: '@'
 			},
 			templateUrl: 'templates/form-templates/spfield-control-loading.html',
-			
+
 
 			link: function($scope, $element, $attrs, controllers) {
 
@@ -52,7 +52,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 						// Check if the old and new values really differ.
 						if (newValue === null && oldValue === undefined) return;
 
-						
+
 
 						// Show loading animation.
 						directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
@@ -169,9 +169,9 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 
 
-angular.module('ngSharePoint').directive('fileSelect', 
+angular.module('ngSharePoint').directive('fileSelect',
 
-	['$parse', '$timeout', 'SPRibbon', 
+	['$parse', '$timeout', 'SPRibbon',
 
 	function fileSelect_DirectiveFactory($parse, $timeout, SPRibbon) {
 
@@ -179,7 +179,7 @@ angular.module('ngSharePoint').directive('fileSelect',
 
 			var fn = $parse($attrs.fileSelect);
 			$element.removeAttr('file-select');
-			
+
 
 			if ($element[0].tagName.toLowerCase() !== 'input' || ($element.attr('type') && $element.attr('type').toLowerCase() !== 'file')) {
 
@@ -257,7 +257,7 @@ angular.module('ngSharePoint').directive('fileSelect',
 
             	SPRibbon.attachFileElement = $element;
                 SPRibbon.registerCommand(
-                	'Ribbon.ListForm.Edit.Actions.AttachFile', 
+                	'Ribbon.ListForm.Edit.Actions.AttachFile',
                 	function() {
                 		SPRibbon.attachFileElement.click();
                 	}, true);
