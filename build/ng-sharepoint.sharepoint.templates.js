@@ -138,7 +138,7 @@ angular.module("templates/form-templates/spfield-control.html", []).run(["$templ
 
 angular.module("templates/form-templates/spfield-currency-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-display.html",
-    "<div ng-if=\"value\" ng-bind=\"$parent.value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"!isNaN(value)\" ng-bind=\"$parent.value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
     "");
 }]);
 
@@ -197,7 +197,7 @@ angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["
 
 angular.module("templates/form-templates/spfield-description.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-description.html",
-    "<span class=\"ms-metadata\" ng-bind-html=\"::schema.Description | newlines\" ng-show=\"currentMode == 'edit'\"></span>\n" +
+    "<span class=\"ms-metadata spfield-body-control\" ng-bind-html=\"::schema.Description | newlines\" ng-show=\"currentMode == 'edit'\"></span>\n" +
     "");
 }]);
 
@@ -374,8 +374,7 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
 
 angular.module("templates/form-templates/spfield-number-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-display.html",
-    "<div ng-if=\"value\" ng-bind=\"(schema.Percentage ? ($parent.value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
-    "\n" +
+    "<div ng-if=\"!isNaN(value)\" ng-bind=\"(schema.Percentage ? ($parent.value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
     "");
 }]);
 
