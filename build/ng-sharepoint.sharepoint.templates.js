@@ -197,7 +197,7 @@ angular.module("templates/form-templates/spfield-datetime-edit.html", []).run(["
 
 angular.module("templates/form-templates/spfield-description.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-description.html",
-    "<span class=\"ms-metadata\" ng-bind-html=\"::schema.Description | newlines\" ng-show=\"currentMode == 'edit'\"></span>\n" +
+    "<span class=\"ms-metadata spfield-body-control\" ng-bind-html=\"::schema.Description | newlines\" ng-show=\"currentMode == 'edit'\"></span>\n" +
     "");
 }]);
 
