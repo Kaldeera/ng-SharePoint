@@ -401,7 +401,6 @@ var utils = {
 	}	// deepExtend
 
 };
-
 /*
 	CamlHelper
 	Pau Codina for Kaldeera
