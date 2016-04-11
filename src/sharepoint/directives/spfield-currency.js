@@ -57,8 +57,23 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 							if (isNaN(modelValue)) modelValue = undefined;
                         }
 
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
                         return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						if ($scope.lastValue !== parseFloat(viewValue)) {
+							// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+							$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, parseFloat(viewValue), $scope.lastValue);
+							$scope.lastValue = parseFloat(viewValue);
+						}
+
+						return parseFloat(viewValue);
                     }
+
 				};
 
 

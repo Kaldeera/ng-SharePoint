@@ -1,6 +1,6 @@
 /*
     SPFieldNote - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPFieldNote
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldNote', 
+angular.module('ngSharePoint').directive('spfieldNote',
 
     ['SPFieldDirective', 'SPUtils', '$q', '$timeout',
 
@@ -35,7 +35,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
 
                 var directive = {
-                    
+
                     fieldTypeName: 'note',
                     replaceAll: false,
 
@@ -89,6 +89,23 @@ angular.module('ngSharePoint').directive('spfieldNote',
 
                         }
 
+                    },
+
+                    formatterFn: function(modelValue) {
+
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
+                        return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+						$scope.lastValue = viewValue;
+
+						return viewValue;
                     }
 
                 };
@@ -184,7 +201,7 @@ angular.module('ngSharePoint').directive('spfieldNote',
                                 deferred.reject();
 
                             }
-                            
+
                         }
 
                     });

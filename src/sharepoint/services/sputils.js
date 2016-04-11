@@ -322,7 +322,7 @@ angular.module('ngSharePoint').factory('SPUtils',
             },
 
 
-            getUserId: function(loginName) {
+            getUserInfoByLoginName: function(loginName) {
 
                 var self = this;
                 var deferred = $q.defer();
@@ -332,7 +332,8 @@ angular.module('ngSharePoint').factory('SPUtils',
                 ctx.load(user);
                 ctx.executeQueryAsync(function() {
 
-                    deferred.resolve(user.get_id());
+                    var objectData = user.get_objectData();
+                    deferred.resolve(objectData.get_properties());
 
                 }, function(sender, args) {
 

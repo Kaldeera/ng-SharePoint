@@ -57,7 +57,21 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 							if (isNaN(modelValue)) modelValue = undefined;
                         }
 
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
                         return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						if ($scope.lastValue !== parseFloat(viewValue)) {
+							// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+							$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, parseFloat(viewValue), $scope.lastValue);
+							$scope.lastValue = parseFloat(viewValue);
+						}
+
+						return parseFloat(viewValue);
                     }
 				};
 
@@ -115,8 +129,9 @@ angular.module('ngSharePoint').directive('spPercentage',
 				ngModel.$parsers.push(function(value) {
 					if ($scope.schema.Percentage && value !== void 0) {
 						// If decimals is set to 'Auto', use 2 decimals for percentage values.
-						var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
-						return (value / 100).toFixed(decimals);
+						// var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+						var percentageNumber = parseFloat(value / 100);
+						return (isNaN(value)) ? value : percentageNumber;
 					} else {
 						return value;
 					}

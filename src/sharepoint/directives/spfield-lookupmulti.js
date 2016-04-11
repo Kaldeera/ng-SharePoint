@@ -1,6 +1,6 @@
 /*
 	SPFieldLookupMulti - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //	SPFieldLookupMulti
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldLookupmulti', 
+angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 	['SPFieldDirective', '$q', '$filter', 'SharePoint',
 
@@ -46,13 +46,13 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						$scope.candidateAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldCandidateAltText, $scope.schema.Title));
 						$scope.resultAltText = STSHtmlEncode(StBuildParam(Strings.STS.L_LookupMultiFieldResultAltText, $scope.schema.Title));
 
-						
+
 					},
 
                     watchModeFn: function(newValue) {
                     	// to prevent default behavior
                     },
-                     
+
 					renderFn: function() {
 
 						$scope.value = $scope.modelCtrl.$viewValue;
@@ -155,7 +155,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					if ($scope.value === null || $scope.value === void 0) {
 						$scope.value = { results: [] };
 					}
-					
+
 					// Show loading animation.
 					directive.setElementHTML('<div><img src="/_layouts/15/images/loadingcirclests16.gif" alt="" /></div>');
 
@@ -251,7 +251,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						def.resolve($scope.lookupItems);
 
 					} else {
-						
+
 						getLookupList().then(function(list) {
 
 							list.getListItems($query).then(function(items) {
@@ -290,7 +290,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						getLookupItems().then(function(items) {
 
 							if ($scope.value !== null && $scope.value !== void 0) {
-								
+
 								angular.forEach($scope.value.results, function(selectedItem) {
 
 									var lookupItem = $filter('filter')(items, { Id: selectedItem }, true)[0];
@@ -354,7 +354,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 						if ($query.select !== undefined) {
 							$query.$select += ',';
 						} else {
-							$query.$select = '*,';	
+							$query.$select = '*,';
 						}
 						$query.$select += $scope.dependency.fieldName + '/Id';
 
@@ -364,7 +364,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 							$query.$expand = '';
 						}
 						$query.$expand += $scope.dependency.fieldName + '/Id';
-						
+
 						if ($query.$filter !== undefined) {
 							$query.$filter += ' and';
 						} else {
@@ -406,7 +406,8 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 							var bindingItem = {
 								id: item.Id,
 								name: displayValue,
-								title: displayValue
+								title: displayValue,
+								item: item
 							};
 
 							if ($scope.value && $scope.value.results && $scope.value.results.indexOf(item.Id) != -1) {
@@ -425,7 +426,7 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 
 					});
 
-					
+
 					return def.promise;
 
 				}
@@ -439,6 +440,15 @@ angular.module('ngSharePoint').directive('spfieldLookupmulti',
 					angular.forEach($scope.resultItems, function(item) {
 						results.push(item.id);
 					});
+
+
+					if ($scope.lastValue !== $scope.value) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, {results: results }, $scope.lastValue, $scope.resultItems);
+
+						$scope.lastValue = $scope.value;
+					}
 
 					$scope.value = {results: results };
 				}

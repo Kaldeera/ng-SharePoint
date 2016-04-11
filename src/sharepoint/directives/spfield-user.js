@@ -1,6 +1,6 @@
 /*
     SPFieldUser - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPFieldUser
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldUser', 
+angular.module('ngSharePoint').directive('spfieldUser',
 
     ['SPFieldDirective', '$q', '$timeout', '$filter', 'SharePoint', 'SPUtils', '$compile',
 
@@ -36,7 +36,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
                 var directive = {
-                    
+
                     fieldTypeName: 'user',
                     replaceAll: false,
 
@@ -45,7 +45,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                         $scope.noUserPresenceAlt = STSHtmlEncode(Strings.STS.L_UserFieldNoUserPresenceAlt);
                         $scope.idPrefix = $scope.schema.InternalName + '_'+ $scope.schema.Id;
                     },
-                    
+
                     parserFn: function(viewValue) {
 
                         if ($scope.schema.AllowMultipleValues) {
@@ -60,7 +60,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
                             // Checks for 'peoplePicker' due to when in 'display' mode it's not created.
                             if ($scope.peoplePicker) {
-                                
+
                                 // Unique validity (Only one value is allowed)
                                 directive.setValidity('unique', $scope.peoplePicker.TotalUserCount <= 1);
                             }
@@ -95,14 +95,15 @@ angular.module('ngSharePoint').directive('spfieldUser',
                             $timeout(function() {
                                 initializePeoplePicker(peoplePickerElementId);
 
+                                // Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+                                $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, undefined, getEntitiesInformation($scope.selectedUserItems));
                             });
                         }
-
                     }
                 };
 
 
-                SPFieldDirective.baseLinkFn.apply(directive, arguments);                
+                SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
 
 
@@ -231,7 +232,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                         def.resolve($scope.userItems);
 
                     } else {
-                        
+
                         getLookupList().then(function(list) {
 
                             list.getListItems().then(function(items) {
@@ -308,7 +309,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
                         } else {
 
-                            // If no value returns an empty object for corrent binding
+                            // If no value returns an empty object for correct binding
                             var userItem = {
                                 Title: '',
                                 url: '',
@@ -382,7 +383,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                 // Render and initialize the client-side People Picker.
                 //
                 function initializePeoplePicker(peoplePickerElementId) {
-                 
+
                     // Create a schema to store picker properties, and set the properties.
                     var schema = {
                         Id: $scope.schema.Id,
@@ -433,14 +434,14 @@ angular.module('ngSharePoint').directive('spfieldUser',
                             Description             Gets or sets text in a text box in the browser.
                             DisplayText             Gets or sets text in the editing control.
                             EntityData              Gets or sets a data-mapping structure that is defined by the consumer of the PickerEntity class.
-                            EntityDataElements  
+                            EntityDataElements
                             EntityGroupName         Group under which this entity is filed in the picker.
                             EntityType              Gets or sets the name of the entity data type.
                             HierarchyIdentifier     Gets or sets the identifier of the current picker entity within the hierarchy provider.
                             IsResolved              Gets or sets a value that indicates whether the entity has been validated.
                             Key                     Gets or sets the identifier of a database record.
-                            MultipleMatches 
-                            ProviderDisplayName 
+                            MultipleMatches
+                            ProviderDisplayName
                             ProviderName
                             */
 
@@ -474,7 +475,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                     this.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, pickerEntities, schema);
 
 
-                    
+
                     // Get the people picker object from the page.
                     var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
 
@@ -510,9 +511,9 @@ angular.module('ngSharePoint').directive('spfieldUser',
                                         if (entity.EntityType === 'User') {
 
                                             // Get the user ID
-                                            entityPromise = SPUtils.getUserId(entity.Key).then(function(userId) {
+                                            entityPromise = SPUtils.getUserInfoByLoginName(entity.Key).then(function(userInfo) {
 
-                                                resolvedValues.push(userId);
+                                                resolvedValues.push(userInfo.Id);
                                                 return resolvedValues;
                                             });
 
@@ -535,7 +536,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
 
                             if (promises.length > 0) {
-                                
+
                                 $q.all(promises).then(function() {
 
                                     updateModel(resolvedValues);
@@ -577,18 +578,34 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
                     $scope.modelCtrl.$setViewValue($scope.value);
                 }
-                
 
+
+
+                function getEntitiesInformation(entitiesArray) {
+
+                    var info = [];
+                    angular.forEach(entitiesArray, function(entity) {
+                        if (entity.data !== null) {
+                            info.push(entity.data);
+                        }
+                    });
+
+                    if ($scope.schema.AllowMultipleValues) {
+                        return info;
+                    } else {
+                        return (info.length > 0) ? info[0] : undefined;
+                    }
+                }
 
                 // ****************************************************************************
                 // Query the picker for user information.
                 // NOTE: This function is actually not used.
                 //
                 function getUserInfo(peoplePickerId) {
-                 
+
                     // Get the people picker object from the page.
                     var peoplePicker = this.SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerId];
-                 
+
                     // Get information about all users.
                     var users = peoplePicker.GetAllUserInfo();
                     var userInfo = '';
@@ -600,7 +617,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                     }
 
                     console.log(userInfo);
-                    
+
                     // Get user keys.
                     var keys = peoplePicker.GetAllUserKeys();
                     console.log(keys);

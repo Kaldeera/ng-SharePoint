@@ -1,6 +1,6 @@
 /*
 	SPFieldUrl - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //	SPFieldUrl
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldUrl', 
+angular.module('ngSharePoint').directive('spfieldUrl',
 
 	['SPFieldDirective',
 
@@ -71,7 +71,24 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 
                             return false;
                         };
-					}
+					},
+
+                    formatterFn: function(modelValue) {
+
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
+                        return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+						$scope.lastValue = viewValue;
+
+						return viewValue;
+                    }
 				};
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
@@ -79,7 +96,7 @@ angular.module('ngSharePoint').directive('spfieldUrl',
 				$scope.$watch('[Url,Description]', function(newValue, oldValue) {
 
 					if (newValue === oldValue) return;
-					
+
 					$scope.modelCtrl.$setViewValue({
 						Url: $scope.Url,
 						Description: $scope.Description

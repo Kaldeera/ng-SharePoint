@@ -1,6 +1,6 @@
 /*
     SPFieldMultiChoice - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -14,7 +14,7 @@
 //  SPFieldMultiChoice
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldMultichoice', 
+angular.module('ngSharePoint').directive('spfieldMultichoice',
 
     ['SPFieldDirective',
 
@@ -35,7 +35,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
 
                 var directive = {
-                    
+
                     fieldTypeName: 'multichoice',
                     replaceAll: false,
 
@@ -50,7 +50,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
                     renderFn: function() {
 
                         var value = $scope.modelCtrl.$viewValue;
-                        
+
                         // Adjust the model if no value is provided
                         if (value === null || value === void 0) {
                             value = { results: [] };
@@ -83,6 +83,23 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
                             return false;
                         };
+                    },
+
+                    formatterFn: function(modelValue) {
+
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
+                        return modelValue;
+                    },
+
+					parserFn: function(viewValue) {
+
+						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+						$scope.lastValue = viewValue;
+
+						return viewValue;
                     }
                 };
 
@@ -154,7 +171,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
                     }
 
                     sortChoices();
-                    
+
                 });
 
 
@@ -172,7 +189,7 @@ angular.module('ngSharePoint').directive('spfieldMultichoice',
 
                     }
 
-                    
+
                     sortChoices();
 
                 };
