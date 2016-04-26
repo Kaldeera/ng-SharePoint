@@ -4413,7 +4413,7 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * *Note*: this method only instantiates a new `SPList` object initialized for future access to
          * list related API (get list items, folders, documents). This method doesn't retrieve any
-         * list properties or information. To get list properties it is necessary to call 
+         * list properties or information. To get list properties it is necessary to call
          * {@link ngSharePoint.SPList#getProperties getProperties} method.
          *
          * @param {SPWeb} web A valid {@link ngSharePoint.SPWeb SPWeb} object where the list is located
@@ -4673,7 +4673,7 @@ angular.module('ngSharePoint').factory('SPList',
          * @methodOf ngSharePoint.SPList
          *
          * @description
-         * With this method, it is possible to modify list properties. The method has an object param 
+         * With this method, it is possible to modify list properties. The method has an object param
          * with any property to modify and makes a call to the server API in order to modify it.
          *
          * @param {object} properties An object with all the properties to modify
@@ -4820,7 +4820,7 @@ angular.module('ngSharePoint').factory('SPList',
          *       console.log(list.Fields.Title.DefaultValue);
          *       // this returns '' or any defined value
          *
-         *       console.log(list.Fields.DueDate.Required);                 
+         *       console.log(list.Fields.DueDate.Required);
          *       // this returns true or false
          *
          *       console.log(list.Fields.Editor.ReadOnlyField);
@@ -4899,7 +4899,7 @@ angular.module('ngSharePoint').factory('SPList',
          * This method retrieves a list of all content types of the list.
          *
          * If you call this method, a new `ContentType` property will be set with an array of content types.
-         * 
+         *
          * @returns {promise} promise with an array of all content types associated with the list.
          * Every element on the array is a {@link ngSharePoint.SPContentType SPContentType} object.
          *
@@ -5247,12 +5247,12 @@ angular.module('ngSharePoint').factory('SPList',
                     });
 
                     def.reject(err);
-                }                    
+                }
             });
-          
+
             return def.promise;
 
-        };  // renderListData 
+        };  // renderListData
 
 
 
@@ -5268,7 +5268,7 @@ angular.module('ngSharePoint').factory('SPList',
          * and order options for the data you request from the server.
          * All valid OData options implemented by the SharePoint REST api are accepted.
          *
-         * Go to {@link https://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx SharePoint documentation} for 
+         * Go to {@link https://msdn.microsoft.com/en-us/library/office/fp142385(v=office.15).aspx SharePoint documentation} for
          * more information about the OData query operations in SharePoint REST api.
          *
          * By default, this method expands the following properties:
@@ -5277,7 +5277,7 @@ angular.module('ngSharePoint').factory('SPList',
          * * File/ParentFolder
          * * Folder
          * * Folder/ParentFolder
-         * 
+         *
          * @param {object=} query An object with all query options used to retrieve list items.
          *
          * It is possible to specify different query options:
@@ -5298,11 +5298,11 @@ angular.module('ngSharePoint').factory('SPList',
          *     };
          *     someList.getListItems(query).then(...);
          * </pre>
-         * @param {boolean=} resetPagination With this param you can specify if you want to continue with the 
+         * @param {boolean=} resetPagination With this param you can specify if you want to continue with the
          * previous query and retrieve the next set of items or want to reset the counter and start a completely new query.
-         * 
+         *
          * By default SharePoint returns sets of 100 items from the server. You can modify this value with the param `$top`
-         * 
+         *
          * @returns {promise} promise with a collection of {@link ngSharePoint.SPListItem SPListItem} elements
          * retrieved from the server
          *
@@ -5329,7 +5329,7 @@ angular.module('ngSharePoint').factory('SPList',
          *      announcementsList.getListItems({ $filter: "Department eq 2"}).then(...);
          * </pre>
          *
-         * But if you don't know the ID and want to make the query by its title, you should expand 
+         * But if you don't know the ID and want to make the query by its title, you should expand
          * the lookup column, select the desired related column and filter the result set.
          * The query will be similar to this:
          *
@@ -5359,6 +5359,10 @@ angular.module('ngSharePoint').factory('SPList',
             } else {
 
                 if (query) {
+                    if (query.$expand !== void 0) {
+                        // previous expanded
+                        query.$expand = query.$expand.substring(0, query.$expand.lastIndexOf(defaultExpandProperties));
+                    }
                     query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
                 } else {
                     query = {
@@ -5544,17 +5548,17 @@ angular.module('ngSharePoint').factory('SPList',
          *
          * <pre>
          *   // This returns the name of the author (string)
-         *   list.getItemProperty(ID, 'Created/Name').then(...);        
+         *   list.getItemProperty(ID, 'Created/Name').then(...);
          *
          *   // This returns the title of the department (string)
-         *   list.getItemProperty(ID, 'Department/Title').then(...)     
+         *   list.getItemProperty(ID, 'Department/Title').then(...)
          *
          *   // This returns the manager of the department (item)
-         *   list.getItemProperty(ID, 'Department/Manager').then(...)   
+         *   list.getItemProperty(ID, 'Department/Manager').then(...)
          *
-         *   // This returns the EMail of the manager's department for the 
+         *   // This returns the EMail of the manager's department for the
          *   // user who has created the item
-         *   list.getItemProperty(ID, 'Created/Department/Manager/EMail');  
+         *   list.getItemProperty(ID, 'Created/Department/Manager/EMail');
          * </pre>
          *
         */
@@ -10376,8 +10380,16 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
             // If you don't want to make a list query, you can specify one custom array of options
             results: ['Activity 1', 'Activity 2', 'Activity 3', '...']
         }
-    },
+    }
 
+    **NOTE**
+    Query $filter value can include references to other item fields.
+    This references are evaluated and used to retrieve dropDownValues.
+    Example:
+        $filter: "status eq 'Aprobado' and userName eq '{requiredBy.Title}'",
+
+    Choice field watch for requiredBy changes, refresh the ListQuery sentence
+    and retrieves new values.
 */
 
 
@@ -10388,9 +10400,9 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 
 angular.module('ngSharePoint').directive('spfieldChoice',
 
-    ['SharePoint', 'SPFieldDirective', '$q',
+    ['SharePoint', 'SPFieldDirective', '$q', '$timeout',
 
-    function spfieldChoice_DirectiveFactory(SharePoint, SPFieldDirective, $q) {
+    function spfieldChoice_DirectiveFactory(SharePoint, SPFieldDirective, $q, $timeout) {
 
         var spfieldChoice_DirectiveDefinitionObject = {
 
@@ -10416,7 +10428,9 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                         if ($scope.schema.Choices.ListQuery !== undefined) {
 
                             $scope.choices = [];
-                            getResultsFromListQuery($scope.schema.Choices.ListQuery);
+                            if ($scope.currentMode === 'edit') {
+                                getResultsFromListQuery($scope.schema.Choices.ListQuery);
+                            }
 
                         } else {
 
@@ -10471,8 +10485,13 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 					parserFn: function(viewValue) {
 
-						// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+                        var data;
+                        if ($scope.items !== void 0) {
+                            data = $scope.items.find(function(item) {
+                                return item.campo14 === viewValue;
+                            });
+                        }
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue, data);
 						$scope.lastValue = viewValue;
 
 						return viewValue;
@@ -10482,6 +10501,69 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
 
                 SPFieldDirective.baseLinkFn.apply(directive, arguments);
+
+
+                // ****************************************************************************
+				// Check for dependences.
+				//
+                if ($scope.currentMode === 'edit' && $scope.schema.Choices.ListQuery !== undefined) {
+                    if ($scope.schema.Choices.ListQuery.Query !== void 0) {
+                        if ($scope.schema.Choices.ListQuery.Query.$filter !== void 0) {
+
+                            $scope.schema.Choices.ListQuery.Query.originalFilter = $scope.schema.Choices.ListQuery.Query.$filter;
+                            $scope.dependences = [];
+
+                            var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g;
+                            EXPRESSION_REGEXP.lastIndex = 0;
+                            var matches;
+
+                            while ((matches = EXPRESSION_REGEXP.exec($scope.schema.Choices.ListQuery.Query.$filter))) {
+
+                                var dependenceField, dependenceValue;
+
+                                var match = matches[1].split('.');
+                                if (match.length > 1) {
+                                    dependenceField = match[0];
+                                    dependenceValue = match[1];
+                                } else {
+                                    dependenceField = match[0];
+                                    dependenceValue = undefined;
+                                }
+
+                                $scope.dependences.push({
+                                    field: dependenceField,
+                                    fieldValue: dependenceValue
+                                });
+
+
+                            }
+
+                            angular.forEach($scope.dependences, function(dependence) {
+
+                                $scope.$on(dependence.field + '_changed', function(evt, newValue, oldValue, params) {
+
+                                    angular.forEach($scope.dependences, function(dependence) {
+
+                                        if (evt.name === dependence.field + '_changed') {
+
+                                            if (dependence.fieldValue !== undefined) {
+                                                dependence.value = (params !== undefined) ? params[dependence.fieldValue] : undefined;
+                                            } else {
+                                                dependence.value = newValue;
+                                            }
+                                        }
+                                    });
+
+                                    $scope.dropDownValue = undefined;
+                                    $scope.value = undefined;
+                                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
+                                    getResultsFromListQuery($scope.schema.Choices.ListQuery);
+                                });
+                            });
+                        }
+
+                    }
+                }
 
 
                 ///////////////////////////////////////////////////////////////////////////////
@@ -10539,8 +10621,12 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                     $scope.selectedOption = 'DropDownButton';
                     $scope.modelCtrl.$setViewValue($scope.dropDownValue);
-                    $scope.value = $scope.dropDownValue;
 
+                    if ($scope.dropDownValue === undefined) {
+                        $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, undefined, $scope.lastValue, undefined);
+                        $scope.lastValue = $scope.value;
+                    }
+                    $scope.value = $scope.dropDownValue;
                 };
 
 
@@ -10572,13 +10658,25 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                         web.getList(ListQuery.List).then(function(list) {
 
+                            parseQuery(ListQuery);
                             list.getListItems(ListQuery.Query).then(function(items) {
 
-                                $scope.choices = [];
+                                $scope.items = items;
+                                var choices = [];
+                                $scope.dropDownValue = undefined;
+                                if (!$scope.schema.Required) {
+                                    choices.push(undefined);
+                                }
                                 angular.forEach(items, function(item) {
-                                    $scope.choices.push(item[ListQuery.Field || 'Title']);
+                                    choices.push(item[ListQuery.Field || 'Title']);
                                 });
-                                $scope.dropDownValue = $scope.value;
+
+                                $timeout(function() {
+                                    $scope.$apply(function() {
+                                        $scope.dropDownValue = $scope.value;
+                                        $scope.choices = choices;
+                                    });
+                                });
                             });
 
                         }, function(err) {
@@ -10591,6 +10689,30 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                     return def.promise;
                 }
 
+
+                function parseQuery(ListQuery) {
+
+                    if ($scope.dependences === void 0) return ListQuery;
+                    if ($scope.dependences.length === 0) return ListQuery;
+
+                    var originalFilter = $scope.schema.Choices.ListQuery.Query.originalFilter;
+                    $scope.schema.Choices.ListQuery.Query.originalFilter = originalFilter;
+
+                    angular.forEach($scope.dependences, function(dependence) {
+
+                        var expression = '{' + dependence.field;
+                        if (dependence.fieldValue !== undefined) {
+                            expression += '.' + dependence.fieldValue + '}';
+                        } else {
+                            expression += '}';
+                        }
+
+                        originalFilter = originalFilter.replace(expression, dependence.value);
+                    });
+
+                    $scope.schema.Choices.ListQuery.Query.$filter = originalFilter;
+                    return ListQuery;
+                }
 
 
             } // link
@@ -13191,8 +13313,8 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 					init: function() {
 
 						var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
-						var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-						var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
+						var percentage = xml.documentElement.getAttribute('Percentage') || $scope.schema.Percentage || 'false';
+						var decimals = xml.documentElement.getAttribute('Decimals') || $scope.schema.Decimals || 'auto';
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
@@ -15056,12 +15178,18 @@ angular.module('ngSharePoint').directive('spform',
                 this.initField = function(fieldName) {
 
                     var def = $q.defer();
+                    var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g;
 
                     if (this.isNew()) {
 
                         var fieldSchema = this.getFieldSchema(fieldName);
 
                         SPExpressionResolver.resolve(fieldSchema.DefaultValue, $scope).then(function(solvedDefaultValue) {
+
+                            EXPRESSION_REGEXP.lastIndex = 0;
+                            if (solvedDefaultValue !== void 0 && EXPRESSION_REGEXP.test(fieldSchema.DefaultValue)) {
+                                solvedDefaultValue = $scope.$eval(solvedDefaultValue);
+                            }
 
                             // Set field default value.
                             switch(fieldSchema.TypeAsString) {
