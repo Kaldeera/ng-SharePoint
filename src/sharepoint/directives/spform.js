@@ -83,12 +83,18 @@ angular.module('ngSharePoint').directive('spform',
                 this.initField = function(fieldName) {
 
                     var def = $q.defer();
+                    var EXPRESSION_REGEXP = /{(\w+\W*[\w\s./\[\]\(\)]+)}(?!})/g;
 
                     if (this.isNew()) {
 
                         var fieldSchema = this.getFieldSchema(fieldName);
 
                         SPExpressionResolver.resolve(fieldSchema.DefaultValue, $scope).then(function(solvedDefaultValue) {
+
+                            EXPRESSION_REGEXP.lastIndex = 0;
+                            if (solvedDefaultValue !== void 0 && EXPRESSION_REGEXP.test(fieldSchema.DefaultValue)) {
+                                solvedDefaultValue = $scope.$eval(solvedDefaultValue);
+                            }
 
                             // Set field default value.
                             switch(fieldSchema.TypeAsString) {
