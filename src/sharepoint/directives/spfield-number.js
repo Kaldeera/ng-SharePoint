@@ -43,8 +43,8 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 					init: function() {
 
 						var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
-						var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-						var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
+						var percentage = xml.documentElement.getAttribute('Percentage') || $scope.schema.Percentage || 'false';
+						var decimals = xml.documentElement.getAttribute('Decimals') || $scope.schema.Decimals || 'auto';
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
