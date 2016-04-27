@@ -1,7 +1,7 @@
 /*
 	SPFieldNumber - directive
 	SPNumber - directive
-	
+
 	Pau Codina (pau.codina@kaldeera.com)
 	Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -15,7 +15,7 @@
 //	SPFieldNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spfieldNumber', 
+angular.module('ngSharePoint').directive('spfieldNumber',
 
 	['SPFieldDirective', 'SPUtils',
 
@@ -36,30 +36,43 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 
 				var directive = {
-					
+
 					fieldTypeName: 'number',
 					replaceAll: false,
 
 					init: function() {
 
 						var xml = SPUtils.parseXmlString($scope.schema.SchemaXml);
-						var percentage = xml.documentElement.getAttribute('Percentage') || 'false';
-						var decimals = xml.documentElement.getAttribute('Decimals') || 'auto';
+						var percentage = xml.documentElement.getAttribute('Percentage') || $scope.schema.Percentage || 'false';
+						var decimals = xml.documentElement.getAttribute('Decimals') || $scope.schema.Decimals || 'auto';
 						$scope.schema.Percentage = percentage.toLowerCase() === 'true';
 						$scope.schema.Decimals = parseInt(decimals);
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 					},
 
+					formatterFn: function(modelValue) {
+
+                        if (typeof modelValue === 'string') {
+                            modelValue = parseFloat(modelValue);
+							if (isNaN(modelValue)) modelValue = undefined;
+                        }
+
+						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, modelValue, $scope.lastValue);
+						$scope.lastValue = modelValue;
+
+                        return modelValue;
+                    },
+
 					parserFn: function(viewValue) {
-						
-						// Adjust value to match field type 'Double' in SharePoint.
-						if (viewValue === '' || viewValue === void 0) {
-						
-							viewValue = null;
+
+						if ($scope.lastValue !== parseFloat(viewValue)) {
+							// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
+							$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, parseFloat(viewValue), $scope.lastValue);
+							$scope.lastValue = parseFloat(viewValue);
 						}
-						
-						return viewValue;
-					}
+
+						return parseFloat(viewValue);
+                    }
 				};
 
 
@@ -89,7 +102,7 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 //	SPNumber
 ///////////////////////////////////////
 
-angular.module('ngSharePoint').directive('spPercentage', 
+angular.module('ngSharePoint').directive('spPercentage',
 
 	[
 
@@ -116,8 +129,9 @@ angular.module('ngSharePoint').directive('spPercentage',
 				ngModel.$parsers.push(function(value) {
 					if ($scope.schema.Percentage && value !== void 0) {
 						// If decimals is set to 'Auto', use 2 decimals for percentage values.
-						var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
-						return (value / 100).toFixed(decimals);
+						// var decimals = isNaN($scope.schema.Decimals) ? 2 : $scope.schema.Decimals;
+						var percentageNumber = parseFloat(value / 100);
+						return (isNaN(value)) ? value : percentageNumber;
 					} else {
 						return value;
 					}

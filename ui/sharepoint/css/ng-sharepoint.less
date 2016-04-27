@@ -12,104 +12,104 @@
 
 		min-width: inherit;
 	}
-	
+
 /******************************************************************************
     NG SharePoint generic styles
 ******************************************************************************/
 
-	@borderColor: #d6d6d6;		
-	
+	@borderColor: #d6d6d6;
+
 	.spform {
-		
+
 		padding-top: 20px;
-		
+
 		.spfield-wrapper {
-		
+
 			display: block !important;
 			padding: 5px 0;
-			border-top: solid 1px @borderColor;	
+			border-top: solid 1px @borderColor;
 			float: none;
-			clear: both;	
-		
+			clear: both;
+
 			&:nth-of-type(1) {
-				
+
 				margin-top: 10px;
 			}
 		}
-		
+
 		.spfield-label,
 		.spfield-body {
-			
+
 			display: inline-block !important;
 			min-height: 17px;
 			float: none;
 			clear: both;
-			padding: 4px 0;	
-		}		
-		
+			padding: 4px 0;
+		}
+
 		.spfield-label {
-			
+
 			width: 30% !important;
-			
+
 			h3 {
-				
+
 				box-sizing: border-box;
 				width: 100%;
 				padding: 0 5px 0 0;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
-			} 
-			
+			}
+
 			h3.ms-standardheader {
-			
+
 				font-weight: bold;
 			}
 		}
-		
+
 		.spfield-body {
-			
-			width: 68% !important; 
-			
+
+			width: 68% !important;
+
 			input:not([type=checkbox]):not([type=radio]),
 			textarea,
 			.sp-peoplepicker-topLevel,
 			.ms-rtefield,
 			table.ms-long,
 			.ms-rtefield {
-				
+
 				box-sizing: border-box;
 				min-width: 100px;
 				width: 100% !important;
 				margin: 0 !important;
 			}
 		}
-		
+
 		.Currency {
-		
-			white-space: nowrap;	
+
+			white-space: nowrap;
 			padding-right: 21px;
 		}
-		
+
 		// Layout
-		
+
 		@MaxColumns: 8;
 		@ColumnMargin: 10px;
 		@SpanBase: 100% / @MaxColumns;
-		
+
 		div.Row {
-			
+
 			float: none;
 			clear: both;
 			margin: 0 - @ColumnMargin;
-		
+
 			div.Column {
-				
+
 				float: left;
 				padding: 0 @ColumnMargin;
 				width: 100% / 8;
 				box-sizing: border-box;
-				
+
 				&.Span_1 { width: @SpanBase * 1; }
 				&.Span_2 { width: @SpanBase * 2; }
 				&.Span_3 { width: @SpanBase * 3; }
@@ -118,78 +118,85 @@
 				&.Span_6 { width: @SpanBase * 6; }
 				&.Span_7 { width: @SpanBase * 7; }
 				&.Span_8 { width: @SpanBase * 8; }
-				
+
 				&:last-child { padding-right: 0; }
 			}
-		}		
+		}
 		
 		&.spform-display {
-			
-			overflow: hidden;
+
 			position: relative;
-			
+
 			.spfield-body {
-			
+
 				> div > div > img {
-					
+
 					width: 100%;
 				}
 			}
-		
+
 			// Visuals
-			
+
 			/* NGSP */
-			
+
 			.CornerFlag {
-				
+
 				position: absolute;
 				top: 0;
 				right: 0;
-			}			
-			
+			}
+
 			.CornerFlag .field-display-value {
-				
+
 				position: absolute;
 				box-sizing: content-box;
-				
+
 				width: 150px;
 				padding: 5px 250px;
-				background-color: #ccc; 
-				text-align: center; 
-				
+				background-color: #ccc;
+				text-align: center;
+
 				top: 0;
 				right: 0;
-				
+
 				transform-origin: 50% 0;
 				transform: translateY(52px) translateX(272px) rotate(45deg);
 			}
-			
+
 			.CornerFlag.Top { 		top: 0; 			bottom: inherit	; }
 			.CornerFlag.Bottom { 	top: inherit; 		bottom: 0; }
 			.CornerFlag.Left { 		left: 0; 			right: inherit; }
-			.CornerFlag.Right { 	left: inherit; 		right: 0; }	
-			
+			.CornerFlag.Right { 	left: inherit; 		right: 0; }
+
 			.CornerFlag.Bottom .field-display-value {
-				
+
 				top: inherit;
 				bottom: 0;
 				transform-origin: 50% 100%;
 				transform: translateY(-52px) translateX(272px) rotate(-45deg);
 			}
-			
+
 			.CornerFlag.Bottom.Left .field-display-value  {
-				
+
 				left: 0;
 				right: inherit;
 				transform: translateY(-53px) translateX(-272px) rotate(45deg);
 			}
-			
+
 			.CornerFlag.Top.Left .field-display-value  {
-				
+
 				left: 0;
 				right: inherit;
 				transform: translateY(55px) translateX(-271px) rotate(-45deg);
 			}
+		}
+
+		.print-hide {
+			display: block;
+		}
+
+		.print-display {
+			display: none;
 		}
 	}
 
@@ -197,81 +204,104 @@
 	Media queries
 ******************************************************************************/
 
-	@media (max-width: 768px) { 
-	
+	@media print {
+
 		.spform {
-		
+
+			.spform-toolbar {
+				display: none !important;
+			}
+
+			a[href]:after {
+		      content: none !important;
+		    }
+			
+			.print-hide {
+				display: none !important;
+			}
+
+			.print-display {
+				display: block !important;
+			}
+		}
+	}
+
+	@media only screen and (max-width: 768px),
+		   only print and (max-width: 500px) {
+
+		.spform {
+
 			.spfield-label,
 			.spfield-body {
-				
+
 				display: block !important;
 				width: 100% !important;
 				padding: 2px 0;
 			}
-		
+
 			.spfield-body input,
 			.spfield-body textarea,
 			.spfield-body .sp-peoplepicker-topLevel,
 			.spfield-body .ms-rtefield,
 			.spfield-body table.ms-long,
 			.spfield-body .ms-rtefield {
-				
+
 				// width: auto !important;
 			}
-				
+
 			.spfield-body table.ms-long td {
-				
+
 				display: block !important;
-			}	
-				
+			}
+
 			.spfield-body table[id*="MultiLookup_topTable"] {
-				
+
 				select {
-					
+
 					width: 100% !important;
 				}
-			
+
 				td:nth-of-type(3) {
-				
+
 					padding: 12px 0;
-				}	
+				}
 			}
-		
+
 			.spform-item-info {
-				
+
 				float: none !important;
-				
+
 				table {
-				
+
 					word-wrap:break-word;
-					
+
 					td {
-					
-						white-space: normal !important;	
+
+						white-space: normal !important;
 					}
 				}
 			}
-			
+
 			div[name="Attachments"] {
-				
+
 				tr {
-					
+
 					display: block;
 					margin-bottom: 5px;
 				}
-				
+
 				td {
-				
+
 					display: block;
 					width: 100%;
 					padding: 0 !important;
 				}
 			}
-			
+
 			// Layout
-			
+
 			div.Column {
-				
+
 				float: none !important;
 				margin-right: 0 !important;
 				width: 100% !important;
