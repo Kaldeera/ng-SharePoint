@@ -135,8 +135,8 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                         var data;
                         if ($scope.items !== void 0) {
-                            data = $scope.items.find(function(item) {
-                                return item.campo14 === viewValue;
+                            angular.forEach($scope.items, function(item) {
+                                if (item.campo14 === viewValue) data = item;
                             });
                         }
 						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue, data);

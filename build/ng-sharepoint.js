@@ -32,8 +32,6 @@ String.prototype.trimS = function(s) {
 
 
 
-
-
 // ***************************************************************************
 // ***************************************************************************
 // Miscellaneous functions in 'utils' namespace.
@@ -5360,8 +5358,11 @@ angular.module('ngSharePoint').factory('SPList',
 
                 if (query) {
                     if (query.$expand !== void 0) {
-                        // previous expanded
-                        query.$expand = query.$expand.substring(0, query.$expand.lastIndexOf(defaultExpandProperties));
+                        var idx = query.$expand.lastIndexOf(defaultExpandProperties);
+                        if (idx !== -1) {
+                            // previous expanded
+                            query.$expand = query.$expand.substring(0, idx);
+                        }
                     }
                     query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
                 } else {
@@ -10487,8 +10488,8 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                         var data;
                         if ($scope.items !== void 0) {
-                            data = $scope.items.find(function(item) {
-                                return item.campo14 === viewValue;
+                            angular.forEach($scope.items, function(item) {
+                                if (item.campo14 === viewValue) data = item;
                             });
                         }
 						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue, data);

@@ -123,10 +123,8 @@
 			}
 		}
 
-
 		&.spform-display {
 
-			overflow: hidden;
 			position: relative;
 
 			.spfield-body {
@@ -217,7 +215,11 @@
 			a[href]:after {
 		      content: none !important;
 		    }
-			
+
+			a[href]:visited:after {
+		      content: none !important;
+		    }
+
 			.print-hide {
 				display: none !important;
 			}
@@ -228,7 +230,8 @@
 		}
 	}
 
-	@media (max-width: 500px) {
+	@media only screen and (max-width: 768px),
+		   only print and (max-width: 500px) {
 
 		.spform {
 
