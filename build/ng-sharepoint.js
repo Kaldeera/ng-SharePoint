@@ -10555,9 +10555,9 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                                         }
                                     });
 
-                                    $scope.dropDownValue = undefined;
-                                    $scope.value = undefined;
-                                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
+//                                    $scope.dropDownValue = undefined;
+//                                    $scope.value = undefined;
+//                                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
                                     getResultsFromListQuery($scope.schema.Choices.ListQuery);
                                 });
                             });
@@ -10674,8 +10674,8 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                                 $timeout(function() {
                                     $scope.$apply(function() {
-                                        $scope.dropDownValue = $scope.value;
                                         $scope.choices = choices;
+                                        $scope.dropDownValue = $scope.value;
                                     });
                                 });
                             });
@@ -13704,6 +13704,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                         }
 
                         $scope.selectedUserItems = void 0;
+                        $scope.lastValue = oldValue;
                         refreshData();
                     },
 
@@ -13716,7 +13717,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                                 initializePeoplePicker(peoplePickerElementId);
 
                                 // Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-                                $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, undefined, getEntitiesInformation($scope.selectedUserItems));
+                                $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, $scope.lastValue, getEntitiesInformation($scope.selectedUserItems));
                             });
                         }
                     }

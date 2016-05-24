@@ -202,9 +202,9 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                                         }
                                     });
 
-                                    $scope.dropDownValue = undefined;
-                                    $scope.value = undefined;
-                                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
+//                                    $scope.dropDownValue = undefined;
+//                                    $scope.value = undefined;
+//                                    $scope.modelCtrl.$setViewValue($scope.dropDownValue);
                                     getResultsFromListQuery($scope.schema.Choices.ListQuery);
                                 });
                             });
@@ -321,8 +321,8 @@ angular.module('ngSharePoint').directive('spfieldChoice',
 
                                 $timeout(function() {
                                     $scope.$apply(function() {
-                                        $scope.dropDownValue = $scope.value;
                                         $scope.choices = choices;
+                                        $scope.dropDownValue = $scope.value;
                                     });
                                 });
                             });

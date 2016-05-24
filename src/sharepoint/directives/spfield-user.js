@@ -84,6 +84,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                         }
 
                         $scope.selectedUserItems = void 0;
+                        $scope.lastValue = oldValue;
                         refreshData();
                     },
 
@@ -96,7 +97,7 @@ angular.module('ngSharePoint').directive('spfieldUser',
                                 initializePeoplePicker(peoplePickerElementId);
 
                                 // Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-                                $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, undefined, getEntitiesInformation($scope.selectedUserItems));
+                                $scope.formCtrl.fieldValueChanged($scope.schema.InternalName, $scope.value, $scope.lastValue, getEntitiesInformation($scope.selectedUserItems));
                             });
                         }
                     }
