@@ -6103,10 +6103,10 @@ angular.module('ngSharePoint').factory('SPList',
  * @name ngSharePoint.SPListItem
  *
  * @description
- * Represents an SPListItem object that you could use to insert, modify or remove items on 
+ * Represents an SPListItem object that you could use to insert, modify or remove items on
  * SharePoint lists.
  *
- * It is possible to create new SPListItem objects or use an {@link ngSharePoint.SPList SPList} object to 
+ * It is possible to create new SPListItem objects or use an {@link ngSharePoint.SPList SPList} object to
  * get the SPListItems stored in the list.
  *
  * *At the moment, not all SharePoint API methods for list items are implemented in ngSharePoint*
@@ -6117,9 +6117,9 @@ angular.module('ngSharePoint').factory('SPList',
 
 
 
-angular.module('ngSharePoint').factory('SPListItem', 
+angular.module('ngSharePoint').factory('SPListItem',
 
-    ['$q', 'SPUtils', 
+    ['$q', 'SPUtils',
 
     function SPListItem_Factory($q, SPUtils) {
 
@@ -6136,7 +6136,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * Instantiates a new `SPListItem` object for a specific list. It's possible
          * to specify their new properties (data).
          *
-         * When you call {@link ngSharePoint.SPList#getListItems getListItems} or 
+         * When you call {@link ngSharePoint.SPList#getListItems getListItems} or
          * {@link ngSharePoint.SPList#getItemById getItemById}, SPListItem objects are returned.
          *
          * @param {SPList} list A valid {@link ngSharePoint.SPList SPList} object where the item is stored
@@ -6182,7 +6182,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     if (data.list !== void 0) {
                         delete data.list;
                     }
-                    
+
                     utils.cleanDeferredProperties(data);
                     angular.extend(this, data);
 
@@ -6210,7 +6210,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @methodOf ngSharePoint.SPListItem
          *
          * @description
-         * List items can be retrieved from the server or created on the client side before 
+         * List items can be retrieved from the server or created on the client side before
          * being saved on the server.
          *
          * This method indicates if the item is new and will create an item on the server
@@ -6230,7 +6230,7 @@ angular.module('ngSharePoint').factory('SPListItem',
         /**
          * This method is called internally to get the correct API url depending if the
          * item is new or not.
-         * This can be <site>/_api/web/<list>/Items for new elements or 
+         * This can be <site>/_api/web/<list>/Items for new elements or
          * <site>/_api/web/<list>/Items(<itemId>) for existing items
          *
          * @returns {string} with the correct API REST url endpoint for the item.
@@ -6240,7 +6240,7 @@ angular.module('ngSharePoint').factory('SPListItem',
             var apiUrl = this.list.apiUrl + '/Items';
 
             if (this.Id !== void 0) {
-                
+
                 apiUrl += '(' + this.Id + ')';
             }
 
@@ -6261,8 +6261,8 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * Instead of creating a new SPListItem, specify the ID and `getProperties` then it is recommendable
          * to use {@link ngSharePoint.SPList#getItemById getItemById} of the SPList object.
-         * 
-         * By default, if the item is a DocumentLibrary item, this method gets the {@link ngSharePoint.SPFile File} 
+         *
+         * By default, if the item is a DocumentLibrary item, this method gets the {@link ngSharePoint.SPFile File}
          * and/or {@link ngSharePoint.SPFolder Folder} properties.
          *
          * @param {string} expandProperties Comma separated values with the properties to expand
@@ -6286,7 +6286,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          *    });
          *
          * </pre>
-        */        
+        */
         SPListItemObj.prototype.getProperties = function(expandProperties) {
 
             var self = this;
@@ -6302,10 +6302,10 @@ angular.module('ngSharePoint').factory('SPListItem',
             executor.executeAsync({
 
                 url: self.getAPIUrl() + utils.parseQuery(query),
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -6326,7 +6326,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                                 });
                                 break;
 
-                            case 1: 
+                            case 1:
                                 // get the Folder
                                 self.getFolder().then(function() {
                                     def.resolve(d);
@@ -6343,7 +6343,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                         def.resolve(d);
                     }
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -6370,11 +6370,11 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method performs a REST call to _api/web/list/item/FieldValuesAsHtml.
-         * 
-         * That is different to expand the property when executes getProperties. That method 
+         *
+         * That is different to expand the property when executes getProperties. That method
          * makes a call like _api/web/list/item?$expand=FieldValuesAsHtml.
          *
-         * if expanding this property does not retrieve detailed information lookup 
+         * if expanding this property does not retrieve detailed information lookup
          * values nor user fields, then it is necessary to call this method.
          *
          * @returns {promise} promise with the result of the REST query
@@ -6389,10 +6389,10 @@ angular.module('ngSharePoint').factory('SPListItem',
             executor.executeAsync({
 
                 url: self.getAPIUrl() + '/FieldValuesAsHtml',
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -6401,7 +6401,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     utils.cleanDeferredProperties(d);
                     self.FieldValuesAsHtml = d;
                     def.resolve(this);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -6443,10 +6443,10 @@ angular.module('ngSharePoint').factory('SPListItem',
             executor.executeAsync({
 
                 url: self.getAPIUrl() + '/File?$expand=ParentFolder',
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -6455,7 +6455,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     angular.extend(self, d);
 
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -6496,10 +6496,10 @@ angular.module('ngSharePoint').factory('SPListItem',
             executor.executeAsync({
 
                 url: self.getAPIUrl() + '/Folder?$expand=ParentFolder',
-                method: 'GET', 
-                headers: { 
+                method: 'GET',
+                headers: {
                     "Accept": "application/json; odata=verbose"
-                }, 
+                },
 
                 success: function(data) {
 
@@ -6508,7 +6508,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     angular.extend(self, d);
 
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -6559,10 +6559,10 @@ angular.module('ngSharePoint').factory('SPListItem',
                 executor.executeAsync({
 
                     url: self.getAPIUrl() + '/AttachmentFiles',
-                    method: 'GET', 
-                    headers: { 
+                    method: 'GET',
+                    headers: {
                         "Accept": "application/json; odata=verbose"
-                    }, 
+                    },
 
                     success: function(data) {
 
@@ -6576,7 +6576,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                         };
 
                         def.resolve(d);
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -6605,7 +6605,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          * @description
          * Attach a new file to the item.
          *
-         * **Note** This method is called internally by the method `processAttachments` 
+         * **Note** This method is called internally by the method `processAttachments`
          * when the item is saved to the server
          * and their property item.attachments.add is an array with files to attach.
          *
@@ -6651,10 +6651,10 @@ angular.module('ngSharePoint').factory('SPListItem',
                     success: function(data) {
 
                         var d = utils.parseSPResponse(data);
-                        
+
                         def.resolve(d);
 
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -6731,7 +6731,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                     def.resolve(d);
 
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -6890,9 +6890,9 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method saves the item to the server.
-         * 
+         *
          * If the item is new because it doesn't have an `Id, a new item is created.
-         * If the item is an existing element retrieved previously, the 
+         * If the item is an existing element retrieved previously, the
          * element is updated with the new set of properties (fields).
          *
          * This method saves the item and processes the attachments arrays.
@@ -6900,9 +6900,9 @@ angular.module('ngSharePoint').factory('SPListItem',
          * After processing, the attachments array will be initialized.
          *
          * @returns {promise} promise with an object with the item properties
-         * 
+         *
          * @example
-         * This example retrieves a task item from the server and 
+         * This example retrieves a task item from the server and
          * changes his state to 'Closed'
          * <pre>
          *
@@ -6910,7 +6910,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          *        task.Status = 'Closed';
          *        task.save().then(function() {
-         *          
+         *
          *            SP.UI.Notify.addNotification("Task closed!", false);
          *
          *        });
@@ -6954,7 +6954,7 @@ angular.module('ngSharePoint').factory('SPListItem',
 
                 // Remove all Computed and ReadOnlyFields
                 angular.forEach(self.list.Fields, function(field) {
-                    
+
                     if (field.TypeAsString === 'Computed' || field.ReadOnlyField) {
                         // delete saveObj[field.InternalName];
                         if (field.EntityPropertyName !== 'ContentTypeId') delete saveObj[field.EntityPropertyName];
@@ -6963,10 +6963,10 @@ angular.module('ngSharePoint').factory('SPListItem',
                     // NOTA DE MEJORA!
                     // Se pueden controlar los campos de tipo Lookup y User para que convierta los valores
                     // al nombre de campo correcto (si es que están mal)
-                    // 
+                    //
                     // Ej. un campo que se llama Sala y el objeto tiene
                     // obj.Sala = 12
-                    // 
+                    //
                     // Para que no se produzca un error, se deberia convertir a:
                     //
                     // obj.SalaId = 12
@@ -6997,6 +6997,26 @@ angular.module('ngSharePoint').factory('SPListItem',
                         }
                     }
 
+                    // NOTE 5/25/2016 - this code solve a new
+                    // If you want to update User properties, use the <field-name>StringId property
+                    // instead of <field-name>Id.
+                    // Note, this only apply for update items, not when creates a new one.
+                    // This behavior is detected on SharePoint on-line (16.0.0.5312)!!
+                    if (fieldType == 'User' || fieldType == 'UserMulti') {
+                        if (saveObj[field.EntityPropertyName + 'StringId'] !== undefined) {
+                            // There is a property with name <field-name>StringId.
+                            // Update it ...
+                            if (fieldType == 'User') {
+                                saveObj[field.EntityPropertyName + 'StringId'] = (saveObj[fieldName] || '').toString();
+                            } else {
+                                var value = { results: [] };
+                                angular.forEach(saveObj[fieldName].results, function(v) {
+                                    value.results.push(v.toString());
+                                });
+                                saveObj[field.EntityPropertyName + 'StringId'] = value;
+                            }
+                        }
+                    }
                 });
 
                 // Remove attachments
@@ -7031,7 +7051,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     // UPDATE
                     angular.extend(headers, {
                         "X-HTTP-Method": "MERGE",
-                        "IF-MATCH": "*" // Overwrite any changes in the item. 
+                        "IF-MATCH": "*" // Overwrite any changes in the item.
                                         // Use 'item.__metadata.etag' to provide a way to verify that the object being changed has not been changed since it was last retrieved.
                     });
                 }
@@ -7053,9 +7073,9 @@ angular.module('ngSharePoint').factory('SPListItem',
                         angular.extend(self, d);
 
                         /**
-                         * On a document library, if user changes the name of the 
+                         * On a document library, if user changes the name of the
                          * file (by the FileLeafRef field), the .File property that
-                         * points to the File object on the server, will have a bad 
+                         * points to the File object on the server, will have a bad
                          * api url
                          * This problem can solfe with a call to updateAPIUrlById method
                          * that modifies the apiURL property correctly
@@ -7063,7 +7083,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                         if (self.File !== undefined) {
                             self.File.updateAPIUrlById(self.list, self.Id);
                         }
-                        
+
                         */
 
                         // After save, process the attachments.
@@ -7072,7 +7092,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                         }, function() {
                             def.resolve(d);
                         });
-                    }, 
+                    },
 
                     error: function(data, errorCode, errorMessage) {
 
@@ -7103,7 +7123,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method removes the item from the server.
-         * 
+         *
          * @param {boolean=} permanent Indicates if the item is recycled or removed permanently.
          * @returns {promise} promise with the result of the REST query.
          *
@@ -7151,7 +7171,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                     var d = utils.parseSPResponse(data);
 
                     def.resolve(d);
-                }, 
+                },
 
                 error: function(data, errorCode, errorMessage) {
 
@@ -7180,7 +7200,7 @@ angular.module('ngSharePoint').factory('SPListItem',
          *
          * @description
          * This method starts a new instance of a specified workflow for the current item.
-         * 
+         *
          * The workflow must be enabled and no other instances of the same workflow version
          * can be running.
          *
@@ -7189,14 +7209,14 @@ angular.module('ngSharePoint').factory('SPListItem',
          * **NOTE**:
          * Due to limitations of the SharePoint REST api, there isn't a method
          * to run a workflow. Because of that, this method uses the SharePoint `workflow.asmx` web service.
-         * 
+         *
          * **Limitations**:
          * This method uses JSOM to retrieve the `FileRef` property of the item. This means
          * that this method can't be executed outside of the SharePoint page context.
          *
          *
          * @param {string} workflowName The name or the ID of the workflow that you want to run.
-         * @param {object} params Initiation workflow data. An object with all properties and 
+         * @param {object} params Initiation workflow data. An object with all properties and
          * values that will be passed to the workflow.
          * @returns {promise} promise with the result of the operation.
          *
@@ -7272,7 +7292,7 @@ angular.module('ngSharePoint').factory('SPListItem',
                             self.getProperties().then(function() {
                                 def.resolve();
                             });
-                        }, 
+                        },
 
                         error: function(data, errorCode, errorMessage) {
 
