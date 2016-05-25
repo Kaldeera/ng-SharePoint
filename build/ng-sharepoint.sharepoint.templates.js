@@ -515,9 +515,9 @@ angular.module("templates/form-templates/spform-toolbar.html", []).run(["$templa
 
 angular.module("templates/form-templates/spform.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spform.html",
-    "<form novalidate=\"true\" class=\"spform spform-{{mode}}\">\n" +
+    "<form novalidate=\"true\">\n" +
     "    <div id=\"form-loading-animation-wrapper-{{$id}}\" ng-show=\"!isInDesignMode\"><img src=\"/_layouts/15/images/loadingcirclests16.gif\" alt=\"\" /></div>\n" +
-    "    <div transclusion-container=\"\"></div>\n" +
+    "    <div transclusion-container=\"\" class=\"spform spform-{{mode}}\"></div>\n" +
     "</form>\n" +
     "");
 }]);
