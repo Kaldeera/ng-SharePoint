@@ -249,7 +249,14 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                 //
                 function OnIframeLoadFinish() {
 
-                    var picker = this.Picker; // IFRAME element
+                    var iframe = this;
+                    var picker;
+                    if (iframe === null) {
+                        iframe = arguments[0].srcElement;
+                        picker = iframe;
+                    } else {
+                        picker = iframe.Picker; // IFRAME element
+                    }
 
                     if (typeof picker !== undefined && picker !== null) {
 
