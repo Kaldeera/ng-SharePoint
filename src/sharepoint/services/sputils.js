@@ -17,8 +17,8 @@ angular.module('ngSharePoint').factory('SPUtils',
 
         'use strict';
 
-
         var isSharePointReady = false;
+
 
         return {
 
@@ -403,7 +403,101 @@ angular.module('ngSharePoint').factory('SPUtils',
                 var self = this;
                 var deferred = $q.defer();
 
+                if (self.lcid !== undefined) {
+                    // lcid exists yet
+                    deferred.resolve(self.lcid);
+                    return deferred.promise;
+                }
+
+                if (self.getCurrentUserLCIDPromises !== undefined) {
+                    // there are a pending request
+                    self.getCurrentUserLCIDPromises.push(deferred);
+                    return deferred.promise;
+                }
+
+                self.getCurrentUserLCIDPromises = [];
+                self.getCurrentUserLCIDPromises.push(deferred);
+
+                function getLCIDFromRegionalSettingsPage(pageUrl) {
+
+                    var def = $q.defer();
+
+                    $http.get(pageUrl).success(function(data) {
+
+                        var html = angular.element(data);
+                        var form, lcid;
+
+                        angular.forEach(html, function(element) {
+                            if (element.tagName && element.tagName.toLowerCase() === 'form') {
+                                form = element;
+                            }
+                        });
+
+                        if (form !== void 0) {
+
+                            var followWebSettings = form.querySelector('#ctl00_PlaceHolderMain_ctl08_ChkFollowWebRegionalSettings');
+                            if (followWebSettings === null) {
+                                followWebSettings = { checked: false };
+                            }
+
+                            if (followWebSettings.checked) {
+
+                                // inherits settings
+                                def.resolve(undefined);
+
+                            } else {
+
+                                var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
+                                var selectedOption = regionalSettingsSelect.querySelector('[selected]');
+
+                                def.resolve(selectedOption.value);
+                            }
+                        }
+
+                        def.resolve(undefined);
+
+                    }); // $http
+
+                    return def.promise;
+
+                }   // getLCIDFromRegionalSettingsPage
+
+
+
+                // retrieve the User LCID
                 var url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx?Type=User";
+                getLCIDFromRegionalSettingsPage(url).then(function(lcid) {
+
+                    if (lcid === undefined) {
+
+                        // we will get the web sttings configuration
+                        url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx";
+                        getLCIDFromRegionalSettingsPage(url).then(function(lcid) {
+
+                            if (lcid === undefined) {
+                                // no language :-(
+                                self.lcid = _spPageContextInfo.currentLanguage;
+                            } else {
+                                self.lcid = lcid;
+                            }
+
+                            angular.forEach(self.getCurrentUserLCIDPromises, function(promise) {
+                                promise.resolve(self.lcid);
+                            });
+                        });
+
+                    } else {
+
+                        self.lcid = lcid;
+
+                        angular.forEach(self.getCurrentUserLCIDPromises, function(promise) {
+                            promise.resolve(self.lcid);
+                        });
+
+                    }
+                });
+
+/*
 
                 $http.get(url).success(function(data) {
 
@@ -417,23 +511,65 @@ angular.module('ngSharePoint').factory('SPUtils',
                     });
 
                     if (form !== void 0) {
+
                         if (form.querySelector('#ctl00_PlaceHolderMain_ctl08_ChkFollowWebRegionalSettings').checked) {
                             // user inherits web settings
-                            lcid = _spPageContextInfo.currentLanguage;
+
                         } else {
+
                             var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
                             var selectedOption = regionalSettingsSelect.querySelector('[selected]');
-                            lcid = selectedOption.value;
+                            self.lcid = selectedOption.value;
+
+                            angular.forEach(self.getCurrentUserLCIDPromises, function(promise) {
+                                promise.resolve(self.lcid);
+                            });
                         }
+
                     }
 
+                    if (self.lcid === undefined) {
 
-                    deferred.resolve(lcid);
+                        // we will get the web sttings configuration
+                        url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx";
+                        $http.get(url).success(function(data) {
 
+                            html = angular.element(data);
+
+                            angular.forEach(html, function(element) {
+                                if (element.tagName && element.tagName.toLowerCase() === 'form') {
+                                    form = element;
+                                }
+                            });
+
+                            if (form !== void 0) {
+
+                                regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
+                                selectedOption = regionalSettingsSelect.querySelector('[selected]');
+                                self.lcid = selectedOption.value;
+
+                                angular.forEach(self.getCurrentUserLCIDPromises, function(promise) {
+                                    promise.resolve(self.lcid);
+                                });
+
+                            } else {
+                                // no language :-(
+                                self.lcid = _spPageContextInfo.currentLanguage;
+                                angular.forEach(self.getCurrentUserLCIDPromises, function(promise) {
+                                    promise.resolve(self.lcid);
+                                });
+                            }
+
+                        });
+                    }
                 });
 
+*/
+
+
                 return deferred.promise;
-            },
+
+            },  // getCurrentUserLCID
 
 
 
