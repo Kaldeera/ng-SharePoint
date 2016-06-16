@@ -114,11 +114,14 @@ angular.module('ngSharePoint').directive('spfieldDatetime',
                         });
 
 
-                        //$scope.lcid = SP.Res.lcid;
-
                         // Gets current user language (LCID) from user regional settings configuration.
                         //
-                        SPUtils.getCurrentUserLCID().then(function(lcid) {
+                        var lcidPromise = $scope.schema.lcid;
+                        if (lcidPromise === undefined) {
+                            lcidPromise = SPUtils.getCurrentUserLCID();
+                        }
+                        //SPUtils.getCurrentUserLCID().then(function(lcid) {
+                        $q.when(lcidPromise).then(function(lcid) {
 
                             $scope.lcid = lcid;
 

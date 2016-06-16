@@ -433,6 +433,8 @@ angular.module('ngSharePoint').factory('SPUtils',
                             }
                         });
 
+                        var retValue;
+
                         if (form !== void 0) {
 
                             var followWebSettings = form.querySelector('#ctl00_PlaceHolderMain_ctl08_ChkFollowWebRegionalSettings');
@@ -443,18 +445,22 @@ angular.module('ngSharePoint').factory('SPUtils',
                             if (followWebSettings.checked) {
 
                                 // inherits settings
-                                def.resolve(undefined);
+                                // def.resolve(undefined);
 
                             } else {
 
+                                var selectedOption = { value: undefined };
                                 var regionalSettingsSelect = form.querySelector('#ctl00_PlaceHolderMain_ctl02_ctl01_DdlwebLCID');
-                                var selectedOption = regionalSettingsSelect.querySelector('[selected]');
+                                if (regionalSettingsSelect !== null) {
+                                    selectedOption = regionalSettingsSelect.querySelector('[selected]');
+                                }
 
-                                def.resolve(selectedOption.value);
+                                // def.resolve(selectedOption.value);
+                                retValue = selectedOption.value;
                             }
                         }
 
-                        def.resolve(undefined);
+                        def.resolve(retValue);
 
                     }); // $http
 
