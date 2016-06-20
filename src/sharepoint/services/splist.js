@@ -986,8 +986,8 @@ angular.module('ngSharePoint').factory('SPList',
                     if (query.$expand !== void 0) {
                         var idx = query.$expand.lastIndexOf(defaultExpandProperties);
                         if (idx !== -1) {
-                            // previous expanded
-                            query.$expand = query.$expand.substring(0, idx);
+                            // previous expanded (remove ...)
+                            query.$expand = query.$expand.substring(defaultExpandProperties.length + 1, query.$expand.length);
                         }
                     }
                     query.$expand = defaultExpandProperties + (query.$expand ? ',' + query.$expand : '');
