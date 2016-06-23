@@ -6638,10 +6638,11 @@ angular.module('ngSharePoint').factory('SPListItem',
                 }
 
 
+                var fileName = file.name.replace(new RegExp('\'', 'g'), '');
 
                 executor.executeAsync({
 
-                    url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + file.name + "')",
+                    url: self.getAPIUrl() + "/AttachmentFiles/add(FileName='" + fileName + "')",
                     method: "POST",
                     binaryStringRequestBody: true,
                     body: binaryData,
