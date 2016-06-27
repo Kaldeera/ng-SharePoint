@@ -9,7 +9,7 @@ angular.module("templates/error.html", []).run(["$templateCache", function($temp
 angular.module("templates/form-templates/spfield-attachments-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-attachments-display.html",
     "<div ng-repeat=\"file in attachmentFiles\">\n" +
-    "	<a ng-href=\"{{file.ServerRelativeUrl}}\" ng-bind=\"file.FileName\"></a>\n" +
+    "	<a ng-href=\"{{file.ServerRelativeUrl}}\" ng-bind=\"file.FileName\" target=\"{{target}}\"></a>\n" +
     "</div>\n" +
     "");
 }]);
