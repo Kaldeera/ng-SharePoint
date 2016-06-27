@@ -1,6 +1,6 @@
 /*
     SPAction - directive
-    
+
     Pau Codina (pau.codina@kaldeera.com)
     Pedro Castro (pedro.castro@kaldeera.com, pedro.cm@gmail.com)
 
@@ -15,7 +15,7 @@
 ///////////////////////////////////////
 
 (function() {
-    
+
     'use strict';
 
     angular
@@ -48,7 +48,7 @@
 
         return directive;
 
-        
+
 
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -139,7 +139,7 @@
                         });
 
                         break;
-                    
+
 
                     // Default cancel action
                     case 'cancel':
@@ -330,9 +330,9 @@
 
                                         }
                                         window.location = url + params;
-                                        
+
                                     });
-                            
+
                                     break;
 
 
@@ -354,7 +354,7 @@
 
                                         }
                                         window.location = url + params;
-                                        
+
                                     });
 
                                     break;
@@ -366,14 +366,14 @@
 
                                         // Redirects to the correct url
                                         window.location = url;
-                                        
+
                                     });
 
                                     break;
 
 
                                 case 'default':
-                                            
+
                                     var dialog = SP.UI.ModalDialog.get_childDialog();
 
                                     if (dialog) {

@@ -10049,6 +10049,7 @@ angular.module('ngSharePoint').directive('spfieldAttachments',
 
 				SPFieldDirective.baseLinkFn.apply(directive, arguments);
 
+				$scope.target = $scope.schema.Target || '_self';
 
 				// ****************************************************************************
 				// Add new attachment to the item locally.
