@@ -211,7 +211,61 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 		}; // getProperties
 
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getListByRootFolderName
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves a SharePoint list or document library from the server and returns a single 
+	     * {@link ngSharePoint.SPList SPList} object.
+	     *
+	     * @returns {promise} promise with a single {@link ngSharePoint.SPList SPList} object.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getListByRootFolder('INTERNAL_LIST_NAME')
+         *      .then(function(list) {
+		 *          $scope.list = list;
+         *      }, function(reason) {
+         *          alert('Failed: ' + reason);
+         *      });
+		 *   });
+		 * </pre>
+		 */
+		SPWebObj.prototype.getListByRootFolderName = function (name) {
+		    var def = $q.defer();
+		    
+		    var self = this;
 
+		    SPUtils.SharePointReady().then(function () {
+
+		        var url = self.apiUrl + '/Lists';
+		        SPHttp.get(url).then(function (data) {
+		            var promises = [];
+		            angular.forEach(data, function (listProperties) {
+		                var spList = new SPList(self, listProperties.Id, listProperties);
+		                var promise = spList.getRootFolder().then(function (folder) {
+		                    if (folder.Name === name) {
+		                        def.resolve(spList);
+		                    }
+		                });
+		                promises.push(promise);
+		            });
+
+		            $q.all(promises).then(function (response) {
+                        // The deferred promises did not resolve, therefore the list was not found
+                        def.reject("A list with the rootFolderName = \"" + name + "\" was not found");
+                    });
+		        });
+		    });
+
+		    return def.promise;
+		};
 
 		/**
 	     * @ngdoc function
