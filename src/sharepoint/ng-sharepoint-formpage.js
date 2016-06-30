@@ -3,7 +3,7 @@
  * @name ngSharePointFormPage
 
  * @description Adds 'spform' directive and bootstrap the angular application with the correct SharePoint List/Item page context.
- 
+
  * @author Pau Codina [<pau.codina@kaldeera.com>]
  * @author Pedro Castro [<pedro.cm@gmail.com>]
  * @license Licensed under the MIT License
@@ -16,7 +16,7 @@ angular.module('ngSharePointFormPage', ['ngSharePoint', 'ngSharePoint.templates'
 
 angular.module('ngSharePointFormPage').config(
 
-    ['SPConfigProvider', '$ocLazyLoadProvider', 
+    ['SPConfigProvider', '$ocLazyLoadProvider',
 
     function(SPConfigProvider, $ocLazyLoadProvider) {
 
@@ -37,12 +37,12 @@ angular.module('ngSharePointFormPage').config(
 
 
 
-angular.module('ngSharePointFormPage').directive('spformpage', 
+angular.module('ngSharePointFormPage').directive('spformpage',
 
-    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', '$window', 
+    ['SharePoint', 'SPUtils', 'SPListItem', '$q', '$http', '$templateCache', '$compile', 'ctx', '$ocLazyLoad', '$window',
 
     function(SharePoint, SPUtils, SPListItem, $q, $http, $templateCache, $compile, ctx, $ocLazyLoad, $window) {
-        
+
         return {
 
             restrict: 'EA',
@@ -241,7 +241,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                             console.log('Error item', err);
 
                         });
-                        
+
                     }
 
                     return deferred.promise;
@@ -264,7 +264,8 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                     }
 
                     if (templateUrl === void 0) {
-                        templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
+                        var listName = $scope.list.Title.replace(new RegExp('/', 'g'), '_');
+                        templateUrl = $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + listName + '-' + ctx.ListData.Items[0].ContentType + '-' + mode + 'Form.html';
                     }
 
 
@@ -297,8 +298,9 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
                     // TODO: Hacer un $http para comprobar que exista el script de definición.
                     //       Si no existe, generar error? utilizar uno vacío? ... ???
-                    
-                    SP.SOD.registerSod('formDefinition', $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + $scope.list.Title + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
+
+                    var listName = $scope.list.Title.replace(new RegExp('/', 'g'), '_');
+                    SP.SOD.registerSod('formDefinition', $scope.web.url.rtrim('/') + '/ngSharePointFormTemplates/' + listName + '-' + ctx.ListData.Items[0].ContentType + '-definition.js');
 
                     SP.SOD.executeFunc('formDefinition', null, function() {
 
@@ -347,7 +349,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                         } else {
 
                             deferred.resolve({});
-                            
+
                         }
 
                     });
@@ -387,5 +389,3 @@ angular.module('ngSharePointFormPage').directive('spformpage',
     }
 
 ]);
-
-
