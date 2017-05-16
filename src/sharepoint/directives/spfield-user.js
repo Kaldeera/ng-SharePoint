@@ -452,14 +452,16 @@ angular.module('ngSharePoint').directive('spfieldUser',
                                 AutoFillSubDisplayText: '',
                                 Description: displayName,
                                 DisplayText: displayName,
-                                //EntityData: {},
+                                EntityData: {
+                                    ID: user.data.ID
+                                },
                                 EntityType: 'User', //-> Para el administrador es ''
                                 IsResolved: true,
                                 Key: userName,
                                 //LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
                                 ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
                                 ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
-                                Resolved: true
+                                Resolved: true,
                             };
 
                             pickerEntities.push(pickerEntity);
@@ -509,19 +511,25 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
                                         var entityPromise;
 
-                                        if (entity.EntityType === 'User') {
+                                        if (entity.EntityData.SPGroupID !== undefined) {
 
-                                            // Get the user ID
+                                            // sharepoint group
+                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
+
+                                        } else if (entity.EntityData.ID !== undefined) {
+
+                                            // previous entity ...
+                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.ID));
+
+                                        } else {
+
+                                            // resolve entity by key
                                             entityPromise = SPUtils.getUserInfoByLoginName(entity.Key).then(function(userInfo) {
 
                                                 resolvedValues.push(userInfo.Id);
                                                 return resolvedValues;
                                             });
 
-                                        } else {
-
-                                            // Get the group ID
-                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
                                         }
 
                                         promises.push(entityPromise);
