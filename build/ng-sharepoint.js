@@ -9153,7 +9153,61 @@ angular.module('ngSharePoint').factory('SPWeb',
 
 		}; // getProperties
 
+		/**
+	     * @ngdoc function
+	     * @name ngSharePoint.SPWeb#getListByRootFolderName
+	     * @methodOf ngSharePoint.SPWeb
+	     *
+	     * @description
+	     * Retrieves a SharePoint list or document library from the server and returns a single 
+	     * {@link ngSharePoint.SPList SPList} object.
+	     *
+	     * @returns {promise} promise with a single {@link ngSharePoint.SPList SPList} object.
+	     *
+		 * @example
+		 * <pre>
+		 *
+		 *   SharePoint.getCurrentWeb(function(webObject) {
+		 *
+		 *     var web = webObject;
+		 *     web.getListByRootFolder('INTERNAL_LIST_NAME')
+         *      .then(function(list) {
+		 *          $scope.list = list;
+         *      }, function(reason) {
+         *          alert('Failed: ' + reason);
+         *      });
+		 *   });
+		 * </pre>
+		 */
+		SPWebObj.prototype.getListByRootFolderName = function (name) {
+		    var def = $q.defer();
+		    
+		    var self = this;
 
+		    SPUtils.SharePointReady().then(function () {
+
+		        var url = self.apiUrl + '/Lists';
+		        SPHttp.get(url).then(function (data) {
+		            var promises = [];
+		            angular.forEach(data, function (listProperties) {
+		                var spList = new SPList(self, listProperties.Id, listProperties);
+		                var promise = spList.getRootFolder().then(function (folder) {
+		                    if (folder.Name === name) {
+		                        def.resolve(spList);
+		                    }
+		                });
+		                promises.push(promise);
+		            });
+
+		            $q.all(promises).then(function (response) {
+                        // The deferred promises did not resolve, therefore the list was not found
+                        def.reject("A list with the rootFolderName = \"" + name + "\" was not found");
+                    });
+		        });
+		    });
+
+		    return def.promise;
+		};
 
 		/**
 	     * @ngdoc function
@@ -10653,7 +10707,7 @@ angular.module('ngSharePoint').directive('spfieldChoice',
                         var data;
                         if ($scope.items !== void 0) {
                             angular.forEach($scope.items, function(item) {
-                                if (item.campo14 === viewValue) data = item;
+                                if (item[ListQuery.Field || 'Title'] === viewValue) data = item;
                             });
                         }
 						$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue, data);
@@ -14246,14 +14300,16 @@ angular.module('ngSharePoint').directive('spfieldUser',
                                 AutoFillSubDisplayText: '',
                                 Description: displayName,
                                 DisplayText: displayName,
-                                //EntityData: {},
+                                EntityData: {
+                                    ID: user.data.ID
+                                },
                                 EntityType: 'User', //-> Para el administrador es ''
                                 IsResolved: true,
                                 Key: userName,
                                 //LocalSearchTerm: 'adminis', //-> Creo que guarda la última búsqueda realizada en el PeoplePicker.
                                 ProviderDisplayName: '', //-> Ej.: 'Active Directory', 'Tenant', ...
                                 ProviderName: '', //-> Ej.: 'AD', 'Tenant', ...
-                                Resolved: true
+                                Resolved: true,
                             };
 
                             pickerEntities.push(pickerEntity);
@@ -14303,19 +14359,25 @@ angular.module('ngSharePoint').directive('spfieldUser',
 
                                         var entityPromise;
 
-                                        if (entity.EntityType === 'User') {
+                                        if (entity.EntityData.SPGroupID !== undefined) {
 
-                                            // Get the user ID
+                                            // sharepoint group
+                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
+
+                                        } else if (entity.EntityData.ID !== undefined) {
+
+                                            // previous entity ...
+                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.ID));
+
+                                        } else {
+
+                                            // resolve entity by key
                                             entityPromise = SPUtils.getUserInfoByLoginName(entity.Key).then(function(userInfo) {
 
                                                 resolvedValues.push(userInfo.Id);
                                                 return resolvedValues;
                                             });
 
-                                        } else {
-
-                                            // Get the group ID
-                                            entityPromise = $q.when(resolvedValues.push(entity.EntityData.SPGroupID));
                                         }
 
                                         promises.push(entityPromise);
