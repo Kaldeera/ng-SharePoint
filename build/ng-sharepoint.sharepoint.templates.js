@@ -138,14 +138,14 @@ angular.module("templates/form-templates/spfield-control.html", []).run(["$templ
 
 angular.module("templates/form-templates/spfield-currency-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-display.html",
-    "<div ng-if=\"!isNaN(value)\" ng-bind=\"$parent.value.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"!isNaN(viewValue)\" ng-bind=\"$parent.viewValue.toFixed(cultureInfo.numberFormat.CurrencyDecimalDigits) + ' ' + cultureInfo.numberFormat.CurrencySymbol\" class=\"field-display-value\"></div>\n" +
     "");
 }]);
 
 angular.module("templates/form-templates/spfield-currency-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-currency-edit.html",
     "<input 	type=\"text\" \n" +
-    "		ng-model=\"value\" \n" +
+    "		ng-model=\"viewValue\" \n" +
     "		data-spfield-focus-element=\"true\" \n" +
     "		maxlength=\"{{schema.MaxLength}}\" \n" +
     "		ng-required=\"{{schema.Required}}\" \n" +
@@ -374,13 +374,13 @@ angular.module("templates/form-templates/spfield-note-edit.html", []).run(["$tem
 
 angular.module("templates/form-templates/spfield-number-display.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-display.html",
-    "<div ng-if=\"!isNaN(value)\" ng-bind=\"(schema.Percentage ? ($parent.value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.value.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
+    "<div ng-if=\"!isNaN(viewValue)\" ng-bind=\"(schema.Percentage ? ($parent.viewValue * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.viewValue.toFixed(schema.Decimals))\" class=\"field-display-value\"></div>\n" +
     "");
 }]);
 
 angular.module("templates/form-templates/spfield-number-edit.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("templates/form-templates/spfield-number-edit.html",
-    "<input type=\"text\" ng-model=\"value\" data-spfield-focus-element=\"true\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
+    "<input type=\"text\" ng-model=\"viewValue\" data-spfield-focus-element=\"true\" sp-percentage=\"{{schema.Percentage}}\" ng-required=\"{{schema.Required}}\" min=\"{{schema.MinimumValue}}\" max=\"{{schema.MaximumValue}}\" size=\"11\" title=\"{{schema.Title}}\" class=\"ms-input\" style=\"ime-mode: inactive\" />\n" +
     "<span ng-if=\"schema.Percentage\">&nbsp;{{cultureInfo.numberFormat.PercentSymbol}}</span>\n" +
     "<br/>\n" +
     "<spfield-validation-messages></spfield-validation-messages>\n" +

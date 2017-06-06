@@ -50,6 +50,10 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 						$scope.cultureInfo = (typeof __cultureInfo == 'undefined' ? Sys.CultureInfo.CurrentCulture : __cultureInfo);
 					},
 
+					renderFn: function() {
+						$scope.viewValue = $scope.modelCtrl.$viewValue;
+					},
+					
 					formatterFn: function(modelValue) {
 
                         if (typeof modelValue === 'string') {
@@ -65,13 +69,13 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 					parserFn: function(viewValue) {
 
-						if ($scope.lastValue !== parseFloat(viewValue)) {
+						if ($scope.lastValue !== viewValue) {
 							// Calls the 'fieldValueChanged' method in the SPForm controller to broadcast to all child elements.
-							$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, parseFloat(viewValue), $scope.lastValue);
-							$scope.lastValue = parseFloat(viewValue);
+							$scope.formCtrl.fieldValueChanged($scope.schema.InternalName, viewValue, $scope.lastValue);
+							$scope.lastValue = viewValue;
 						}
 
-						return parseFloat(viewValue);
+						return viewValue;
                     }
 				};
 
@@ -82,6 +86,18 @@ angular.module('ngSharePoint').directive('spfieldNumber',
 
 	            	return (viewValue === undefined) || (!isNaN(viewValue) && isFinite(viewValue));
 	            };
+
+				$scope.$watch('viewValue', function(newValue, oldValue) {
+					if (newValue === '' || newValue === null || newValue === undefined) {
+						$scope.modelCtrl.$setViewValue(undefined);
+					} else {
+						if (parseFloat(newValue).toString() === newValue) {
+							$scope.modelCtrl.$setViewValue(parseFloat(newValue));
+						} else {
+							$scope.modelCtrl.$setViewValue(newValue);
+						}
+					}
+				});
 
 			} // link
 
