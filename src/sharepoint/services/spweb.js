@@ -497,7 +497,13 @@ angular.module('ngSharePoint').factory('SPWeb',
 		*/
 		SPWebObj.prototype.getUserById = function(userID) {
 
-			return new SPUser(this, userID).getProperties();
+            var def = $q.defer();
+ 
+            new SPUser(this, userID).getProperties().then(function(user) {
+                def.resolve(user);
+            });
+ 
+            return def.promise;
 		};
 
 
