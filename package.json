@@ -21,5 +21,6 @@
   "dependencies": {
     "grunt-contrib-less": "^1.2.0",
     "grunt-ngdocs": "^0.2.9"
-  }
+  },
+  "main": "index.js"
 }
