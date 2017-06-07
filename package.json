@@ -4,7 +4,7 @@
     "company": "Kaldeera"
   },
   "name": "ng-sharepoint",
-  "version": "0.0.1",
+  "version": "0.8.1",
   "homepage": "https://github.com/Kaldeera/ng-sharepoint/",
   "devDependencies": {
     "faithful-exec": "^0.1.0",

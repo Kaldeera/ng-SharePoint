@@ -44,3 +44,4 @@ oldJs
 # ==========================
 .*
 !.gitignore
+!.npmignore
