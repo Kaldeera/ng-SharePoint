@@ -1,1 +1,1 @@
-<div ng-if="!isNaN(value)" ng-bind="(schema.Percentage ? ($parent.value * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.value.toFixed(schema.Decimals))" class="field-display-value"></div>
+<div ng-if="!isNaN(viewValue)" ng-bind="(schema.Percentage ? ($parent.viewValue * 100).toFixed(schema.Decimals) + ' ' + cultureInfo.numberFormat.PercentSymbol : $parent.viewValue.toFixed(schema.Decimals))" class="field-display-value"></div>
