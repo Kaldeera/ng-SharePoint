@@ -54,7 +54,7 @@ angular.module('ngSharePoint').directive('spfield',
 					}
 
 
-					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).then(function(html) {
 
 						if ($element.parent().length === 0) return;
 						
@@ -86,7 +86,7 @@ angular.module('ngSharePoint').directive('spfield',
 							elementAttributes += nameAttr + '="' + valueAttr + '" ';
 						}
 
-
+						html = html.data;
 						html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
 						html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
 						

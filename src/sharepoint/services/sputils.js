@@ -137,8 +137,9 @@ angular.module('ngSharePoint').factory('SPUtils',
                 }
 
                 $http.get(url)
-                    .success(function(data, status, headers, config) {
+                    .then(function(data, status, headers, config) {
 
+                        data = data.data;
                         window.Resources = window.Resources || {};
 
                         // Fix bad transformation in core.resx
@@ -422,9 +423,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                     var def = $q.defer();
 
-                    $http.get(pageUrl).success(function(data) {
+                    $http.get(pageUrl).then(function(data) {
 
-                        var html = angular.element(data);
+                        var html = angular.element(data.data);
                         var form, lcid;
 
                         angular.forEach(html, function(element) {
@@ -505,9 +506,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 /*
 
-                $http.get(url).success(function(data) {
+                $http.get(url).then(function(data) {
 
-                    var html = angular.element(data);
+                    var html = angular.element(data.data);
                     var form, lcid;
 
                     angular.forEach(html, function(element) {
@@ -538,9 +539,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                         // we will get the web sttings configuration
                         url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx";
-                        $http.get(url).success(function(data) {
+                        $http.get(url).then(function(data) {
 
-                            html = angular.element(data);
+                            html = angular.element(data.data);
 
                             angular.forEach(html, function(element) {
                                 if (element.tagName && element.tagName.toLowerCase() === 'form') {

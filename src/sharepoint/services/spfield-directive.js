@@ -203,7 +203,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 if ($scope.currentMode === 'edit' && directive.editTemplateUrl) templateUrl = directive.editTemplateUrl;
 
 
-                $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
+                $http.get(templateUrl, { cache: $templateCache }).then(function(html) {
 
                     // Checks if the field has an 'extended template'.
                     // The 'extended template' is defined in the field 'extended schema'.
@@ -237,7 +237,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     if (angular.isDefined($scope.schema) && angular.isDefined($scope.schema.extendedTemplate)) {
 
-                        var finalHtml = html;
+                        var finalHtml = html.data;
                         var templateEx = $scope.schema.extendedTemplate;
 
                         // Checks if there are defined and explicit mode extended template.
@@ -255,16 +255,16 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                         if (angular.isDefined(templateEx.url)) {
 
-                            $http.get(templateEx.url, { cache: $templateCache }).success(function(htmlEx) {
+                            $http.get(templateEx.url, { cache: $templateCache }).then(function(htmlEx) {
 
-                                finalHtml = replace ? htmlEx : html + htmlEx;
+                                finalHtml = replace ? htmlEx.data : html.data + htmlEx.data;
                                 deferred.resolve(finalHtml);
 
                             });
 
                         } else if (angular.isDefined(templateEx.html)) {
 
-                            finalHtml = replace ? templateEx.html : html + templateEx.html;
+                            finalHtml = replace ? templateEx.html : html.data + templateEx.html;
                             deferred.resolve(finalHtml);
 
                         } else {
@@ -276,7 +276,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     } else {
 
-                        deferred.resolve(html);
+                        deferred.resolve(html.data);
 
                     }
 
