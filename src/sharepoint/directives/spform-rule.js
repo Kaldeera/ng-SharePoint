@@ -31,9 +31,9 @@ angular.module('ngSharePoint').directive('spformRule',
 
 					if ($attrs.templateUrl) {
 
-						$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
+						$http.get($attrs.templateUrl, { cache: $templateCache }).then(function (html) {
 
-							var newElement = $compile(html)($scope);
+							var newElement = $compile(html.data)($scope);
 							$element.replaceWith(newElement);
 							$element = newElement;
 

@@ -2501,7 +2501,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
                 if ($scope.currentMode === 'edit' && directive.editTemplateUrl) templateUrl = directive.editTemplateUrl;
 
 
-                $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
+                $http.get(templateUrl, { cache: $templateCache }).then(function(html) {
 
                     // Checks if the field has an 'extended template'.
                     // The 'extended template' is defined in the field 'extended schema'.
@@ -2535,7 +2535,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     if (angular.isDefined($scope.schema) && angular.isDefined($scope.schema.extendedTemplate)) {
 
-                        var finalHtml = html;
+                        var finalHtml = html.data;
                         var templateEx = $scope.schema.extendedTemplate;
 
                         // Checks if there are defined and explicit mode extended template.
@@ -2553,16 +2553,16 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                         if (angular.isDefined(templateEx.url)) {
 
-                            $http.get(templateEx.url, { cache: $templateCache }).success(function(htmlEx) {
+                            $http.get(templateEx.url, { cache: $templateCache }).then(function(htmlEx) {
 
-                                finalHtml = replace ? htmlEx : html + htmlEx;
+                                finalHtml = replace ? htmlEx.data : html.data + htmlEx.data;
                                 deferred.resolve(finalHtml);
 
                             });
 
                         } else if (angular.isDefined(templateEx.html)) {
 
-                            finalHtml = replace ? templateEx.html : html + templateEx.html;
+                            finalHtml = replace ? templateEx.html : html.data + templateEx.html;
                             deferred.resolve(finalHtml);
 
                         } else {
@@ -2574,7 +2574,7 @@ angular.module('ngSharePoint').service('SPFieldDirective',
 
                     } else {
 
-                        deferred.resolve(html);
+                        deferred.resolve(html.data);
 
                     }
 
@@ -8417,8 +8417,9 @@ angular.module('ngSharePoint').factory('SPUtils',
                 }
 
                 $http.get(url)
-                    .success(function(data, status, headers, config) {
+                    .then(function(data, status, headers, config) {
 
+                        data = data.data;
                         window.Resources = window.Resources || {};
 
                         // Fix bad transformation in core.resx
@@ -8702,9 +8703,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                     var def = $q.defer();
 
-                    $http.get(pageUrl).success(function(data) {
+                    $http.get(pageUrl).then(function(data) {
 
-                        var html = angular.element(data);
+                        var html = angular.element(data.data);
                         var form, lcid;
 
                         angular.forEach(html, function(element) {
@@ -8785,9 +8786,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
 /*
 
-                $http.get(url).success(function(data) {
+                $http.get(url).then(function(data) {
 
-                    var html = angular.element(data);
+                    var html = angular.element(data.data);
                     var form, lcid;
 
                     angular.forEach(html, function(element) {
@@ -8818,9 +8819,9 @@ angular.module('ngSharePoint').factory('SPUtils',
 
                         // we will get the web sttings configuration
                         url = _spPageContextInfo.webServerRelativeUrl.rtrim('/') + "/_layouts/15/regionalsetng.aspx";
-                        $http.get(url).success(function(data) {
+                        $http.get(url).then(function(data) {
 
-                            html = angular.element(data);
+                            html = angular.element(data.data);
 
                             angular.forEach(html, function(element) {
                                 if (element.tagName && element.tagName.toLowerCase() === 'form') {
@@ -14986,7 +14987,7 @@ angular.module('ngSharePoint').directive('spfield',
 					}
 
 
-					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).success(function(html) {
+					$http.get('templates/form-templates/spfield.html', { cache: $templateCache }).then(function(html) {
 
 						if ($element.parent().length === 0) return;
 						
@@ -15018,7 +15019,7 @@ angular.module('ngSharePoint').directive('spfield',
 							elementAttributes += nameAttr + '="' + valueAttr + '" ';
 						}
 
-
+						html = html.data;
 						html = html.replace(/\{\{attributes\}\}/g, elementAttributes.trim());
 						html = html.replace(/\{\{classAttr\}\}/g, cssClasses.join(' '));
 						
@@ -15089,9 +15090,9 @@ angular.module('ngSharePoint').directive('spformRule',
 
 					if ($attrs.templateUrl) {
 
-						$http.get($attrs.templateUrl, { cache: $templateCache }).success(function (html) {
+						$http.get($attrs.templateUrl, { cache: $templateCache }).then(function (html) {
 
-							var newElement = $compile(html)($scope);
+							var newElement = $compile(html.data)($scope);
 							$element.replaceWith(newElement);
 							$element = newElement;
 
@@ -16178,9 +16179,9 @@ angular.module('ngSharePoint').directive('spform',
                                 if ($attrs.templateUrl) {
 
                                     // Apply the 'templateUrl' attribute
-                                    $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+                                    $http.get($attrs.templateUrl, { cache: $templateCache }).then(function(html) {
 
-                                        parseRules(transclusionContainer, angular.element(html), false).then(function() {
+                                        parseRules(transclusionContainer, angular.element(html.data), false).then(function() {
 
                                             /*
                                             $compile(transclusionContainer)($scope);
@@ -16224,9 +16225,9 @@ angular.module('ngSharePoint').directive('spform',
                                                     }
                                                 });
 
-                                                $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                                $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).then(function (html) {
 
-                                                    transclusionContainer.append(html);
+                                                    transclusionContainer.append(html.data);
                                                     /*
                                                     $compile(transclusionContainer)($scope);
                                                     $scope.formStatus = spformController.status.IDLE;
@@ -17079,7 +17080,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
-                    $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
+                    $http.get(templateUrl, { cache: $templateCache }).then(function(html) {
 
                         // Returns the 'templateUrl'
                         deferred.resolve(templateUrl);

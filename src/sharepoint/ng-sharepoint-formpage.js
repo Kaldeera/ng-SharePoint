@@ -270,7 +270,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
 
 
                     // Check if the 'templateUrl' is valid, i.e. the template exists.
-                    $http.get(templateUrl, { cache: $templateCache }).success(function(html) {
+                    $http.get(templateUrl, { cache: $templateCache }).then(function(html) {
 
                         // Returns the 'templateUrl'
                         deferred.resolve(templateUrl);

@@ -807,9 +807,9 @@ angular.module('ngSharePoint').directive('spform',
                                 if ($attrs.templateUrl) {
 
                                     // Apply the 'templateUrl' attribute
-                                    $http.get($attrs.templateUrl, { cache: $templateCache }).success(function(html) {
+                                    $http.get($attrs.templateUrl, { cache: $templateCache }).then(function(html) {
 
-                                        parseRules(transclusionContainer, angular.element(html), false).then(function() {
+                                        parseRules(transclusionContainer, angular.element(html.data), false).then(function() {
 
                                             /*
                                             $compile(transclusionContainer)($scope);
@@ -853,9 +853,9 @@ angular.module('ngSharePoint').directive('spform',
                                                     }
                                                 });
 
-                                                $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).success(function (html) {
+                                                $http.get('templates/form-templates/spform-default.html', { cache: $templateCache }).then(function (html) {
 
-                                                    transclusionContainer.append(html);
+                                                    transclusionContainer.append(html.data);
                                                     /*
                                                     $compile(transclusionContainer)($scope);
                                                     $scope.formStatus = spformController.status.IDLE;
