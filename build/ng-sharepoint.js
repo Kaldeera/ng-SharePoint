@@ -10542,7 +10542,8 @@ angular.module('ngSharePoint').directive('spfieldCalculated',
 
 						 	case SP.FieldType.currency:
 						 		// Parse the value to match the type.
-						 		$scope.value = parseFloat(newValue);
+								$scope.value = parseFloat(newValue);
+								$scope.viewValue = $scope.value;
 						 		break;
 
 						}
