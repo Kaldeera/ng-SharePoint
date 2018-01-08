@@ -275,7 +275,7 @@ angular.module('ngSharePointFormPage').directive('spformpage',
                         // Returns the 'templateUrl'
                         deferred.resolve(templateUrl);
 
-                    }).error(function(data, status, headers, config, statusText) {
+                    }).catch(function(data, status, headers, config, statusText) {
 
                         // No valid template url specified.
                         console.log(data);
