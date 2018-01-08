@@ -408,22 +408,21 @@ angular.module('ngSharePoint').directive('spform',
                             dlg = SP.UI.ModalDialog.showWaitScreenWithNoClose(SP.Res.dialogLoading15);
                         }
 
-
-                        // Removes all the custom 'virtual' fields.
-                        angular.forEach($scope.schema, function(field, key) {
-
-                            if (field.isVirtualField) {
-
-                                delete $scope.item[key];
-
-                            }
-
-                        });
-
-
+                        
                         // Invoke 'onPreSave' function
                         $q.when(SPUtils.callFunctionWithParams($scope.onPreSave, $scope)).then(function(result) {
-
+                            
+                            // Removes all the custom 'virtual' fields.
+                            angular.forEach($scope.schema, function(field, key) {
+    
+                                if (field.isVirtualField) {
+    
+                                    delete $scope.item[key];
+    
+                                }
+    
+                            });
+    
                             // If the 'onPreSave' function returns FALSE, cancels the save operation.
                             if (result !== false) {
 
@@ -821,7 +820,7 @@ angular.module('ngSharePoint').directive('spform',
 
                                         });
 
-                                    }).error(function(data, status, headers, config, statusText) {
+                                    }).catch(function(data, status, headers, config, statusText) {
 
                                         $element.html('<div><h2 class="ms-error">' + data + '</h2><p class="ms-error">Form Template URL: <strong>' + $attrs.templateUrl + '</strong></p></div>');
 

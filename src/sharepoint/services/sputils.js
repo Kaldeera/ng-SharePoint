@@ -166,7 +166,7 @@ angular.module('ngSharePoint').factory('SPUtils',
                         deferred.resolve();
 
                     })
-                    .error(function(data, status, headers, config) {
+                    .catch(function(data, status, headers, config) {
 
                         deferred.resolve();
                     });
