@@ -295,12 +295,24 @@ angular.module('ngSharePoint').service('SPFieldDirective',
             //
             directive.renderField = function() {
 
-                directive.getFieldTemplate().then(function(html) {
+                if ($scope.currentMode === 'display' && directive.RenderFieldValuesAsHtml) {
 
-                    directive.setElementHTML(html);
-                    if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
+                    var fieldName = $scope.name.replace(/_/g, '_x005f_');
+                    if ($scope.item.FieldValuesAsHtml !== void 0 && $scope.item.FieldValuesAsHtml[fieldName] !== void 0) {
 
-                });
+                        directive.setElementHTML($scope.item.FieldValuesAsHtml[fieldName]);
+                        return;
+                    }
+
+                } else {
+                    
+                    directive.getFieldTemplate().then(function(html) {
+
+                        directive.setElementHTML(html);
+                        if (angular.isFunction(directive.postRenderFn)) directive.postRenderFn.apply(directive, arguments);
+
+                    });
+                }
 
             };
 

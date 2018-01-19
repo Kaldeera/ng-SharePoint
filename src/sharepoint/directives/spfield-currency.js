@@ -38,6 +38,7 @@ angular.module('ngSharePoint').directive('spfieldCurrency',
 
 					fieldTypeName: 'currency',
 					replaceAll: false,
+					RenderFieldValuesAsHtml: true,
 
 					init: function() {
 
