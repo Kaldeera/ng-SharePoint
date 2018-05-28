@@ -10285,7 +10285,7 @@ angular.module('ngSharePoint').directive('fileSelect',
 				var files = [];
 				var fileList = evt.__files_ || evt.target.files;
 
-				if (fileList !== null) {
+				if (fileList !== undefined && fileList !== null) {
 					for (var i = 0; i < fileList.length; i++) {
 						files.push(fileList.item(i));
 					}
