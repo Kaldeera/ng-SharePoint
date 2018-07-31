@@ -5639,7 +5639,13 @@ angular.module('ngSharePoint').factory('SPList',
                 return def.promise;
             }
 
-            var listGuid = self.Id;
+            if (self.getDefaultViewPromises !== undefined) {
+                self.getDefaultViewPromises.push(def);
+                return def.promise;
+            }
+
+            self.getDefaultViewPromises = [];
+            self.getDefaultViewPromises.push(def);
 
             self.context = new SP.ClientContext(self.web.url);
             var web = self.context.get_web();
@@ -5654,10 +5660,13 @@ angular.module('ngSharePoint').factory('SPList',
 
             self.context.executeQueryAsync(function() {
 
-
                 self.defaultViewUrl = self._list.get_defaultViewUrl();
-                def.resolve(self.defaultViewUrl);
 
+                self.getDefaultViewPromises.forEach(function(promise) {
+                    promise.resolve(self.defaultViewUrl);
+                });
+
+                delete self.getDefaultViewPromises;
 
             }, function(sender, args) {
 
@@ -5707,7 +5716,13 @@ angular.module('ngSharePoint').factory('SPList',
                 return def.promise;
             }
 
-            var listGuid = self.Id;
+            if (self.getDefaultEditFormPromises !== undefined) {
+                self.getDefaultEditFormPromises.push(def);
+                return def.promise;
+            }
+
+            self.getDefaultEditFormPromises = [];
+            self.getDefaultEditFormPromises.push(def);
 
             self.context = new SP.ClientContext(self.web.url);
             var web = self.context.get_web();
@@ -5722,10 +5737,13 @@ angular.module('ngSharePoint').factory('SPList',
 
             self.context.executeQueryAsync(function() {
 
-
                 self.defaultEditFormUrl = self._list.get_defaultEditFormUrl();
-                def.resolve(self.defaultEditFormUrl);
 
+                self.getDefaultEditFormPromises.forEach(function(promise) {
+                    promise.resolve(self.defaultEditFormUrl);
+                });
+
+                delete self.getDefaultEditFormPromises;
 
             }, function(sender, args) {
 
@@ -5775,7 +5793,13 @@ angular.module('ngSharePoint').factory('SPList',
                 return def.promise;
             }
 
-            var listGuid = self.Id;
+            if (self.getDefaultDisplayFormPromises !== undefined) {
+                self.getDefaultDisplayFormPromises.push(def);
+                return def.promise;
+            }
+
+            self.getDefaultDisplayFormPromises = [];
+            self.getDefaultDisplayFormPromises.push(def);
 
             self.context = new SP.ClientContext(self.web.url);
             var web = self.context.get_web();
@@ -5790,10 +5814,13 @@ angular.module('ngSharePoint').factory('SPList',
 
             self.context.executeQueryAsync(function() {
 
-
                 self.defaultDisplayFormUrl = self._list.get_defaultDisplayFormUrl();
-                def.resolve(self.defaultDisplayFormUrl);
 
+                self.getDefaultDisplayFormPromises.forEach(function(promise) {
+                    promise.resolve(self.defaultDisplayFormUrl);
+                });
+
+                delete self.getDefaultDisplayFormPromises;
 
             }, function(sender, args) {
 
@@ -5843,7 +5870,13 @@ angular.module('ngSharePoint').factory('SPList',
                 return def.promise;
             }
 
-            var listGuid = self.Id;
+            if (self.getDefaultNewFormPromises !== undefined) {
+                self.getDefaultNewFormPromises.push(def);
+                return def.promise;
+            }
+
+            self.getDefaultNewFormPromises = [];
+            self.getDefaultNewFormPromises.push(def);
 
             self.context = new SP.ClientContext(self.web.url);
             var web = self.context.get_web();
@@ -5860,8 +5893,12 @@ angular.module('ngSharePoint').factory('SPList',
 
 
                 self.defaultNewFormUrl = self._list.get_defaultNewFormUrl();
-                def.resolve(self.defaultNewFormUrl);
 
+                self.getDefaultNewFormPromises.forEach(function(promise) {
+                    promise.resolve(self.defaultNewFormUrl);
+                });
+
+                delete self.getDefaultNewFormPromises;
 
             }, function(sender, args) {
 
