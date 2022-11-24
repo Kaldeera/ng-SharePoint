@@ -42,7 +42,8 @@ angular.module('ngSharePoint').directive('spfieldBoolean',
 					renderFn: function() {
 
 						$scope.value = $scope.modelCtrl.$viewValue;
-						$scope.displayValue = $scope.modelCtrl.$viewValue ? STSHtmlEncode(Strings.STS.L_SPYes) : STSHtmlEncode(Strings.STS.L_SPNo);
+						$scope.displayValue = $scope.modelCtrl.$viewValue === true ? STSHtmlEncode(Strings.STS.L_SPYes) : 
+											  $scope.modelCtrl.$viewValue === false ? STSHtmlEncode(Strings.STS.L_SPNo) : "";
 					},
 
 					formatterFn: function(modelValue) {
